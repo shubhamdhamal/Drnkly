@@ -21,8 +21,8 @@ exports.updateProfile = async (req, res) => {
     const updatedUser = await User.findByIdAndUpdate(
       req.params.id,
       { name, email, mobile, kycDocument, address },
-      { new: true }
-    ).select('-password'); // Don't return password in response
+      { new: true }  // This ensures that the updated user data is returned
+    ).select('-password');  // Don't return password in response
 
     res.json(updatedUser);  // Return the updated user data
   } catch (err) {

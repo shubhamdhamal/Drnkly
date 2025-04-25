@@ -155,17 +155,22 @@ const Profile = () => {
   };
 
   const handleEditProfile = () => {
-    setIsEditing(prev => !prev);  // Toggle the editing state
+    if (isEditing) {
+      // When saving the changes, call the function to handle saving
+      handleSaveChanges();
+    }
+    setIsEditing(!isEditing); // Toggle edit mode
   };
 
   const handleSaveChanges = async () => {
     try {
+      const userId = localStorage.getItem('userId'); // Retrieve userId from localStorage
       const response = await axios.put(
-        `http://localhost:5000/api/users/profile/${userId}`,
-        userInfo
+        `http://localhost:5000/api/users/profile/${userId}`, // Replace with the actual URL
+        userInfo // Send the updated user data
       );
-      setUserInfo(response.data); // Set updated data
-      setIsEditing(false); // Exit edit mode
+      setUserInfo(response.data); // Set updated data from response
+      setIsEditing(false); // Exit edit mode after saving
     } catch (error) {
       console.error('Failed to update profile', error);
     }
