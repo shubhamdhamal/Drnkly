@@ -1,0 +1,14 @@
+{
+  "dependencies": {
+    "express": "^4.17.1"
+  },
+  "name": "your-app",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "your-dev-command",
+    "start": "node server.js"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}

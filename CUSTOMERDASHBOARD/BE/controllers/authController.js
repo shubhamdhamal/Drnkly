@@ -1,0 +1,92 @@
+const User = require('../models/User');
+const bcrypt = require('bcryptjs');
+
+const path = require('path');
+const fs = require('fs');
+
+exports.signup = async (req, res) => {
+  try {
+    const { 
+      name, 
+      email, 
+      mobile, 
+      password, 
+      state, 
+      city, 
+      dob, 
+      aadhaar, 
+      selfDeclaration 
+    } = req.body;
+
+    // Validate input fields
+    if (!name || (!email && !mobile) || !password || !state || !city || !dob || !aadhaar || !selfDeclaration) {
+      return res.status(400).json({ message: 'Please provide all necessary fields.' });
+    }
+
+    // Check if user already exists by email or mobile
+    let userExists = await User.findOne({
+      $or: [{ email: email }, { mobile: mobile }]
+    });
+
+    if (userExists) {
+      return res.status(400).json({ message: 'User already exists.' });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create a new user with uploaded file
+    const idProof = req.file ? path.join('/uploads/idproofs', req.file.filename) : null;
+
+    // Create user object
+    const user = new User({
+      name,
+      email,
+      mobile,
+      password: hashedPassword,
+      state,
+      city,
+      dob,
+      aadhaar,
+      idProof,  // Path to uploaded ID proof
+      selfDeclaration
+    });
+
+    // Save user in the database
+    await user.save();
+
+    // Send success response
+    res.status(201).json({ message: 'User created successfully!' });
+
+  } catch (error) {
+    res.status(500).json({ message: 'Server error.', error: error.message });
+  }
+};
+
+
+exports.login = async (req, res) => {
+  const { mobile, password } = req.body;
+
+  if (!mobile || !password) {
+    return res.status(400).json({ message: 'Please provide both mobile number and password.' });
+  }
+
+  try {
+    const user = await User.findOne({ mobile });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    // If login is successful, return a success message (you can also return a JWT token for auth)
+    res.status(200).json({ message: 'Login successful', user });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error.', error: error.message });
+  }
+};
