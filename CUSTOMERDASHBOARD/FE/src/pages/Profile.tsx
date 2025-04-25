@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { 
@@ -19,6 +19,7 @@ import {
   X,
   Send
 } from 'lucide-react';
+import axios from 'axios';
 
 // Enhanced FAQ Data with bilingual support
 const FAQ_DATA = [
@@ -77,11 +78,30 @@ const Profile = () => {
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [userInfo, setUserInfo] = useState({
-    name: 'ankush',
-    phone: '9356646313'
+    name: '',
+  phone: ''
   });
   const navigate = useNavigate();  // Initialize useNavigate hook
   const [isChatOpen, setIsChatOpen] = useState(false);
+    // Fetch user profile data using useEffect
+    useEffect(() => {
+      const fetchUserProfile = async () => {
+        try {
+          const userId = localStorage.getItem('userId'); // Replace with your actual auth logic
+          const response = await axios.get(`http://localhost:5000/api/users/${userId}`);
+          const user = response.data;
+  
+          setUserInfo({
+            name: user.name,
+            phone: user.mobile
+          });
+        } catch (error) {
+          console.error('Failed to fetch profile', error);
+        }
+      };
+  
+      fetchUserProfile();
+    }, []);  // Empty dependency array ensures this effect runs only once
   const [chatMessages, setChatMessages] = useState<Message[]>([
     { 
       text: "Hello! 👋 Welcome to Liquor Shop. How can I help you today?\n\nनमस्कार! लिकर शॉपमध्ये आपले स्वागत आहे. मी आपली कशी मदत करू शकतो?", 
@@ -126,20 +146,29 @@ const Profile = () => {
     setShowLocationDropdown(false);
   };
 
-  const handleEditProfile = () => {
-    if (isEditing) {
-      setIsEditing(false);
-    } else {
-      setIsEditing(true);
-    }
-  };
-
   const handleUserInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setUserInfo(prev => ({
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleEditProfile = () => {
+    setIsEditing(prev => !prev);  // Toggle the editing state
+  };
+
+  const handleSaveChanges = async () => {
+    try {
+      const response = await axios.put(
+        `http://localhost:5000/api/users/profile/${userId}`,
+        userInfo
+      );
+      setUserInfo(response.data); // Set updated data
+      setIsEditing(false); // Exit edit mode
+    } catch (error) {
+      console.error('Failed to update profile', error);
+    }
   };
 
   const generateAIResponse = (input: string): string => {
@@ -357,6 +386,7 @@ const Profile = () => {
         </button>
       </div>
     );
+  
   };
 
   const BalanceSection = () => {
