@@ -157,22 +157,49 @@ function SignUp() {
                   type="date"
                   className="w-full border px-3 py-2 rounded"
                   value={extraData.dob}
-                  onChange={(e) =>
-                    setExtraData({ ...extraData, dob: e.target.value })
-                  }
+                  onChange={(e) => {
+                    const dob = e.target.value;
+                    const today = new Date();
+                    const birthDate = new Date(dob);
+                    let age = today.getFullYear() - birthDate.getFullYear();
+                    const m = today.getMonth() - birthDate.getMonth();
+                    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                      age--;
+                    }
+
+                    if (age >= 25) {
+                      setExtraData(prev => ({
+                        ...prev,
+                        dob: dob
+                      }));
+                    } else {
+                      alert('Your age is less than 25. You are not allowed to register.');
+                      setExtraData(prev => ({
+                        ...prev,
+                        dob: '',
+                        aadhaar: '',
+                        idProof: null,
+                        selfDeclaration: false
+                      }));
+                    }
+                  }}
                 />
               </div>
               <div>
                 <label>Aadhaar Number</label>
                 <input
-                  type="text"
-                  className="w-full border px-3 py-2 rounded"
-                  placeholder="Enter Aadhaar"
-                  value={extraData.aadhaar}
-                  onChange={(e) =>
-                    setExtraData({ ...extraData, aadhaar: e.target.value })
-                  }
-                />
+            type="text"
+            className="w-full border px-3 py-2 rounded"
+            placeholder="Enter Aadhaar"
+            value={extraData.aadhaar}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (/^\d{0,12}$/.test(value)) {
+                setExtraData({ ...extraData, aadhaar: value });
+              }
+            }}
+            maxLength={12}
+          />
               </div>
             </>
           )}
@@ -227,26 +254,31 @@ function SignUp() {
               <div>
                 <label>Email</label>
                 <input
-                  type="email"
-                  className="w-full border px-3 py-2 rounded"
-                  placeholder="Email"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                />
+                    type="email"
+                    className="w-full border px-3 py-2 rounded"
+                    placeholder="Email"
+                    value={formData.email}
+                    onChange={(e) => 
+                      setFormData({ ...formData, email: e.target.value })
+                    }
+                  />
               </div>
               <div>
                 <label>Mobile</label>
                 <input
-                  type="tel"
-                  className="w-full border px-3 py-2 rounded"
-                  placeholder="Mobile Number"
-                  value={formData.mobile}
-                  onChange={(e) =>
-                    setFormData({ ...formData, mobile: e.target.value })
-                  }
-                />
+                    type="tel"
+                    className="w-full border px-3 py-2 rounded"
+                    placeholder="Mobile Number"
+                    value={formData.mobile}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Allow only numbers and max 10 digits starting with 6-9
+                      if (/^[6-9]\d{0,9}$/.test(value) || value === '') {
+                        setFormData({ ...formData, mobile: value });
+                      }
+                    }}
+                    maxLength={10}
+                  />
               </div>
               <div>
                 <label>Password</label>
@@ -255,7 +287,7 @@ function SignUp() {
                   className="w-full border px-3 py-2 rounded"
                   placeholder="Password"
                   value={formData.password}
-                  onChange={(e) =>
+                  onChange={(e) => 
                     setFormData({ ...formData, password: e.target.value })
                   }
                 />

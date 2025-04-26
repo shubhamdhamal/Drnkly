@@ -231,6 +231,14 @@ function Login() {
             >
               Create Account
             </button>
+            {/* Alcohol Health Warning Banner */}
+<div className="py-4 px-2 flex justify-center items-center">
+  <img
+    src="../src/pages/photo1.jpeg"
+    alt="Alcohol is Dangerous Warning"
+    className="w-[500px] h-[100px] object-cover"
+  />
+</div>
           </p>
         </div>
       </div>
