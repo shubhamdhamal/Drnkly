@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   kycDocument: { type: String }, // path or URL
   address: { type: String },
+  status: { type: String, enum: ['Pending', 'Verified', 'Rejected'], default: 'Pending' }, // New field for verification status
   createdAt: { type: Date, default: Date.now }
 });
 

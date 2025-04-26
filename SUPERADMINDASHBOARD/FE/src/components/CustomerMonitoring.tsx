@@ -32,12 +32,12 @@ function CustomerMonitoring() {
       try {
         const res = await axios.get('http://localhost:5000/api/customers');
         const formatted = res.data.customers.map((user: any, index: number) => ({
-          id: index + 1,
+          id: user._id,
           name: user.name,
           location: user.address || 'Unknown',
-          coordinates: [18.5204, 73.8567],
+          coordinates: [18.5204, 73.8567], // Placeholder coordinates, update with actual data
           performance: 'Good',
-          status: index % 2 === 0 ? 'Verified' : 'Pending',
+          status: user.status || 'Pending',
         }));
         setCustomers(formatted);
       } catch (err) {
@@ -65,6 +65,30 @@ function CustomerMonitoring() {
         ? { ...customer, performance: newPerformance }
         : customer
     ));
+  };
+
+  const handleAccept = async (customerId: string) => {
+    try {
+      const response = await axios.put(`http://localhost:5000/api/customers/accept/${customerId}`);
+      alert(response.data.message); // Show success message
+      setCustomers(customers.map((customer) =>
+        customer.id === customerId ? { ...customer, status: 'Verified' } : customer
+      ));
+    } catch (error) {
+      console.error('Error accepting verification:', error);
+    }
+  };
+
+  const handleReject = async (customerId: string) => {
+    try {
+      const response = await axios.put(`http://localhost:5000/api/customers/reject/${customerId}`);
+      alert(response.data.message); // Show success message
+      setCustomers(customers.map((customer) =>
+        customer.id === customerId ? { ...customer, status: 'Rejected' } : customer
+      ));
+    } catch (error) {
+      console.error('Error rejecting verification:', error);
+    }
   };
 
   return (
@@ -155,8 +179,20 @@ function CustomerMonitoring() {
                   </span>
                 </td>
                 <td className="p-4 flex gap-2">
-                  <button className="bg-green-100 text-green-700 px-3 py-1 rounded hover:bg-green-200" title="Accept">✓</button>
-                  <button className="bg-red-100 text-red-700 px-3 py-1 rounded hover:bg-red-200" title="Reject">✕</button>
+                  <button
+                    onClick={() => handleAccept(shop.id)}
+                    className="bg-green-100 text-green-700 px-3 py-1 rounded hover:bg-green-200"
+                    title="Accept"
+                  >
+                    ✓
+                  </button>
+                  <button
+                    onClick={() => handleReject(shop.id)}
+                    className="bg-red-100 text-red-700 px-3 py-1 rounded hover:bg-red-200"
+                    title="Reject"
+                  >
+                    ✕
+                  </button>
                   <button
                     onClick={() => handleViewDetails(shop)}
                     className="bg-blue-100 text-blue-700 px-4 py-1 rounded hover:bg-blue-200"
