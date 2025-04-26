@@ -59,10 +59,24 @@ function Dashboard() {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [sparklePosition, setSparklePosition] = useState({ x: 0, y: 0 });
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
+
+  const handleLogout = () => {
+    localStorage.clear(); // ✅ Clear all data including token and user
+    setIsLoggedIn(false);
+    navigate('/login');
+  };
+
+  useEffect(() => {
+    const token = localStorage.getItem('Token');
+    if (token) {
+      setIsLoggedIn(true);
+    }
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -93,18 +107,29 @@ function Dashboard() {
             </div>
 
             <div className="flex items-center space-x-4">
-              <button
-                onClick={() => navigate('/login')}
-                className="text-[#cd6839] font-medium hover:underline"
-              >
-                Login
-              </button>
-              <button
-                onClick={() => navigate('/signup')}
-                className="bg-[#cd6839] text-white px-4 py-2 rounded-full hover:bg-[#b55a31] transition-colors"
-              >
-                Sign Up
-              </button>
+              {isLoggedIn ? (
+                <button
+                  onClick={handleLogout}
+                  className="bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition-colors"
+                >
+                  Logout
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="text-[#cd6839] font-medium hover:underline"
+                  >
+                    Login
+                  </button>
+                  <button
+                    onClick={() => navigate('/signup')}
+                    className="bg-[#cd6839] text-white px-4 py-2 rounded-full hover:bg-[#b55a31] transition-colors"
+                  >
+                    Sign Up
+                  </button>
+                </>
+              )}
               <button
                 onClick={() => navigate('/cart')}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -173,19 +198,19 @@ function Dashboard() {
         </div>
 
         {/* Categories */}
-<div className="mb-8">
-  <h2 className="text-xl font-semibold mb-4">Categories</h2>
-  <div className="grid grid-cols-3 gap-4"> {/* Changed to grid-cols-3 to display 3 items in one row */}
-    {categories.map((category) => (
-      <div key={category.name} onClick={() => navigate('/products')} className="relative overflow-hidden rounded-xl cursor-pointer transform hover:scale-105 transition-transform">
-        <img src={category.image} alt={category.name} className="w-full h-32 object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
-          <span className="text-white font-medium">{category.name}</span>
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold mb-4">Categories</h2>
+          <div className="grid grid-cols-3 gap-4">
+            {categories.map((category) => (
+              <div key={category.name} onClick={() => navigate('/products')} className="relative overflow-hidden rounded-xl cursor-pointer transform hover:scale-105 transition-transform">
+                <img src={category.image} alt={category.name} className="w-full h-32 object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                  <span className="text-white font-medium">{category.name}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-    ))}
-  </div>
-</div>
 
         {/* Stores */}
         <div>
@@ -257,7 +282,7 @@ function Dashboard() {
               <button onClick={() => navigate('/issue-tracking')} className="flex items-center w-full p-3 hover:bg-gray-50 rounded-lg transition-colors">
                 <Sparkles size={20} className="mr-3 text-blue-500" /> Track Issue
               </button>
-              <button onClick={() => navigate('/login')} className="flex items-center w-full p-3 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+              <button onClick={handleLogout} className="flex items-center w-full p-3 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                 <LogOut size={20} className="mr-3" /> Logout
               </button>
             </div>

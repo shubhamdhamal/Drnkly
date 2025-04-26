@@ -1,8 +1,12 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken'); // Import jsonwebtoken
 
 const path = require('path');
 const fs = require('fs');
+
+// Secret key for JWT signing
+const JWT_SECRET = 'your_jwt_secret_key'; // Ideally, store this in an environment variable
 
 exports.signup = async (req, res) => {
   try {
@@ -55,14 +59,16 @@ exports.signup = async (req, res) => {
     // Save user in the database
     await user.save();
 
-    // Send success response
-    res.status(201).json({ message: 'User created successfully!' });
+    // Generate a JWT token after successful user creation
+    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
+
+    // Send success response with JWT token
+    res.status(201).json({ message: 'User created successfully!', token });
 
   } catch (error) {
     res.status(500).json({ message: 'Server error.', error: error.message });
   }
 };
-
 
 exports.login = async (req, res) => {
   const { mobile, password } = req.body;
@@ -84,8 +90,12 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // If login is successful, return a success message (you can also return a JWT token for auth)
-    res.status(200).json({ message: 'Login successful', user });
+    // Generate a JWT token after successful login
+    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
+
+    // Send success response with JWT token
+    res.status(200).json({ message: 'Login successful', token, user });
+
   } catch (error) {
     res.status(500).json({ message: 'Server error.', error: error.message });
   }

@@ -19,34 +19,39 @@ function Login() {
   const [isSkipped, setIsSkipped] = useState(false);
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     // Validation for checkboxes
     if (!hasDrinkingLicense || !agreedToTerms) {
       setError('Please confirm you have a drinking license and agree to the terms.');
       return;
     }
-
+  
     // Validate user input
     if (!mobile || !password) {
       setError('Please enter both mobile number and password');
       return;
     }
-
+  
     // Make the API call to login
     try {
       const response = await axios.post('http://localhost:5000/api/auth/login', { mobile, password });
-
+  
       if (response.data.message === 'Login successful') {
-        // Store user data in localStorage (or manage it via state/store)
+        // Store JWT token in localStorage (instead of storing user data)
+        localStorage.setItem('authToken', response.data.token); // Store the JWT token
+  
+        // Optionally store the user data (for convenience)
         localStorage.setItem('user', JSON.stringify(response.data.user));
         localStorage.setItem('userId', response.data.user._id);
-        // Handle successful login (redirect to the dashboard)
+        
+        // Handle successful login (redirect to the dashboard or show a popup)
         setShowLocationPopup(true);
       }
     } catch (error) {
       setError('Something went wrong');
     }
   };
+  
 
   const handleLocationAccess = () => {
     if ("geolocation" in navigator) {
