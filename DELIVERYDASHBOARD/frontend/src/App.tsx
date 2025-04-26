@@ -607,7 +607,7 @@ const handleItemAction = async (orderId: string, itemId: string, action: 'accept
         </div>
 
         <div>{order.deliveryAddress.fullName}</div>
-        <div>{order.deliveryAddress.city}, {order.deliveryAddress.state}, {order.deliveryAddress.phone}</div>
+        <div>{order.deliveryAddress.street},{order.deliveryAddress.city}, {order.deliveryAddress.pincode},{order.deliveryAddress.state}, {order.deliveryAddress.phone}</div>
 
         {/* Iterate over each item in the order and display its details */}
         <div className="order-items">
