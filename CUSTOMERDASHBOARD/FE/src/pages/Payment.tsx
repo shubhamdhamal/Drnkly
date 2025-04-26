@@ -16,7 +16,9 @@ const Payment = () => {
 
   const deliveryCharges = 100.0;
   const platform = 12.0;
-  const total = orderTotal + deliveryCharges + platform;
+  const gst = 5.00;
+  const gstAmount = (orderTotal * gst) / 100;
+  const total = orderTotal + deliveryCharges +platform + gstAmount;
 
   // 🔁 Fetch vendor QR
   useEffect(() => {
@@ -140,10 +142,14 @@ const Payment = () => {
               <span className="text-gray-600">Platform Fee</span>
               <span className="font-semibold">₹{platform.toFixed(2)}</span>
             </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">GST (5%)</span>
+              <span className="font-semibold">₹{((orderTotal) * 0.05).toFixed(2)}</span>
+            </div>
             <div className="pt-4 border-t">
               <div className="flex justify-between items-center">
                 <span className="text-xl font-semibold">Total</span>
-                <span className="text-xl font-semibold">₹{total.toFixed(2)}</span>
+                <span className="text-xl font-semibold">₹{(orderTotal + 100 + 12 + (orderTotal) * 0.05).toFixed(2)}</span>
               </div>
             </div>
           </div>

@@ -310,12 +310,12 @@ function Checkout() {
               <span>₹{platform.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-gray-600">
-              <span>GST</span>
-              <span>{gst.toFixed(2)}%</span>
+              <span>GST (5%)</span>
+              <span>₹{((orderTotal) * 0.05).toFixed(2)}</span>
             </div>
             <div className="flex justify-between font-semibold text-lg pt-2">
               <span>Total</span>
-              <span>₹{total.toFixed(2)}</span>
+              <span>₹{(orderTotal + 100 + 12 + (orderTotal) * 0.05).toFixed(2)}</span>
             </div>
           </div>
         </div>
