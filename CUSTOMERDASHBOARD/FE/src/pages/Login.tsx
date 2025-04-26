@@ -44,8 +44,12 @@ function Login() {
         localStorage.setItem('user', JSON.stringify(response.data.user));
         localStorage.setItem('userId', response.data.user._id);
         
-        // Handle successful login (redirect to the dashboard or show a popup)
-        setShowLocationPopup(true);
+        // Check if location was already granted before
+  if (localStorage.getItem('locationGranted') === 'true') {
+    navigate('/dashboard');
+  } else {
+    setShowLocationPopup(true); // Ask for location
+  }
       }
     } catch (error) {
       setError('Something went wrong');
@@ -59,16 +63,21 @@ function Login() {
         (position) => {
           const latitude = position.coords.latitude;
           const longitude = position.coords.longitude;
-          // Store the location details in localStorage
+  
+          console.log("Location retrieved:", latitude, longitude); // ✅ Add this line
+  
           localStorage.setItem("userLocation", JSON.stringify({
             latitude,
             longitude,
             timestamp: new Date().toISOString(),
           }));
-          // Display success message
+  
+          localStorage.setItem("locationGranted", "true");
+  
           setLocationError(`Location retrieved: Latitude ${latitude}, Longitude ${longitude}`);
-          // Close the location popup and navigate to the dashboard
           setShowLocationPopup(false);
+  
+          // ✅ Only navigate once location is successfully stored
           navigate('/dashboard');
         },
         (error) => {
@@ -88,6 +97,8 @@ function Login() {
       }, 2000);
     }
   };
+  
+  
 
   const handleSkipLocation = () => {
     setShowLocationPopup(false);

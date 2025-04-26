@@ -67,6 +67,7 @@ function Dashboard() {
 
   const handleLogout = () => {
     localStorage.clear(); // ✅ Clear all data including token and user
+    localStorage.removeItem("locationGranted");
     setIsLoggedIn(false);
     navigate('/login');
   };
