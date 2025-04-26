@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, Search, ShoppingCart, X, User, Settings, LogOut, Wine, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const categories = [
   {
@@ -60,6 +61,8 @@ function Dashboard() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [sparklePosition, setSparklePosition] = useState({ x: 0, y: 0 });
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userName, setUserName] = useState(''); // <-- ADD THIS
+
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -71,13 +74,33 @@ function Dashboard() {
     setIsLoggedIn(false);
     navigate('/login');
   };
-
   useEffect(() => {
-    const token = localStorage.getItem('Token');
-    if (token) {
-      setIsLoggedIn(true);
-    }
+    const fetchUserName = async () => {
+      try {
+        const token = localStorage.getItem('authToken'); // ✅ correct token key
+        const userId = localStorage.getItem('userId');
+  
+        if (token && userId) {
+          setIsLoggedIn(true);
+  
+          const response = await axios.get(`http://localhost:5000/api/users/${userId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`, // ✅ SEND token properly
+            },
+          });
+  
+          const user = response.data;
+          setUserName(user.name);
+        }
+      } catch (error) {
+        console.error('Failed to fetch user info for sidebar', error);
+      }
+    };
+  
+    fetchUserName();
   }, []);
+  
+  
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -265,7 +288,7 @@ function Dashboard() {
                 <User size={24} className="text-gray-600" />
               </div>
               <div className="ml-4">
-                <h3 className="font-medium">John Doe</h3>
+              <h3 className="font-medium">{userName || 'Guest User'}</h3>
                 <p className="text-sm text-gray-600">View Profile</p>
               </div>
             </div>
