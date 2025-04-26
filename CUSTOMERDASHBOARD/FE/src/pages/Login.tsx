@@ -37,24 +37,46 @@ function Login() {
       const response = await axios.post('http://localhost:5000/api/auth/login', { mobile, password });
   
       if (response.data.message === 'Login successful') {
-        // Store JWT token in localStorage (instead of storing user data)
-        localStorage.setItem('authToken', response.data.token); // Store the JWT token
+        // ✅ Status Check
+        const status = response.data.user.status;
   
-        // Optionally store the user data (for convenience)
+        if (status === 'Pending') {
+          setError('🕒 Your account is pending verification. Please wait for admin approval.');
+          return;
+        } else if (status === 'Rejected') {
+          setError('❌ Your account has been rejected due to government rules.');
+          return;
+        }
+  
+        // Store JWT token
+        localStorage.setItem('authToken', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
         localStorage.setItem('userId', response.data.user._id);
-        
-        // Check if location was already granted before
-  if (localStorage.getItem('locationGranted') === 'true') {
-    navigate('/dashboard');
-  } else {
-    setShowLocationPopup(true); // Ask for location
-  }
+  
+        // ✅ Location check
+        if (localStorage.getItem('locationGranted') === 'true') {
+          navigate('/dashboard');
+        } else {
+          setShowLocationPopup(true);
+        }
       }
     } catch (error) {
-      setError('Something went wrong');
+      const msg = (error as any).response?.data?.message;
+  
+      if (msg === 'User not found') {
+        setError('No account found with this mobile number.');
+      } else if (msg === 'Invalid credentials') {
+        setError('Incorrect mobile number or password.');
+      } else if (msg === 'Your account is pending verification. Please wait for approval.') {
+        setError('🕒 Your account is pending verification. Please wait for admin approval.');
+      } else if (msg === 'Your account has been rejected due to government regulations.') {
+        setError('❌ Your account has been rejected due to government rules.');
+      } else {
+        setError('Something went wrong. Please try again.');
+      }
     }
   };
+  
   
 
   const handleLocationAccess = () => {

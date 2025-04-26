@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema({
   aadhaar: { type: String, required: true },
   idProof: { type: String }, // Path to the ID proof file
   selfDeclaration: { type: Boolean, required: true },
+  status: { type: String, enum: ['Pending', 'Verified', 'Rejected'], default: 'Pending' }, // New field for verification status
   createdAt: { type: Date, default: Date.now }
 });
 

@@ -84,19 +84,27 @@ exports.login = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    // ✅ CHECK STATUS before password
+    if (user.status === 'Pending') {
+      return res.status(403).json({ message: 'Your account is pending verification. Please wait for approval.' });
+    }
+
+    if (user.status === 'Rejected') {
+      return res.status(403).json({ message: 'Your account has been rejected due to government regulations.' });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // Generate a JWT token after successful login
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
 
-    // Send success response with JWT token
-    res.status(200).json({ message: 'Login successful', token, user });
+    return res.status(200).json({ message: 'Login successful', token, user });
 
   } catch (error) {
     res.status(500).json({ message: 'Server error.', error: error.message });
   }
 };
+
