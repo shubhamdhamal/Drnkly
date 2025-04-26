@@ -9,26 +9,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 
-// CSS for floating chat icon
-const styles = {
-  chatIcon: {
-    width: '60px',
-    height: '60px',
-    backgroundColor: '#007bff',
-    borderRadius: '50%',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    color: 'white',
-    fontSize: '24px',
-    fontWeight: 'bold',
-    position: 'fixed',
-    bottom: '20px',
-    right: '20px',
-    cursor: 'pointer',
-    zIndex: 1000, // Ensures the chat button is above other elements
-  } as React.CSSProperties,
-};
+
 
 interface NavigationProps {
   isChatOpen: boolean;
@@ -179,10 +160,13 @@ const Navigation: React.FC<NavigationProps> = ({ isChatOpen, setIsChatOpen }) =>
         </div>
       </nav>
 
-      {/* Chat Button (Floating on the right side) */}
-      <div style={styles.chatIcon} onClick={() => handleNavClick('chat')}>
-        💬
-      </div>
+{/* Chat Button (Floating on the right side) */}
+<div 
+          className="fixed right-4 bottom-32 w-[50px] h-[50px] bg-blue-500 rounded-full flex items-center justify-center text-white text-3xl font-bold z-50 sm:bottom-6 sm:w-[50px] sm:h-[50px] sm:text-2xl"
+          onClick={() => handleNavClick('chat')}
+        >
+          💬
+        </div>
 
       {/* Chat Bot */}
       {isChatOpen && (

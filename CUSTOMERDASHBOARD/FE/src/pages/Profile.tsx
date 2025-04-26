@@ -269,7 +269,7 @@ const Profile = () => {
             <div className="flex items-center space-x-8">
             <div 
   className="flex items-center cursor-pointer"
-  onClick={() => navigate('/')}
+  onClick={() => navigate('/dashboard')}
 >
   <Wine className="h-8 w-8 text-red-600 mr-2" />
   <h1 className="text-3xl font-bold text-red-600">LIQUOR SHOP</h1>
