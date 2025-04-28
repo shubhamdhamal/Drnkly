@@ -62,6 +62,8 @@ function Dashboard() {
   const [sparklePosition, setSparklePosition] = useState({ x: 0, y: 0 });
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState(''); // <-- ADD THIS
+  const [searchQuery, setSearchQuery] = useState(''); // Store the search query
+
 
 
   const toggleMenu = () => {
@@ -111,7 +113,16 @@ function Dashboard() {
     }, 2000);
     return () => clearInterval(interval);
   }, []);
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value); // Update the search query
+  };
 
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/products?search=${searchQuery}`); // Redirect with search query
+    }
+  };
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -163,14 +174,19 @@ function Dashboard() {
             </div>
           </div>
 
-          <div className="mt-4 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-            <input
-              type="text"
-              placeholder="Search for drinks..."
-              className="w-full pl-10 pr-4 py-3 bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
-            />
-          </div>
+           {/* Search Bar */}
+           <form onSubmit={handleSearchSubmit}>
+            <div className="mt-4 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <input
+                type="text"
+                placeholder="Search for drinks..."
+                value={searchQuery}
+                onChange={handleSearchChange} // Update search query on change
+                className="w-full pl-10 pr-4 py-3 bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
+              />
+            </div>
+          </form>
         </div>
       </div>
 

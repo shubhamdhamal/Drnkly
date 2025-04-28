@@ -17,6 +17,16 @@ function Login() {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const [isSkipped, setIsSkipped] = useState(false);
+  
+  // Handle mobile number change and restrict to 10 digits
+  const handleMobileChange = (e) => {
+    const value = e.target.value;
+
+    // Allow only numbers and restrict the length to 10 digits
+    if (/^\d{0,10}$/.test(value)) {
+      setMobile(value);
+    }
+  };
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
   
@@ -31,6 +41,8 @@ function Login() {
       setError('Please enter both mobile number and password');
       return;
     }
+
+
   
     // Make the API call to login
     try {

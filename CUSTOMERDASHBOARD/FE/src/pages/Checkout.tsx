@@ -17,7 +17,8 @@ function Checkout() {
     state: '',
     pincode: ''
   });
-
+  const [phoneError, setPhoneError] = useState('');
+  const [formError, setFormError] = useState('');
   const userId = localStorage.getItem('userId');
 
   // 🛒 Fetch Cart Items from Backend
@@ -50,8 +51,18 @@ function Checkout() {
   
     const userId = localStorage.getItem('userId');
     if (!userId) return alert("User not logged in");
-  
-  
+
+    // Ensure all address fields are filled
+    if (!address.fullName || !address.phone || !address.street || !address.city || !address.state || !address.pincode) {
+      return alert("Please fill in all the fields.");
+    }
+     // Ensure phone number is exactly 10 digits long
+     if (address.phone.length !== 10) {
+      setPhoneError("Phone number must be exactly 10 digits.");
+      return;
+    } else {
+      setPhoneError('');
+    }
     const allowedPincodes = [
       '411004', '411040', '410506', '410509', '413132', '411032', '411035', '412411', '412205', '412201', 
       '412105', '412211', '412411', '412206', '410507', '411042', '412206', '410401', '411046', '412206', 
@@ -218,12 +229,23 @@ function Checkout() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
                 <input
-                  type="tel"
-                  value={address.phone}
-                  onChange={(e) => setAddress({ ...address, phone: e.target.value })}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
+                    type="tel"
+                    value={address.phone}
+                    onChange={(e) => {
+                      const phone = e.target.value;
+                      // Update phone and check if it's valid
+                      if (phone.length <= 10) {
+                        setAddress({ ...address, phone });
+                      }
+                    }}
+                    className={`w-full px-4 py-3 rounded-lg border ${address.phone.length !== 10 ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    required
+                    maxLength={10}
+                    placeholder="Enter 10-digit phone number"
+                  />
+                    {address.phone.length !== 10 && address.phone.length > 0 && (
+                    <p className="text-red-500 text-sm">Phone number must be exactly 10 digits.</p>
+                  )}
               </div>
             </div>
 
