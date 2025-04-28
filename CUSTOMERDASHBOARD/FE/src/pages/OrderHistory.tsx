@@ -143,7 +143,7 @@ const OrderHistory: React.FC = () => {
 
                 <div className="p-4 bg-yellow-100 rounded-lg mt-6">
                   <p className="text-lg font-semibold text-gray-800">Estimated Delivery Time:</p>
-                  <p className="text-gray-700">Your order is expected to be delivered within 30-40 minutes. Please check the tracking timeline for updates.</p>
+                  <p className="text-gray-700">Your order is expected to be delivered within 45 minutes. Please check the tracking timeline for updates.</p>
                 </div>
               </div>
             )}

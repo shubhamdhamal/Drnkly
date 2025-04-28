@@ -29,6 +29,8 @@ function SignUp() {
 
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState('');
+  
+  const [errorMessage, setErrorMessage] = useState('');
 
   const allowedAlcoholStates: Record<string, string[]> = {
     'Maharashtra': ['Mumbai', 'Pune', 'Nagpur'],
@@ -54,13 +56,32 @@ function SignUp() {
     'Jammu & Kashmir': ['Srinagar', 'Jammu'],
     'Ladakh': ['Leh', 'Kargil'],
   };
-
+   // Aadhaar number validation
+   const handleAadhaarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (/^\d{0,12}$/.test(value)) {
+      setExtraData({ ...extraData, aadhaar: value });
+      setErrorMessage('');
+    }
+  };
+  const handleAadhaarBlur = () => {
+    if (extraData.aadhaar.length !== 12) {
+      setErrorMessage('Aadhaar number should be exactly 12 digits.');
+    } else {
+      setErrorMessage('');
+    }
+  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Check if the user agreed to the terms and conditions
     if (!agreed) {
       setError('Please agree to the terms and conditions');
+      return;
+    }
+    // Check if the user agreed to the terms and conditions
+    if (!extraData.aadhaar || extraData.aadhaar.length !== 12) {
+      setError('Please enter a valid 12-digit Aadhaar number');
       return;
     }
 
@@ -157,50 +178,24 @@ function SignUp() {
                   type="date"
                   className="w-full border px-3 py-2 rounded"
                   value={extraData.dob}
-                  onChange={(e) => {
-                    const dob = e.target.value;
-                    const today = new Date();
-                    const birthDate = new Date(dob);
-                    let age = today.getFullYear() - birthDate.getFullYear();
-                    const m = today.getMonth() - birthDate.getMonth();
-                    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-                      age--;
-                    }
-
-                    if (age >= 25) {
-                      setExtraData(prev => ({
-                        ...prev,
-                        dob: dob
-                      }));
-                    } else {
-                      alert('Your age is less than 25. You are not allowed to register.');
-                      setExtraData(prev => ({
-                        ...prev,
-                        dob: '',
-                        aadhaar: '',
-                        idProof: null,
-                        selfDeclaration: false
-                      }));
-                    }
-                  }}
+                  onChange={(e) =>
+                    setExtraData({ ...extraData, dob: e.target.value })
+                  }
                 />
               </div>
               <div>
-                <label>Aadhaar Number</label>
-                <input
-            type="text"
-            className="w-full border px-3 py-2 rounded"
-            placeholder="Enter Aadhaar"
-            value={extraData.aadhaar}
-            onChange={(e) => {
-              const value = e.target.value;
-              if (/^\d{0,12}$/.test(value)) {
-                setExtraData({ ...extraData, aadhaar: value });
-              }
-            }}
-            maxLength={12}
-          />
-              </div>
+            <label>Aadhaar Number</label>
+            <input
+              type="text"
+              className="w-full border px-3 py-2 rounded"
+              placeholder="Enter Aadhaar"
+              value={extraData.aadhaar}
+              onChange={handleAadhaarChange}
+              maxLength={12}
+              onBlur={handleAadhaarBlur}
+            />
+            {errorMessage && <p className="text-red-500">{errorMessage}</p>} {/* Display error message */}
+          </div>
             </>
           )}
 
@@ -254,31 +249,26 @@ function SignUp() {
               <div>
                 <label>Email</label>
                 <input
-                    type="email"
-                    className="w-full border px-3 py-2 rounded"
-                    placeholder="Email"
-                    value={formData.email}
-                    onChange={(e) => 
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                  />
+                  type="email"
+                  className="w-full border px-3 py-2 rounded"
+                  placeholder="Email"
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                />
               </div>
               <div>
                 <label>Mobile</label>
                 <input
-                    type="tel"
-                    className="w-full border px-3 py-2 rounded"
-                    placeholder="Mobile Number"
-                    value={formData.mobile}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      // Allow only numbers and max 10 digits starting with 6-9
-                      if (/^[6-9]\d{0,9}$/.test(value) || value === '') {
-                        setFormData({ ...formData, mobile: value });
-                      }
-                    }}
-                    maxLength={10}
-                  />
+                  type="tel"
+                  className="w-full border px-3 py-2 rounded"
+                  placeholder="Mobile Number"
+                  value={formData.mobile}
+                  onChange={(e) =>
+                    setFormData({ ...formData, mobile: e.target.value })
+                  }
+                />
               </div>
               <div>
                 <label>Password</label>
@@ -287,7 +277,7 @@ function SignUp() {
                   className="w-full border px-3 py-2 rounded"
                   placeholder="Password"
                   value={formData.password}
-                  onChange={(e) => 
+                  onChange={(e) =>
                     setFormData({ ...formData, password: e.target.value })
                   }
                 />
