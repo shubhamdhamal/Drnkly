@@ -364,21 +364,29 @@ function Login() {
       {/* Health Message */}
       <div className="text-center">
         <p className="text-lg text-red-600 font-semibold">
-          🚭 तुमच्या कुटुंबासाठी मद्यपान आणि धूम्रपान सोडा – आरोग्य हाच खरा धन आहे ❤️🍀
+          🚭 तुमच्या कुटुंबासाठी मद्यपान आणि धूम्रपान सोडा – आरोग्य हाच खरा धन आहे 
         </p>
       </div>
 
       {/* Actions */}
       <div className="text-center mt-4">
-        <button
-          onClick={() => {
+      <button
+        onClick={() => {
+          if (isTermsChecked) {  // ✅ Only proceed if checkbox is checked
             setAgreedToTerms(true);
             setShowTermsPopup(false);
-          }}
-          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded mr-2"
-        >
-          AGREE AND CONTINUE
-        </button>
+          }
+        }}
+        disabled={!isTermsChecked} // ✅ Disable button if not checked
+        className={`px-6 py-2 rounded mr-2 ${
+          isTermsChecked
+            ? "bg-green-600 hover:bg-green-700 text-white"
+            : "bg-gray-400 text-white cursor-not-allowed"
+        }`}
+      >
+        AGREE AND CONTINUE
+      </button>
+
         <button
           onClick={() => setShowTermsPopup(false)}
           className="bg-gray-300 hover:bg-gray-400 text-black px-6 py-2 rounded"

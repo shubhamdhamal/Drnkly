@@ -153,33 +153,42 @@ const Profile = () => {
 
   const handleUserInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setUserInfo(prev => ({
+  
+    // For phone, validate only digits and length <= 10
+    if (name === 'phone') {
+      if (!/^\d{0,10}$/.test(value)) return;
+    }
+  
+    setUserInfo((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
-
+  
   const handleEditProfile = () => {
-    if (isEditing) {
-      // When saving the changes, call the function to handle saving
-      handleSaveChanges();
-    }
-    setIsEditing(!isEditing); // Toggle edit mode
+    setIsEditing(false); // only sets editing mode true
   };
-
+  
   const handleSaveChanges = async () => {
+    if (userInfo.phone.length !== 10) {
+      alert('Mobile number must be exactly 10 digits.');
+      return;
+    }
+  
     try {
-      const userId = localStorage.getItem('userId'); // Retrieve userId from localStorage
+      const userId = localStorage.getItem('userId');
       const response = await axios.put(
-        `http://localhost:5000/api/users/profile/${userId}`, // Replace with the actual URL
-        userInfo // Send the updated user data
+        `http://localhost:5000/api/users/profile/${userId}`,
+        userInfo
       );
-      setUserInfo(response.data); // Set updated data from response
-      setIsEditing(false); // Exit edit mode after saving
+      setUserInfo(response.data);
+      setIsEditing(false); // Save successful, now exit editing mode
     } catch (error) {
       console.error('Failed to update profile', error);
     }
   };
+  
+  
 
   const generateAIResponse = (input: string): string => {
     const lowerInput = input.toLowerCase();
@@ -305,21 +314,7 @@ const Profile = () => {
                 )}
               </div>
             </div>
-            
-            <div className="flex-1 max-w-2xl mx-8">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                  <Search className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={handleSearch}
-                  placeholder="Search for products..."
-                  className="block w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                />
-              </div>
-            </div>
+         
             
             <div className="flex items-center space-x-6">
               <button 
@@ -373,6 +368,12 @@ const Profile = () => {
                 className="block w-full rounded border-gray-300 px-3 py-2"
                 placeholder="Phone"
               />
+              {/* 🛠️ Add this validation immediately below the phone input */}
+                  {userInfo.phone && userInfo.phone.length !== 10 && (
+                    <p className="text-red-500 text-sm mt-1">
+                      Mobile number must be exactly 10 digits.
+                    </p>
+                  )}
             </div>
           ) : (
             <div>
@@ -382,7 +383,13 @@ const Profile = () => {
           )}
         </div>
         <button
-          onClick={handleEditProfile}
+          onClick={() => {
+            if (isEditing) {
+              handleSaveChanges(); // Only save if already editing
+            } else {
+              setIsEditing(true);  // Else, start editing
+            }
+          }}
           className="flex items-center text-gray-600 hover:text-red-600 transition-colors"
         >
           {isEditing ? (
@@ -394,6 +401,8 @@ const Profile = () => {
             </>
           )}
         </button>
+
+
       </div>
     );
   
@@ -678,11 +687,10 @@ const Profile = () => {
                 label="Addresses" 
                 onClick={() => setActiveTab('addresses')}
               />
-              <MenuItem 
+               <MenuItem 
                 icon={<User className="w-5 h-5 text-gray-700" />} 
                 label="Profile" 
                 onClick={() => setActiveTab('profile')}
-                active={activeTab === 'profile'}
               />
             </div>
             
