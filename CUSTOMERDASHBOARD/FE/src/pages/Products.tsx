@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wine, Search, ShoppingCart, ChevronDown, ArrowLeft } from 'lucide-react';
+import { Wine, Search, ShoppingCart, ChevronDown } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-
 
 function Products() {
   const navigate = useNavigate();
@@ -28,7 +27,6 @@ function Products() {
   const [showPriceFilter, setShowPriceFilter] = useState(false);
   const [showBrandFilter, setShowBrandFilter] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-
 
   // ✅ Fetch products and categories on component mount
   useEffect(() => {
@@ -76,13 +74,6 @@ function Products() {
       console.error('Cart Error:', error);
     }
   };
-  
-  
-  
-  
-  
-
-
 
   const getPriceRanges = () => [
     { label: 'All Prices', value: 'all' },
@@ -101,86 +92,60 @@ function Products() {
     return ['all', ...Array.from(brands)];
   };
 
-const filterProducts = () => {
-  let filtered = [...products];
+  const filterProducts = () => {
+    let filtered = [...products];
 
-  if (selectedCategory !== 'all') {
-    filtered = filtered.filter(product =>
-      product.category.toLowerCase() === selectedCategory.toLowerCase()
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(product =>
+        product.category.toLowerCase() === selectedCategory.toLowerCase()
+      );
+    }
+
+    if (selectedBrand !== 'all') {
+      filtered = filtered.filter(product => product.brand === selectedBrand);
+    }
+
+    if (priceRange !== 'all') {
+      const [min, max] = priceRange.split('-').map(Number);
+      filtered = filtered.filter(product => {
+        if (max) return product.price >= min && product.price <= max;
+        return product.price >= min;
+      });
+    }
+
+    if (searchQuery.trim()) {
+      const lowerQuery = searchQuery.toLowerCase();
+      filtered = filtered.filter(product =>
+        product.name.toLowerCase().includes(lowerQuery) ||
+        product.brand.toLowerCase().includes(lowerQuery)
+      );
+    }
+
+    filtered.sort((a, b) =>
+      sortOrder === 'asc' ? a.price - b.price : b.price - a.price
     );
-  }
 
-  if (selectedBrand !== 'all') {
-    filtered = filtered.filter(product => product.brand === selectedBrand);
-  }
-
-  if (priceRange !== 'all') {
-    const [min, max] = priceRange.split('-').map(Number);
-    filtered = filtered.filter(product => {
-      if (max) return product.price >= min && product.price <= max;
-      return product.price >= min;
-    });
-  }
-
-  if (searchQuery.trim()) {
-    const lowerQuery = searchQuery.toLowerCase();
-    filtered = filtered.filter(product =>
-      product.name.toLowerCase().includes(lowerQuery) ||
-      product.brand.toLowerCase().includes(lowerQuery)
-    );
-  }
-
-  filtered.sort((a, b) =>
-    sortOrder === 'asc' ? a.price - b.price : b.price - a.price
-  );
-
-  return filtered;
-};
-
-  
+    return filtered;
+  };
 
   return (
     <div className="container">
-   {/* Top Navbar */}
-<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 0' }}>
-  {/* Back Button */}
-  <button
-    onClick={() => navigate(-1)} // Go back to previous page
-    style={{
-      background: 'none',
-      border: 'none',
-      cursor: 'pointer',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '6px',
-      fontSize: '16px',
-      color: '#cd6839',
-      fontWeight: 'bold'
-    }}
-  >
-    <ArrowLeft size={20} />
-    Back
-  </button>
-
-  {/* Logo */}
-  <h1 style={{ margin: '0', textAlign: 'center', flexGrow: 1 }}>Logo</h1>
-
-  {/* Cart Icon */}
-  <ShoppingCart onClick={() => navigate('/cart')} style={{ cursor: 'pointer' }} />
-</div>
-
-
+      {/* Top Navbar */}
+      <div style={{ display: 'flex', alignItems: 'center', padding: '20px 0' }}>
+        <h1 style={{ margin: '0 auto' }}>Logo</h1>
+        <ShoppingCart onClick={() => navigate('/cart')} style={{ cursor: 'pointer' }} />
+      </div>
 
       {/* Search Bar */}
       <div className="mt-4 relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
         <input
-  type="text"
-  placeholder="Search for drinks..."
-  value={searchQuery}
-  onChange={(e) => setSearchQuery(e.target.value)}
-  className="w-full pl-10 pr-4 py-3 bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
-/>
+          type="text"
+          placeholder="Search for drinks..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full pl-10 pr-4 py-3 bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
+        />
       </div>
 
       {/* Categories from Backend */}
@@ -357,7 +322,7 @@ const filterProducts = () => {
             style={{ background: 'white', borderRadius: '12px', padding: '10px', textAlign: 'center' }}
           >
             <img
-              src={product.image}
+              src={`http://localhost:5000${product.image}`}
               alt={product.name}
               style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px' }}
             />
