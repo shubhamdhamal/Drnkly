@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wine, ArrowRight, AlertCircle,Eye,EyeOff } from 'lucide-react';
+import { Wine, ArrowRight, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 
 function SignUp() {
@@ -9,9 +9,7 @@ function SignUp() {
   const [showInfo, setShowInfo] = useState(false); // This controls the visibility of the info modal
   const [showTermsModal, setShowTermsModal] = useState(false); // Modal for Terms & Conditions
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -58,14 +56,6 @@ function SignUp() {
     'Jammu & Kashmir': ['Srinagar', 'Jammu'],
     'Ladakh': ['Leh', 'Kargil'],
   };
-  const togglePassword = () => {
-    setShowPassword(!showPassword);
-  };
-  
-  const toggleConfirmPassword = () => {
-    setShowConfirmPassword(!showConfirmPassword);
-  };
-  
    // Aadhaar number validation
    const handleAadhaarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -227,9 +217,32 @@ const validateNameWithoutSpace = (name: string) => {
                   type="date"
                   className="w-full border px-3 py-2 rounded"
                   value={extraData.dob}
-                  onChange={(e) =>
-                    setExtraData({ ...extraData, dob: e.target.value })
-                  }
+                  onChange={(e) => {
+                    const dob = e.target.value;
+                    const today = new Date();
+                    const birthDate = new Date(dob);
+                    let age = today.getFullYear() - birthDate.getFullYear();
+                    const m = today.getMonth() - birthDate.getMonth();
+                    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                      age--;
+                    }
+
+                    if (age >= 25) {
+                      setExtraData(prev => ({
+                        ...prev,
+                        dob: dob
+                      }));
+                    } else {
+                      alert('Your age is less than 25. You are not allowed to register.');
+                      setExtraData(prev => ({
+                        ...prev,
+                        dob: '',
+                        aadhaar: '',
+                        idProof: null,
+                        selfDeclaration: false
+                      }));
+                    }
+                  }}
                 />
               </div>
               <div>
@@ -325,49 +338,31 @@ const validateNameWithoutSpace = (name: string) => {
               </div>
               <div>
                 <label>Password</label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    className="w-full border px-3 py-2 rounded"
-                    placeholder="Password"
-                    value={formData.password}
-                    onChange={(e) =>
-                      setFormData({ ...formData, password: e.target.value })
-                    }
-                  />
-                  <span
-                    onClick={togglePassword}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer"
-                  >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                  </span>
-                </div>
+                <input
+                  type="password"
+                  className="w-full border px-3 py-2 rounded"
+                  placeholder="Password"
+                  value={formData.password}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
+                />
               </div>
-
               <div>
-                          <label>Confirm Password</label>
-                          <div className="relative">
-                            <input
-                              type={showConfirmPassword ? 'text' : 'password'}
-                              className="w-full border px-3 py-2 rounded"
-                              placeholder="Confirm Password"
-                              value={formData.confirmPassword}
-                              onChange={(e) =>
-                                setFormData({
-                                  ...formData,
-                                  confirmPassword: e.target.value,
-                                })
-                              }
-                            />
-                            <span
-                              onClick={toggleConfirmPassword}
-                              className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer"
-                            >
-                              {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                            </span>
-                          </div>
-                        </div>
-
+                <label>Confirm Password</label>
+                <input
+                  type="password"
+                  className="w-full border px-3 py-2 rounded"
+                  placeholder="Confirm Password"
+                  value={formData.confirmPassword}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      confirmPassword: e.target.value,
+                    })
+                  }
+                />
+              </div>
 
               {/* Terms Modal Trigger */}
               <div className="mt-2">
