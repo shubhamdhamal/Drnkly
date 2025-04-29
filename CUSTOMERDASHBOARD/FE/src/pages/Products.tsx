@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wine, Search, ShoppingCart, ChevronDown } from 'lucide-react';
+import { Wine, Search, ShoppingCart, ChevronDown, ArrowLeft } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -136,11 +136,35 @@ const filterProducts = () => {
 
   return (
     <div className="container">
-      {/* Top Navbar */}
-      <div style={{ display: 'flex', alignItems: 'center', padding: '20px 0' }}>
-        <h1 style={{ margin: '0 auto' }}>Logo</h1>
-        <ShoppingCart onClick={() => navigate('/cart')} style={{ cursor: 'pointer' }} />
-      </div>
+   {/* Top Navbar */}
+<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 0' }}>
+  {/* Back Button */}
+  <button
+    onClick={() => navigate(-1)} // Go back to previous page
+    style={{
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '6px',
+      fontSize: '16px',
+      color: '#cd6839',
+      fontWeight: 'bold'
+    }}
+  >
+    <ArrowLeft size={20} />
+    Back
+  </button>
+
+  {/* Logo */}
+  <h1 style={{ margin: '0', textAlign: 'center', flexGrow: 1 }}>Logo</h1>
+
+  {/* Cart Icon */}
+  <ShoppingCart onClick={() => navigate('/cart')} style={{ cursor: 'pointer' }} />
+</div>
+
+
 
       {/* Search Bar */}
       <div className="mt-4 relative">

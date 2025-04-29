@@ -126,7 +126,7 @@ const Profile = () => {
   ];
 
   const handleAddBalance = () => {
-    setBalance(prevBalance => prevBalance + 100);
+    
   };
   
   const handleRateOrder = () => {
@@ -134,7 +134,12 @@ const Profile = () => {
   };
   
   const handleLogout = () => {
-    alert('Logout system will be implemented here');
+    // Clear any stored user info (optional but recommended)
+    localStorage.removeItem('userId');
+    localStorage.removeItem('authToken');  // if you're using tokens
+    
+    // Navigate to Login page
+    navigate('/login');
   };
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -393,36 +398,23 @@ const Profile = () => {
     );
   
   };
-
   const BalanceSection = () => {
     return (
       <div className="p-6 border-b border-gray-200">
-        <button 
-          onClick={() => setActiveTab('wallet')}
-          className="w-full"
-        >
-          <div className="flex items-center justify-between py-4 px-6 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-red-100 rounded-md flex items-center justify-center">
-                <CreditCard className="h-6 w-6 text-red-600" />
-              </div>
-              <span className="ml-4 text-lg font-medium">Liquor Shop Wallet</span>
+        <div className="flex items-center justify-between py-4 px-6 bg-red-50 rounded-lg">
+          <div className="flex items-center">
+            <div className="w-10 h-10 bg-red-100 rounded-md flex items-center justify-center">
+              <CreditCard className="h-6 w-6 text-red-600" />
             </div>
-            <ChevronRight className="h-6 w-6 text-gray-400" />
+            <span className="ml-4 text-lg font-medium">Liquor Shop Wallet</span>
           </div>
-        </button>
-        
-        <div className="mt-6 flex items-center justify-between px-6">
-          <div>
-            <p className="text-gray-500 text-lg">Available Balance:</p>
-            <p className="text-2xl font-semibold mt-1">₹{balance}</p>
-          </div>
-          <button
-            onClick={handleAddBalance}
-            className="bg-black text-white px-8 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors"
-          >
-            Add Balance
-          </button>
+          <ChevronRight className="h-6 w-6 text-gray-400" />
+        </div>
+  
+        {/* Available Balance Display */}
+        <div className="mt-6 px-6">
+          <p className="text-gray-500 text-lg">Available Balance:</p>
+          <p className="text-2xl font-semibold mt-1">₹{balance}</p>
         </div>
       </div>
     );

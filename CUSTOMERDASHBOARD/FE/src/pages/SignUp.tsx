@@ -64,6 +64,20 @@ function SignUp() {
       setErrorMessage('');
     }
   };
+  // Without space
+const validateNameWithoutSpace = (name: string) => {
+  return /^[A-Za-z]{2,}$/.test(name.trim());
+};
+  
+  
+  const validateMobile = (mobile: string) => {
+    return /^\d{10}$/.test(mobile);
+  };
+  
+  const validateEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+  
   const handleAadhaarBlur = () => {
     if (extraData.aadhaar.length !== 12) {
       setErrorMessage('Aadhaar number should be exactly 12 digits.');
@@ -82,6 +96,31 @@ function SignUp() {
     // Check if the user agreed to the terms and conditions
     if (!extraData.aadhaar || extraData.aadhaar.length !== 12) {
       setError('Please enter a valid 12-digit Aadhaar number');
+      return;
+    }
+    if (!formData.name || !validateName(formData.name)) {
+      setError('Please enter your first name and last name together without space (e.g., JohnDoe).');
+      return;
+    }
+    
+  
+    if (!formData.email || !validateEmail(formData.email)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+  
+    if (!formData.mobile || !validateMobile(formData.mobile)) {
+      setError('Please enter a valid 10-digit mobile number.');
+      return;
+    }
+  
+    if (!formData.password || !formData.confirmPassword) {
+      setError('Please fill both password fields.');
+      return;
+    }
+  
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match.');
       return;
     }
 
@@ -178,9 +217,32 @@ function SignUp() {
                   type="date"
                   className="w-full border px-3 py-2 rounded"
                   value={extraData.dob}
-                  onChange={(e) =>
-                    setExtraData({ ...extraData, dob: e.target.value })
-                  }
+                  onChange={(e) => {
+                    const dob = e.target.value;
+                    const today = new Date();
+                    const birthDate = new Date(dob);
+                    let age = today.getFullYear() - birthDate.getFullYear();
+                    const m = today.getMonth() - birthDate.getMonth();
+                    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                      age--;
+                    }
+
+                    if (age >= 25) {
+                      setExtraData(prev => ({
+                        ...prev,
+                        dob: dob
+                      }));
+                    } else {
+                      alert('Your age is less than 25. You are not allowed to register.');
+                      setExtraData(prev => ({
+                        ...prev,
+                        dob: '',
+                        aadhaar: '',
+                        idProof: null,
+                        selfDeclaration: false
+                      }));
+                    }
+                  }}
                 />
               </div>
               <div>
@@ -261,14 +323,18 @@ function SignUp() {
               <div>
                 <label>Mobile</label>
                 <input
-                  type="tel"
-                  className="w-full border px-3 py-2 rounded"
-                  placeholder="Mobile Number"
-                  value={formData.mobile}
-                  onChange={(e) =>
-                    setFormData({ ...formData, mobile: e.target.value })
-                  }
-                />
+                      type="tel"
+                      className="w-full border px-3 py-2 rounded"
+                      placeholder="Mobile Number"
+                      value={formData.mobile}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (/^\d{0,10}$/.test(value)) {  // Allow typing only 0-10 digits
+                          setFormData({ ...formData, mobile: value });
+                        }
+                      }}
+                    />
+
               </div>
               <div>
                 <label>Password</label>
@@ -337,14 +403,37 @@ function SignUp() {
               </button>
             )}
             {step < 4 ? (
-              <button
-                type="button"
-                onClick={() => setStep(step + 1)}
-                className="ml-auto px-4 py-2 bg-orange-500 text-white rounded flex items-center space-x-1"
-              >
-                <span>Continue</span>
-                <ArrowRight size={18} />
-              </button>
+           <button
+           type="button"
+           onClick={() => {
+             if (step === 1) {
+               if (!extraData.state || !extraData.city) {
+                 setError('Please select both State and City to continue.');
+                 return;
+               }
+             }
+             if (step === 2) {
+               if (!extraData.dob || extraData.aadhaar.length !== 12) {
+                 setError('Please enter valid Date of Birth and 12-digit Aadhaar number.');
+                 return;
+               }
+             }
+             if (step === 3) {
+               if (!extraData.idProof || !extraData.selfDeclaration) {
+                 setError('Please upload ID proof and declare the information.');
+                 return;
+               }
+             }
+             // If no validation errors, move to next step
+             setError('');
+             setStep(step + 1);
+           }}
+           className="ml-auto px-4 py-2 bg-orange-500 text-white rounded flex items-center space-x-1"
+         >
+           <span>Continue</span>
+           <ArrowRight size={18} />
+         </button>
+         
             ) : (
               <button
                 type="submit"

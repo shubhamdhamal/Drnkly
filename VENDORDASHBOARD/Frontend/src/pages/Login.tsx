@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogIn, Store } from 'lucide-react';
+import { LogIn, Store, Eye, EyeOff } from 'lucide-react';
 import Input from '../components/Input';
 import Button from '../components/Button';
 import axios from 'axios';
@@ -12,6 +12,7 @@ const Login: React.FC = () => {
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [rememberMe, setRememberMe] = React.useState(false);
+  const [showPassword, setShowPassword] = React.useState(false); // New state to toggle password visibility
 
   // Check if already logged in
   React.useEffect(() => {
@@ -21,47 +22,60 @@ const Login: React.FC = () => {
     }
   }, [navigate]);
 
+  const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Allow only numbers and restrict the length to 10 digits
+    if (/^\d{0,10}$/.test(value)) {
+      setEmailOrPhone(value);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null); // Reset any previous error
-    
+
+    // Mobile number validation
+    if (emailOrPhone.length !== 10 || !/^\d{10}$/.test(emailOrPhone)) {
+      setError('Mobile number must be exactly 10 digits.');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const response = await axios.post('http://localhost:5000/api/vendor/login', {
         emailOrPhone,
         password,
       });
-  
+
       // Check if response contains a token
       const token = response.data.token;
-  
+
       if (token) {
         // Save the token in localStorage
         localStorage.setItem('authToken', token);
-  
+
         // Redirect to dashboard after successful login
         navigate('/dashboard');
       } else {
         setError('Invalid credentials');
       }
-  
+
       setIsLoading(false);
     } catch (err: any) {
       setIsLoading(false);
-  
+
       // Check if the error response has a message
       if (err.response && err.response.data) {
         setError(err.response.data.error || 'An error occurred');
       } else {
         setError('An error occurred');
       }
-  
+
       console.error('Login Error:', err);
     }
   };
-  
-  
-  
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
@@ -79,18 +93,29 @@ const Login: React.FC = () => {
             required
             placeholder="Enter your email or mobile number"
             value={emailOrPhone}
-            onChange={(e) => setEmailOrPhone(e.target.value)}
+            onChange={handleMobileChange}
           />
 
           {/* Password Input */}
-          <Input
-            label="Password"
-            type="password"
-            required
-            placeholder="Enter your password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <div className="relative">
+            <Input
+              label="Password"
+              type={showPassword ? 'text' : 'password'} // Toggle password visibility
+              required
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            {/* Show/Hide Password Icon */}
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-10 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              tabIndex={-1} // to prevent focusing the button on tab
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
 
           {/* Error message */}
           {error && <p className="text-red-500 text-center">{error}</p>}
@@ -109,10 +134,6 @@ const Login: React.FC = () => {
                 Remember me
               </label>
             </div>
-
-            <a href="#" className="text-sm font-medium text-blue-600 hover:text-blue-500">
-              Forgot password?
-            </a>
           </div>
 
           {/* Submit Button */}
