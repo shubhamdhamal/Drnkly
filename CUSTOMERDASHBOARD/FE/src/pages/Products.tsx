@@ -50,32 +50,37 @@ function Products() {
 
   const handleAddToCart = async (e: React.MouseEvent, product: any) => {
     e.stopPropagation();
-
+  
     const userId = localStorage.getItem('userId');
     if (!userId) {
-      alert('Please log in first'); // Alert if user is not logged in
+      alert('Please log in first');
       return;
     }
-
+  
     try {
-      // Send product details to the backend to add to cart
-      await axios.post('http://localhost:5000/api/cart/add', {
+      // Proceed to add the product to the cart
+      const res = await axios.post('http://localhost:5000/api/cart/add', {
         userId,
         productId: product._id,
         name: product.name,
         price: product.price,
         image: product.image,
         volume: product.volume,
+        alcoholContent: product.alcoholContent
       });
-
-      // Show success alert after adding to cart
+  
       alert(`${product.name} added to cart!`);
     } catch (error) {
-      // Show error alert if the operation fails
-      alert('Failed to add to cart');
+      // If the error is due to restrictions, show an alert
+      alert(error.response?.data?.message || 'Failed to add to cart');
       console.error('Cart Error:', error);
     }
-};
+  };
+  
+  
+  
+  
+  
 
 
 

@@ -14,38 +14,15 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage }).single('image'); // Set the field name for the image to 'image'
 
-// Add a new product
-// exports.addProduct = async (req, res) => {
-//   try {
-//     const { name, brand, category, alcoholContent, price, stock, volume, description } = req.body;
-//     const image = req.file ? `/uploads/${req.file.filename}` : null; // Save the image path
-    
-//     const newProduct = new Product({
-//       name,
-//       brand,
-//       category,
-//       alcoholContent,
-//       price,
-//       stock,
-//       volume,
-//       description,
-//       image, // Save the image path to the database
-//       vendorId: req.vendorId, // The vendor ID from the JWT token
-//       inStock: false, // Default value when the product is added
-//     });
 
-//     await newProduct.save();
-
-//     res.status(201).json({
-//       message: 'Product added successfully',
-//       product: newProduct,  // Return the newly added product with the image path
-//     });
-//   } catch (err) {
-//     console.error('Error adding product:', err);
-//     res.status(500).json({ error: 'Failed to add product' });
-//   }
-// };
-  
+// Function to categorize liquor based on alcohol content
+const categorizeLiquor = (alcoholContent) => {
+  if (alcoholContent >= 40) {
+    return 'Hard Liquor';
+  } else {
+    return 'Mild Liquor';
+  }
+};
 
 exports.addProduct = async (req, res) => {
   try {
@@ -53,6 +30,9 @@ exports.addProduct = async (req, res) => {
       name, brand, category,
       alcoholContent, price, stock, volume, description
     } = req.body;
+
+    // Check the liquor type based on alcohol content
+    const liquorType = categorizeLiquor(alcoholContent);
 
     // ✅ Check image file from multer
     const image = req.file ? `/uploads/${req.file.filename}` : null;
@@ -67,8 +47,9 @@ exports.addProduct = async (req, res) => {
       volume,
       description,
       image,
+      liquorType, // Add liquor type based on the categorization
       vendorId: req.vendorId,
-      inStock: false
+      inStock: stock > 0, // Set inStock based on stock availability
     });
 
     await newProduct.save();
@@ -83,7 +64,6 @@ exports.addProduct = async (req, res) => {
     res.status(500).json({ error: 'Failed to add product' });
   }
 };
-
 
 
 exports.updateStockForProducts = async (req, res) => {
