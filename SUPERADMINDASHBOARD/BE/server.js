@@ -2,6 +2,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const issueRoutes = require('./routes/issueRoutes');
+const path = require('path');  // Add this line at the top of your file
+
 
 
 const app = express();
@@ -10,6 +12,8 @@ const PORT = 5000;
 // Middleware
 app.use(cors());
 app.use(express.json());
+// Serve static files (uploaded files like ID proof) from the 'uploads' directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/superadmin', require('./routes/superAdminRoutes'));
