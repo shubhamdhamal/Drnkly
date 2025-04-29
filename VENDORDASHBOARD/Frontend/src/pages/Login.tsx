@@ -29,7 +29,20 @@ const Login: React.FC = () => {
       setEmailOrPhone(value);
     }
   };
+  const handleEmailOrPhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setEmailOrPhone(value);
+  };
 
+  const isEmail = (input: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(input);
+  };
+
+  const isPhone = (input: string) => {
+    const phoneRegex = /^\d{10}$/;
+    return phoneRegex.test(input);
+  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -41,7 +54,33 @@ const Login: React.FC = () => {
       setIsLoading(false);
       return;
     }
+    if (emailOrPhone.trim() === '') {
+      setError('Email or mobile number is required.');
+      setIsLoading(false);
+      return;
+    }
 
+    if (/^\d+$/.test(emailOrPhone)) {
+      // Only numbers entered => validate as mobile number
+      if (!isPhone(emailOrPhone)) {
+        setError('Please enter a valid 10-digit mobile number.');
+        setIsLoading(false);
+        return;
+      }
+    } else {
+      // Contains text/symbols => validate as email
+      if (!isEmail(emailOrPhone)) {
+        setError('Please enter a valid email address.');
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    if (password.trim() === '') {
+      setError('Password is required.');
+      setIsLoading(false);
+      return;
+    }
     try {
       const response = await axios.post('http://localhost:5000/api/vendor/login', {
         emailOrPhone,
@@ -88,12 +127,12 @@ const Login: React.FC = () => {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {/* Email or Phone Input */}
           <Input
-            label="Email or Mobile number"
+            label="Mobile number"
             type="text"
             required
-            placeholder="Enter your email or mobile number"
+            placeholder="Enter your mobile number"
             value={emailOrPhone}
-            onChange={handleMobileChange}
+            onChange={handleEmailOrPhoneChange}
           />
 
           {/* Password Input */}
