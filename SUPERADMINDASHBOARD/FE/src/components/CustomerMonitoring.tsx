@@ -19,6 +19,7 @@ interface Customer {
   coordinates: [number, number];
   performance: 'Excellent' | 'Good' | 'Poor';
   status: 'Verified' | 'Pending';
+  idProof: string | null;  // Path to the uploaded file (ID proof)
 }
 
 function CustomerMonitoring() {
@@ -31,13 +32,14 @@ function CustomerMonitoring() {
     const fetchCustomers = async () => {
       try {
         const res = await axios.get('http://localhost:5000/api/customers');
-        const formatted = res.data.customers.map((user: any, index: number) => ({
+        const formatted = res.data.customers.map((user: any) => ({
           id: user._id,
           name: user.name,
           location: user.address || 'Unknown',
-          coordinates: [18.5204, 73.8567], // Placeholder coordinates, update with actual data
+          coordinates: [18.5204, 73.8567], // Placeholder coordinates
           performance: 'Good',
           status: user.status || 'Pending',
+          idProof: user.idProof, // Add the file path here
         }));
         setCustomers(formatted);
       } catch (err) {
@@ -168,7 +170,19 @@ function CustomerMonitoring() {
             {customers.map((shop) => (
               <tr key={shop.id} className="border-b hover:bg-gray-50">
                 <td className="p-4">{shop.name}</td>
-                <td className="p-4">Available</td>
+                <td className="p-4">
+                  {/* Add the download link for the ID Proof */}
+                  {shop.idProof && (
+                    <a 
+                      href={`http://localhost:5000${shop.idProof}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      download
+                    >
+                      Download ID Proof
+                    </a>
+                  )}
+                </td>
                 <td className="p-4">
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                     shop.status === 'Verified'
@@ -216,6 +230,15 @@ function CustomerMonitoring() {
               <p><strong>Location:</strong> {selectedCustomer.location}</p>
               <p><strong>Performance:</strong> {selectedCustomer.performance}</p>
               <p><strong>Status:</strong> {selectedCustomer.status}</p>
+              {/* Show the file link in the modal */}
+              {selectedCustomer.idProof && (
+                <p>
+                  <strong>ID Proof:</strong> 
+                  <a href={`http://localhost:5000${selectedCustomer.idProof}`} target="_blank" rel="noopener noreferrer">
+                    View ID Proof
+                  </a>
+                </p>
+              )}
             </div>
             <button
               onClick={() => setShowModal(false)}

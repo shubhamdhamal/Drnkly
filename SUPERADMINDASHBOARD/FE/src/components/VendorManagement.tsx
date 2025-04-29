@@ -5,7 +5,7 @@ import { Check, X } from 'lucide-react';
 interface Vendor {
   _id: string;
   businessName: string;
-  license: string;
+  license: string;  // License file path
   verificationStatus: 'pending' | 'verified' | 'rejected';
 }
 
@@ -57,7 +57,7 @@ function VendorManagement() {
           <thead>
             <tr className="border-b">
               <th className="p-4 text-left">Shop Name</th>
-              <th className="p-4 text-left">License</th>
+              <th className="p-4 text-left">License</th> {/* License Column */}
               <th className="p-4 text-left">Status</th>
               <th className="p-4 text-left">Actions</th>
             </tr>
@@ -66,7 +66,19 @@ function VendorManagement() {
             {vendors.map((vendor) => (
               <tr key={vendor._id} className="border-b">
                 <td className="p-4">{vendor.businessName}</td>
-                <td className="p-4">{vendor.license}</td>
+                <td className="p-4">
+                  {/* Add the download link for the license file */}
+                  {vendor.license && (
+                    <a 
+                      href={`http://localhost:5000/uploads/${vendor.license}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      download
+                    >
+                      Download License
+                    </a>
+                  )}
+                </td>
                 <td className="p-4">
                   <span
                     className={`px-2 py-1 rounded-full text-sm ${
@@ -117,6 +129,20 @@ function VendorManagement() {
             <div className="mb-4">
               <p><strong>Shop Name:</strong> {selectedVendor.businessName}</p>
               <p><strong>License:</strong> {selectedVendor.license}</p>
+              {/* Show the download link for the license file in the modal */}
+              {selectedVendor.license && (
+                <p>
+                  <strong>Download License:</strong> 
+                  <a 
+                    href={`http://localhost:5000/uploads/${selectedVendor.license}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    download
+                  >
+                    Download License File
+                  </a>
+                </p>
+              )}
               <p><strong>Status:</strong> {selectedVendor.verificationStatus}</p>
             </div>
             <button
