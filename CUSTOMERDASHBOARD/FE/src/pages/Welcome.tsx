@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Wine, ArrowRight } from 'lucide-react';
 
@@ -75,7 +74,7 @@ function Welcome() {
 
         {/* Get Started Button */}
         <button 
-          onClick={() => navigate('/verify-age')}
+          onClick={() => navigate('/login')}
           className="group relative w-full bg-gray-900 text-white py-4 px-8 rounded-full text-lg font-semibold 
                    transition-all duration-300 hover:bg-gray-800 hover:shadow-xl"
           style={{
@@ -98,7 +97,7 @@ function Welcome() {
             animation: 'slideUp 0.8s ease-out 0.6s both',
             boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
           }}
-          onClick={() => navigate('/products')}
+          onClick={() => navigate('/login')}
         >
           <h2 
             className="text-2xl font-bold mb-2"

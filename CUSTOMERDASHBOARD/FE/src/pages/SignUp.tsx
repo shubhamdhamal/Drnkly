@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wine, ArrowRight, AlertCircle } from 'lucide-react';
+import { Wine, ArrowRight, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
 
 function SignUp() {
@@ -9,7 +9,9 @@ function SignUp() {
   const [showInfo, setShowInfo] = useState(false); // This controls the visibility of the info modal
   const [showTermsModal, setShowTermsModal] = useState(false); // Modal for Terms & Conditions
   const [isSubmitted, setIsSubmitted] = useState(false);
-
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -87,35 +89,45 @@ const validateNameWithoutSpace = (name: string) => {
   };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     // Check if the user agreed to the terms and conditions
     if (!agreed) {
       setError('Please agree to the terms and conditions');
       return;
     }
-    // Check if the user agreed to the terms and conditions
+  
+    // Validate Aadhaar
     if (!extraData.aadhaar || extraData.aadhaar.length !== 12) {
       setError('Please enter a valid 12-digit Aadhaar number');
       return;
     }
-    if (!formData.name || !validateName(formData.name)) {
+  
+    // Validate Name (✅ fixed validateNameWithoutSpace)
+    if (!formData.name || !validateNameWithoutSpace(formData.name)) {
       setError('Please enter your first name and last name together without space (e.g., JohnDoe).');
       return;
     }
-    
   
+    // Validate Email
     if (!formData.email || !validateEmail(formData.email)) {
       setError('Please enter a valid email address.');
       return;
     }
   
+    // Validate Mobile
     if (!formData.mobile || !validateMobile(formData.mobile)) {
       setError('Please enter a valid 10-digit mobile number.');
       return;
     }
   
+    // Validate Passwords
     if (!formData.password || !formData.confirmPassword) {
       setError('Please fill both password fields.');
+      return;
+    }
+  
+    if (formData.password.length < 6) {
+      setError('Password should be at least 6 characters long.');
       return;
     }
   
@@ -123,8 +135,8 @@ const validateNameWithoutSpace = (name: string) => {
       setError('Passwords do not match.');
       return;
     }
-
-    // Prepare the data for submission (including file upload)
+  
+    // ✅ If all validations passed, Prepare the data for submission
     const finalData = new FormData();
     Object.entries(formData).forEach(([key, val]) => finalData.append(key, val));
     Object.entries(extraData).forEach(([key, val]) =>
@@ -132,23 +144,24 @@ const validateNameWithoutSpace = (name: string) => {
         ? val && finalData.append(key, val as Blob)
         : finalData.append(key, String(val))
     );
-
+  
     try {
       // Submit the form data to the backend
       const res = await axios.post('http://localhost:5000/api/auth/signup', finalData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-
+  
       console.log(res.data);
-
-      // After successful submission, show the Info Modal and set the submitted state
+  
+      // After successful submission
       setIsSubmitted(true);
-      setShowInfo(true); // Show the modal
-      setTimeout(() => navigate('/login'), 4000); // Redirect to the login page after 4 seconds
+      setShowInfo(true);
+      setTimeout(() => navigate('/login'), 4000);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Something went wrong!');
     }
   };
+  
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">
@@ -294,102 +307,139 @@ const validateNameWithoutSpace = (name: string) => {
             </>
           )}
 
-          {step === 4 && (
-            <>
-              <div>
-                <label>Name</label>
-                <input
-                  type="text"
-                  className="w-full border px-3 py-2 rounded"
-                  placeholder="Full Name"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <label>Email</label>
-                <input
-                  type="email"
-                  className="w-full border px-3 py-2 rounded"
-                  placeholder="Email"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <label>Mobile</label>
-                <input
-                      type="tel"
-                      className="w-full border px-3 py-2 rounded"
-                      placeholder="Mobile Number"
-                      value={formData.mobile}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        if (/^\d{0,10}$/.test(value)) {  // Allow typing only 0-10 digits
-                          setFormData({ ...formData, mobile: value });
-                        }
-                      }}
-                    />
+        {step === 4 && (
+  <>
+    <div>
+      <label>Name</label>
+      <input
+        type="text"
+        className="w-full border px-3 py-2 rounded"
+        placeholder="Full Name"
+        value={formData.name}
+        onChange={(e) =>
+          setFormData({ ...formData, name: e.target.value })
+        }
+      />
+      {formData.name && !/^[A-Za-z]{2,}$/.test(formData.name.trim()) && (
+        <p className="text-red-500 text-xs mt-1">Name must be minimum 2 characters without spaces.</p>
+      )}
+    </div>
 
-              </div>
-              <div>
-                <label>Password</label>
-                <input
-                  type="password"
-                  className="w-full border px-3 py-2 rounded"
-                  placeholder="Password"
-                  value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <label>Confirm Password</label>
-                <input
-                  type="password"
-                  className="w-full border px-3 py-2 rounded"
-                  placeholder="Confirm Password"
-                  value={formData.confirmPassword}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      confirmPassword: e.target.value,
-                    })
-                  }
-                />
-              </div>
+    <div>
+      <label>Email</label>
+      <input
+        type="email"
+        className="w-full border px-3 py-2 rounded"
+        placeholder="Email"
+        value={formData.email}
+        onChange={(e) =>
+          setFormData({ ...formData, email: e.target.value })
+        }
+      />
+      {formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) && (
+        <p className="text-red-500 text-xs mt-1">Please enter a valid email address.</p>
+      )}
+    </div>
 
-              {/* Terms Modal Trigger */}
-              <div className="mt-2">
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={agreed}
-                    readOnly
-                    onClick={() => setShowTermsModal(true)} // Open terms modal
-                  />
-                  <span className="cursor-pointer text-sm text-gray-800">
-                    I agree to the <span className="text-blue-600 underline">Terms & Conditions</span>
-                  </span>
+    <div>
+      <label>Mobile</label>
+      <input
+        type="tel"
+        className="w-full border px-3 py-2 rounded"
+        placeholder="Mobile Number"
+        value={formData.mobile}
+        onChange={(e) => {
+          const value = e.target.value;
+          if (/^\d{0,10}$/.test(value)) {
+            setFormData({ ...formData, mobile: value });
+          }
+        }}
+      />
+      {formData.mobile && formData.mobile.length !== 10 && (
+        <p className="text-red-500 text-xs mt-1">Mobile number must be exactly 10 digits.</p>
+      )}
+    </div>
+
+    <div className="relative">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Password
                 </label>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
+                  placeholder="Enter your password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-10 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
 
-              {/* ✅ Show message only after Submit */}
-              {isSubmitted && (
-                <p
-                  className="text-sm text-green-700 font-medium mt-4 cursor-pointer hover:underline"
-                  onClick={() => setShowInfo(true)}
-                >
-                  ✅ Account will be verified within 24 hours
-                </p>
-              )}
-            </>
-          )}
+
+              <div className="relative">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Confirm Password
+                        </label>
+                        <input
+                          type={showConfirmPassword ? "text" : "password"}
+                          className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
+                          placeholder="Confirm your password"
+                          value={formData.confirmPassword}
+                          onChange={(e) =>
+                            setFormData({ ...formData, confirmPassword: e.target.value })
+                          }
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-4 top-10 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                          tabIndex={-1}
+                        >
+                          {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        </button>
+                      </div>
+
+
+
+    {/* Terms Modal Trigger */}
+    <div className="mt-2 flex items-center space-x-2">
+  <input
+    type="checkbox"
+    checked={agreed}
+    readOnly
+    onClick={() => setShowTermsModal(true)} // ✅ Always open Terms modal on click
+  />
+  <span className="text-sm text-gray-800">
+    I agree to the{" "}
+    <button
+      type="button"
+      onClick={() => setShowTermsModal(true)}
+      className="text-blue-600 underline hover:text-blue-800"
+    >
+      Terms & Conditions
+    </button>
+  </span>
+</div>
+
+
+    {/* ✅ Show message only after Submit */}
+    {isSubmitted && (
+      <p
+        className="text-sm text-green-700 font-medium mt-4 cursor-pointer hover:underline"
+        onClick={() => setShowInfo(true)}
+      >
+        ✅ Account will be verified within 24 hours
+      </p>
+    )}
+  </>
+)}
+
 
           {/* Navigation Buttons */}
           <div className="flex justify-between items-center pt-2">
@@ -490,15 +540,17 @@ const validateNameWithoutSpace = (name: string) => {
                 🚭 तुमच्या कुटुंबासाठी मद्यपान आणि धूम्रपान सोडा – आरोग्य हाच खरा धन आहे ❤️🍀
               </p>
               <div className="text-center">
-                <button
-                  onClick={() => {
-                    setAgreed(true);
-                    setShowTermsModal(false);
-                  }}
-                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded mr-2"
-                >
-                  Agree & Continue
-                </button>
+              <button
+                onClick={() => {
+                  setAgreed(true);
+                  setError(''); // clear error
+                  setShowTermsModal(false);
+                }}
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded mr-2"
+              >
+                Agree & Continue
+              </button>
+
                 <button
                   onClick={() => setShowTermsModal(false)}
                   className="bg-gray-300 hover:bg-gray-400 text-black px-6 py-2 rounded"
