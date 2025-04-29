@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wine, AlertCircle } from 'lucide-react';
+import { Wine, AlertCircle, Eye, EyeOff } from 'lucide-react';
+
 import axios from 'axios';
 
 function Login() {
@@ -11,12 +12,25 @@ function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [showTermsPopup, setShowTermsPopup] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isTermsChecked, setIsTermsChecked] = useState(false);  // Set default to true to check it by default
+
 
   // New checkboxes states
   const [hasDrinkingLicense, setHasDrinkingLicense] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const [isSkipped, setIsSkipped] = useState(false);
+  
+  // Handle mobile number change and restrict to 10 digits
+  const handleMobileChange = (e) => {
+    const value = e.target.value;
+
+    // Allow only numbers and restrict the length to 10 digits
+    if (/^\d{0,10}$/.test(value)) {
+      setMobile(value);
+    }
+  };
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
   
@@ -26,11 +40,19 @@ function Login() {
       return;
     }
   
-    // Validate user input
-    if (!mobile || !password) {
-      setError('Please enter both mobile number and password');
+    // Mobile number length validation
+    if (!mobile || mobile.length !== 10) {
+      setError('Mobile number must be exactly 10 digits.');
       return;
     }
+  
+    // Validate user input
+    if (!password) {
+      setError('Please enter your password.');
+      return;
+    }
+  
+
   
     // Make the API call to login
     try {
@@ -158,22 +180,33 @@ function Login() {
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
                 placeholder="Enter your mobile number"
                 value={mobile}
-                onChange={(e) => setMobile(e.target.value)}
+                onChange={handleMobileChange}
+
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Password
-              </label>
-              <input
-                type="password"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
+            <div className="relative">
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    Password
+  </label>
+  <input
+    type={showPassword ? "text" : "password"}
+    className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
+    placeholder="Enter your password"
+    value={password}
+    onChange={(e) => setPassword(e.target.value)}
+  />
+  {/* Eye Icon */}
+  <button
+    type="button"
+    onClick={() => setShowPassword(!showPassword)}
+    className="absolute right-4 top-10 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+    tabIndex={-1} // to prevent focusing the button on tab
+  >
+    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+  </button>
+</div>
+
 
             {/* Drinking License */}
             <div className="flex items-center space-x-2">
@@ -279,81 +312,82 @@ function Login() {
 
       {/* Terms Popup */}
       {showTermsPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
-          <div className="bg-white rounded-lg shadow-lg p-6 max-w-lg w-full text-left overflow-y-auto max-h-[90vh]">
-            <h2 className="text-lg font-bold mb-2 text-center">Terms & Regulations</h2>
-            
-            {/* Terms & Conditions Content */}
-            <div className="text-sm text-gray-700 mb-4">
-              <p><strong>Terms & Conditions:</strong></p>
-              <p>
-                By accessing this app, you affirm you're of legal drinking age. Use of this app in restricted states or by underage users is punishable by law. If you're a business, you must have a valid license.
-              </p>
-            </div>
-            
-            {/* Declaration Section */}
-            <div className="text-sm text-gray-700 mb-4">
-              <p><strong>Declaration:</strong></p>
-              <p>Liquor License No. (if any)</p>
-              <input
-                type="text"
-                placeholder="Enter License Number (if any)"
-                className="w-full px-3 py-2 border border-gray-300 rounded mb-3"
-              />
-              <div className="flex items-start gap-2">
-                <input
-                  type="checkbox"
-                  checked={agreedToTerms}
-                  onChange={(e) => setAgreedToTerms(e.target.checked)}
-                  className="mt-1"
-                />
-                <label className="text-sm text-gray-700">
-                  I confirm I’m of legal age and agree to all terms above.
-                </label>
-              </div>
-            </div>
+  <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
+    <div className="bg-white rounded-lg shadow-lg p-6 max-w-lg w-full text-left overflow-y-auto max-h-[90vh]">
+      <h2 className="text-lg font-bold mb-2 text-center">Terms & Regulations</h2>
 
-            {/* Government Rules & Excise Acts */}
-            <div className="text-sm text-gray-700 mb-4">
-              <p><strong>Government Rules & Excise Acts:</strong></p>
-              <ul className="list-disc pl-5">
-                <li>✔ Maharashtra: Age 21</li>
-                <li>✔ Delhi: Age 25</li>
-                <li>✔ Karnataka: Age 21</li>
-                <li>✔ Tamil Nadu: Only TASMAC allowed</li>
-                <li>✔ Gujarat: Alcohol banned</li>
-                <li>✔ Telangana: Excise Act applies</li>
-              </ul>
-            </div>
+      {/* Terms & Conditions Content */}
+      <div className="text-sm text-gray-700 mb-4">
+        <p><strong>Terms & Conditions:</strong></p>
+        <p>
+          By accessing this app, you affirm you're of legal drinking age. Use of this app in restricted states or by underage users is punishable by law. If you're a business, you must have a valid license.
+        </p>
+      </div>
 
-            {/* Health Message */}
-            <div className="text-center">
-              <p className="text-lg text-red-600 font-semibold">
-                🚭 तुमच्या कुटुंबासाठी मद्यपान आणि धूम्रपान सोडा – आरोग्य हाच खरा धन आहे ❤️🍀
-              </p>
-            </div>
-
-            {/* Actions */}
-            <div className="text-center mt-4">
-              <button
-                onClick={() => {
-                  setAgreedToTerms(true);
-                  setShowTermsPopup(false);
-                }}
-                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded mr-2"
-              >
-                AGREE AND CONTINUE
-              </button>
-              <button
-                onClick={() => setShowTermsPopup(false)}
-                className="bg-gray-300 hover:bg-gray-400 text-black px-6 py-2 rounded"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
+      {/* Declaration Section */}
+      <div className="text-sm text-gray-700 mb-4">
+        <p><strong>Declaration:</strong></p>
+        <p>Liquor License No. (if any)</p>
+        <input
+          type="text"
+          placeholder="Enter License Number (if any)"
+          className="w-full px-3 py-2 border border-gray-300 rounded mb-3"
+        />
+        <div className="flex items-start gap-2">
+          <input
+            type="checkbox"
+            checked={isTermsChecked} // Bind to isTermsChecked
+            onChange={(e) => setIsTermsChecked(e.target.checked)} // Update the state on change
+            className="mt-1"
+          />
+          <label className="text-sm text-gray-700">
+            I confirm I’m of legal age and agree to all terms above.
+          </label>
         </div>
-      )}
+      </div>
+
+      {/* Government Rules & Excise Acts */}
+      <div className="text-sm text-gray-700 mb-4">
+        <p><strong>Government Rules & Excise Acts:</strong></p>
+        <ul className="list-disc pl-5">
+          <li>✔ Maharashtra: Age 21</li>
+          <li>✔ Delhi: Age 25</li>
+          <li>✔ Karnataka: Age 21</li>
+          <li>✔ Tamil Nadu: Only TASMAC allowed</li>
+          <li>✔ Gujarat: Alcohol banned</li>
+          <li>✔ Telangana: Excise Act applies</li>
+        </ul>
+      </div>
+
+      {/* Health Message */}
+      <div className="text-center">
+        <p className="text-lg text-red-600 font-semibold">
+          🚭 तुमच्या कुटुंबासाठी मद्यपान आणि धूम्रपान सोडा – आरोग्य हाच खरा धन आहे ❤️🍀
+        </p>
+      </div>
+
+      {/* Actions */}
+      <div className="text-center mt-4">
+        <button
+          onClick={() => {
+            setAgreedToTerms(true);
+            setShowTermsPopup(false);
+          }}
+          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded mr-2"
+        >
+          AGREE AND CONTINUE
+        </button>
+        <button
+          onClick={() => setShowTermsPopup(false)}
+          className="bg-gray-300 hover:bg-gray-400 text-black px-6 py-2 rounded"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 }

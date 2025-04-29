@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Upload, MapPin, Wine, Store, FileCheck } from 'lucide-react';
+import { Upload, MapPin, Wine, Store, FileCheck, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Input from '../components/Input';
 import Button from '../components/Button';
@@ -32,6 +32,9 @@ const Registration: React.FC = () => {
     state: '',
     postalCode: ''
   });
+
+  const [errors, setErrors] = useState<any>({});
+  const [showPassword, setShowPassword] = useState(false); // Show password toggle
 
   useEffect(() => {
     if (!vendorId) return;
@@ -73,9 +76,9 @@ const Registration: React.FC = () => {
         location,
         productCategories: selectedCategories,
       };
-  
+
       console.log('📦 Sending to backend:', registrationData); // ✅ DEBUG this
-  
+
       try {
         const res = await axios.post('http://localhost:5000/api/vendor/register', registrationData);
         setVendorId(res.data.vendorId);
@@ -87,8 +90,54 @@ const Registration: React.FC = () => {
       setStep(step - 1);
     }
   };
-  
+
   const handleRegistration = async () => {
+    // Step 1: Business Information Validation
+    if (!businessName || !businessEmail || !businessPhone || !password) {
+      setErrors((prevErrors: any) => ({
+        ...prevErrors,
+        businessInfo: 'All business fields are required.'
+      }));
+      return;
+    }
+
+    // Business Phone validation (ensure it is a valid 10-digit phone number)
+    if (!/^\d{10}$/.test(businessPhone)) {
+      setErrors((prevErrors: any) => ({
+        ...prevErrors,
+        businessPhone: 'Business phone number must be exactly 10 digits.'
+      }));
+      return;
+    }
+
+    // Step 2: Document Upload Validation
+    if (!uploadedFiles.license || !uploadedFiles.id) {
+      setErrors((prevErrors: any) => ({
+        ...prevErrors,
+        documentUpload: 'Both Shop License and ID Proof are required.'
+      }));
+      return;
+    }
+
+    // Step 3: Location Validation
+    if (!location.addressLine1 || !location.city || !location.state || !location.postalCode) {
+      setErrors((prevErrors: any) => ({
+        ...prevErrors,
+        locationInfo: 'All location fields are required.'
+      }));
+      return;
+    }
+
+    // Step 4: Product Categories Validation
+    if (selectedCategories.length === 0) {
+      setErrors((prevErrors: any) => ({
+        ...prevErrors,
+        productCategories: 'Please select at least one product category.'
+      }));
+      return;
+    }
+
+    // If all validations pass, submit the data
     const registrationData = {
       businessName,
       businessEmail,
@@ -97,7 +146,7 @@ const Registration: React.FC = () => {
       location,
       productCategories: selectedCategories,
     };
-  
+
     try {
       console.log('📦 Sending to backend:', registrationData);
       const res = await axios.post('http://localhost:5000/api/vendor/register', registrationData);
@@ -107,7 +156,6 @@ const Registration: React.FC = () => {
       console.error('❌ Error registering vendor:', error);
     }
   };
-  
 
   const renderStep = () => {
     switch (step) {
@@ -118,7 +166,12 @@ const Registration: React.FC = () => {
             <Input label="Business Name" value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="Enter your business name" required />
             <Input label="Business Email" type="email" value={businessEmail} onChange={(e) => setBusinessEmail(e.target.value)} placeholder="Enter your business email" required />
             <Input label="Business Phone" type="tel" value={businessPhone} onChange={(e) => setBusinessPhone(e.target.value)} placeholder="Enter your business phone" required />
-            <Input label="Create Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter a strong password" required />
+            {errors.businessPhone && <p className="text-red-500">{errors.businessPhone}</p>}
+            <Input label="Create Password" type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter a strong password" required />
+            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-16 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+            {errors.businessInfo && <p className="text-red-500">{errors.businessInfo}</p>}
           </div>
         );
       case 2:
@@ -127,6 +180,7 @@ const Registration: React.FC = () => {
             <h2 className="text-xl font-semibold">Document Upload</h2>
             <FileUpload label="Shop License" icon={<FileCheck className="w-12 h-12" />} accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileUpload('license')} description={''} />
             <FileUpload label="ID Proof" icon={<Upload className="w-12 h-12" />} accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileUpload('id')} description={''} />
+            {errors.documentUpload && <p className="text-red-500">{errors.documentUpload}</p>}
           </div>
         );
       case 3:
@@ -141,6 +195,7 @@ const Registration: React.FC = () => {
               <Input label="Postal Code" value={location.postalCode} onChange={(e) => setLocation({ ...location, postalCode: e.target.value })} placeholder="Enter postal code" required />
               <Button type="button" variant="secondary" icon={<MapPin className="w-5 h-5" />} className="mt-6">Use Current Location</Button>
             </div>
+            {errors.locationInfo && <p className="text-red-500">{errors.locationInfo}</p>}
           </div>
         );
       case 4:
@@ -155,6 +210,7 @@ const Registration: React.FC = () => {
                 </button>
               ))}
             </div>
+            {errors.productCategories && <p className="text-red-500">{errors.productCategories}</p>}
           </div>
         );
       case 5:
@@ -168,13 +224,7 @@ const Registration: React.FC = () => {
                     <h3 className="font-medium text-yellow-800">Application Under Review</h3>
                     <p className="text-sm text-yellow-600 mt-1">Our team is reviewing your application. This usually takes 1-2 business days.</p>
                   </div>
-                  <div className={`px-3 py-1 rounded-full text-sm ${
-                    verificationStatus === 'pending'
-                      ? 'bg-yellow-100 text-yellow-800'
-                      : verificationStatus === 'verified'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
-                  }`}>
+                  <div className={`px-3 py-1 rounded-full text-sm ${verificationStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' : verificationStatus === 'verified' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                     {verificationStatus}
                   </div>
                 </div>
@@ -189,7 +239,7 @@ const Registration: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
+
     if (step === 4) {
       const registrationData = {
         businessName,
@@ -199,12 +249,11 @@ const Registration: React.FC = () => {
         location,
         productCategories: selectedCategories,
       };
-  
+
       console.log("🚀 Submitting vendor data:", JSON.stringify(registrationData, null, 2));
-  
+
       try {
         const res = await axios.post('http://localhost:5000/api/vendor/register', registrationData);
-        console.log("✅ Success:", res.data);
         setVendorId(res.data.vendorId);
         setStep(5);
       } catch (error: any) {
@@ -216,8 +265,6 @@ const Registration: React.FC = () => {
       navigate('/login');
     }
   };
-  
-  
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
@@ -240,32 +287,30 @@ const Registration: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-8">
             {renderStep()}
             <div className="flex justify-between pt-6 border-t">
-  {step > 1 && (
-    <Button
-      type="button"
-      variant="secondary"
-      onClick={() => setStep(step - 1)}
-    >
-      Previous
-    </Button>
-  )}
-
-  <div className="flex flex-col">
-    <Button
-      type="submit"
-      disabled={step === 5 && verificationStatus !== 'verified'}
-      className={step === 1 ? 'w-full' : 'ml-auto'}
-    >
-      {step === 5 ? 'Complete Registration' : 'Continue'}
-    </Button>
-    {step === 5 && verificationStatus !== 'verified' && (
-      <p className="text-sm text-red-600 mt-2">
-        Admin approval is required to proceed.
-      </p>
-    )}
-  </div>
-</div>
-
+              {step > 1 && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setStep(step - 1)}
+                >
+                  Previous
+                </Button>
+              )}
+              <div className="flex flex-col">
+                <Button
+                  type="submit"
+                  disabled={step === 5 && verificationStatus !== 'verified'}
+                  className={step === 1 ? 'w-full' : 'ml-auto'}
+                >
+                  {step === 5 ? 'Complete Registration' : 'Continue'}
+                </Button>
+                {step === 5 && verificationStatus !== 'verified' && (
+                  <p className="text-sm text-red-600 mt-2">
+                    Admin approval is required to proceed.
+                  </p>
+                )}
+              </div>
+            </div>
           </form>
         </div>
       </div>
