@@ -66,10 +66,22 @@ function SignUp() {
       setErrorMessage('');
     }
   };
-  // Without space
-const validateNameWithoutSpace = (name: string) => {
-  return /^[A-Za-z]{2,}$/.test(name.trim());
-};
+   // Name validation for first and last name
+   const validateNameWithoutSpace = (name: string) => {
+    const nameParts = name.trim().split(' ');
+
+    // Ensure there are exactly two parts (first name and last name)
+    if (nameParts.length !== 2) {
+      return false;
+    }
+
+    const firstName = nameParts[0];
+    const lastName = nameParts[1];
+
+    const nameRegex = /^[A-Za-z]{2,}$/; // Only letters, at least two characters
+
+    return nameRegex.test(firstName) && nameRegex.test(lastName);
+  };
   
   
   const validateMobile = (mobile: string) => {
@@ -102,12 +114,12 @@ const validateNameWithoutSpace = (name: string) => {
       return;
     }
   
-    // Validate Name (✅ fixed validateNameWithoutSpace)
+  
+    // Validate Name (First name and Last name together in one field)
     if (!formData.name || !validateNameWithoutSpace(formData.name)) {
-      setError('Please enter your first name and last name together without space (e.g., JohnDoe).');
+      setError('Please enter your first name and last name together without space (e.g., John Doe).');
       return;
     }
-  
     // Validate Email
     if (!formData.email || !validateEmail(formData.email)) {
       setError('Please enter a valid email address.');
@@ -309,21 +321,19 @@ const validateNameWithoutSpace = (name: string) => {
 
         {step === 4 && (
   <>
-    <div>
-      <label>Name</label>
-      <input
-        type="text"
-        className="w-full border px-3 py-2 rounded"
-        placeholder="Full Name"
-        value={formData.name}
-        onChange={(e) =>
-          setFormData({ ...formData, name: e.target.value })
-        }
-      />
-      {formData.name && !/^[A-Za-z]{2,}$/.test(formData.name.trim()) && (
-        <p className="text-red-500 text-xs mt-1">Name must be minimum 2 characters without spaces.</p>
-      )}
-    </div>
+            <div>
+                <label>Name</label>
+                <input
+                  type="text"
+                  className="w-full border px-3 py-2 rounded"
+                  placeholder="First Name and Last Name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                />
+                {formData.name && !validateNameWithoutSpace(formData.name) && (
+                  <p className="text-red-500 text-xs mt-1">Enter the First Name and Last Name.</p>
+                )}
+              </div>
 
     <div>
       <label>Email</label>
