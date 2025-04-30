@@ -7,6 +7,10 @@ exports.addToCart = async (req, res) => {
   try {
     let cart = await Cart.findOne({ userId }).populate('items.productId');
     const newProduct = await Product.findById(productId);
+    if (!newProduct) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
     const newLiquorType = newProduct.liquorType;
 
     if (!cart) {
@@ -17,48 +21,64 @@ exports.addToCart = async (req, res) => {
       return res.status(201).json({ message: 'Cart created', cart: newCart });
     }
 
-    // Count ALL Hard/Mild items from the entire cart INCLUDING this one (as future state)
     let hardLiquorCount = 0;
     let mildLiquorCount = 0;
-    let found = false;
+    let existingItem = null;
 
-    const updatedItems = cart.items.map(item => {
-      if (item.productId._id.toString() === productId) {
-        found = true;
-        item.quantity += 1;
+    // Count current quantities (excluding the current product if already in cart)
+    cart.items.forEach(item => {
+      const type = item.productId.liquorType;
+      const qty = item.quantity;
+      const isSameProduct = item.productId._id.toString() === productId;
+
+      if (isSameProduct) {
+        existingItem = item;
+        return;
       }
 
-      const type = item.productId.liquorType;
-      const quantity = item.quantity;
-
-      if (type === 'Hard Liquor') hardLiquorCount += quantity;
-      else if (type === 'Mild Liquor') mildLiquorCount += quantity;
-
-      return item;
+      if (type === 'Hard Liquor') hardLiquorCount += qty;
+      if (type === 'Mild Liquor') mildLiquorCount += qty;
     });
 
-    // If this is a new product being added
-    if (!found) {
-      if (newLiquorType === 'Hard Liquor') hardLiquorCount += 1;
-      else if (newLiquorType === 'Mild Liquor') mildLiquorCount += 1;
+    // Add +1 to respective type
+    const addQty = 1;
+    const futureHard = newLiquorType === 'Hard Liquor'
+      ? hardLiquorCount + addQty + (existingItem && existingItem.productId.liquorType === 'Hard Liquor' ? existingItem.quantity : 0)
+      : hardLiquorCount + (existingItem && existingItem.productId.liquorType === 'Hard Liquor' ? existingItem.quantity : 0);
+
+    const futureMild = newLiquorType === 'Mild Liquor'
+      ? mildLiquorCount + addQty + (existingItem && existingItem.productId.liquorType === 'Mild Liquor' ? existingItem.quantity : 0)
+      : mildLiquorCount + (existingItem && existingItem.productId.liquorType === 'Mild Liquor' ? existingItem.quantity : 0);
+
+    // ❌ BLOCKERS — BEFORE mutation
+    if (hardLiquorCount === 2 && newLiquorType === 'Mild Liquor') {
+      return res.status(400).json({ message: '❌ Cannot add Mild Liquor when 2 Hard Liquors already in cart.' });
     }
 
-    // 🧠 Validation based on future state
-    if (hardLiquorCount > 2) {
+    if (mildLiquorCount === 12 && newLiquorType === 'Hard Liquor') {
+      return res.status(400).json({ message: '❌ Cannot add Hard Liquor when 12 Mild Liquors already in cart.' });
+    }
+
+    if (futureHard > 2) {
       return res.status(400).json({ message: '❌ Max 2 Hard Liquors allowed.' });
     }
-    if (hardLiquorCount === 2 && mildLiquorCount > 0) {
-      return res.status(400).json({ message: '❌ Cannot mix Mild with 2 Hard Liquors.' });
-    }
-    if (hardLiquorCount === 1 && mildLiquorCount > 6) {
-      return res.status(400).json({ message: '❌ Only 1 Hard + up to 6 Mild allowed.' });
-    }
-    if (hardLiquorCount === 0 && mildLiquorCount > 12) {
+
+    if (futureMild > 12) {
       return res.status(400).json({ message: '❌ Max 12 Mild Liquors allowed.' });
     }
 
-    // ✅ All good — Save the update
-    if (!found) {
+    if (futureHard === 1 && futureMild > 6) {
+      return res.status(400).json({ message: '❌ Only 1 Hard + up to 6 Mild allowed.' });
+    }
+
+    if (futureHard === 2 && futureMild > 0) {
+      return res.status(400).json({ message: '❌ Cannot mix 2 Hard with any Mild Liquor.' });
+    }
+
+    // ✅ PASS — Proceed to update cart
+    if (existingItem) {
+      existingItem.quantity += 1;
+    } else {
       cart.items.push({ productId, name, price, image, quantity: 1 });
     }
 
