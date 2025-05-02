@@ -48,10 +48,9 @@ function App() {
           </main>
           {/* Pass the isChatOpen and setIsChatOpen to Navigation component */}
           <Navigation isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} />
-{/*           {/* Display the ChatBox component conditionally */}
-          <ChatBox isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} /> */}
+
         </div>
-      </BrowserRouter>
+      </BrowserRouter
     </CartProvider>
   );
 }
