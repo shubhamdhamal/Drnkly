@@ -41,7 +41,7 @@ const IssueReport = () => {
     formData.append('receiveUpdates', updates.toString());
   
     try {
-      const res = await axios.post('http://localhost:5000/api/issues/report', formData, {
+      const res = await axios.post('http://drnkly.in/api/issues/report', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
