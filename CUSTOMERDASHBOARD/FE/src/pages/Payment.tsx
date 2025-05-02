@@ -27,7 +27,7 @@ const Payment = () => {
       if (!userId) return;
   
       try {
-        const res = await axios.get(`http://localhost:5000/api/cart/${userId}`);
+        const res = await axios.get(`http://drnkly.in/api/cart/${userId}`);
         setItems(res.data.items || []);
       } catch (err) {
         console.error("Cart fetch error:", err);
@@ -58,7 +58,7 @@ const Payment = () => {
       formData.append('screenshot', screenshot);
 
       const res = await axios.put(
-        `http://localhost:5000/api/orders/${orderId}/pay`,
+        `http://drnkly.in/api/orders/${orderId}/pay`,
         formData,
         {
           headers: {
@@ -93,7 +93,7 @@ const Payment = () => {
         <div className="mb-6 text-center">
   <h2 className="text-lg font-semibold mb-2">Scan QR to Pay</h2>
   <img
-    src={`http://localhost:5001/uploads/qr.png`} // ✅ Assuming vendor server runs on port 5001
+    src={`http://drnkly.in/uploads/qr.png`} // ✅ Assuming vendor server runs on port 5001
     alt="Admin QR Code"
     className="mx-auto w-48 h-48 object-contain border border-gray-200 rounded-lg shadow"
   />
