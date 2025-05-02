@@ -58,7 +58,7 @@ function Login() {
   
     // Make the API call to login
     try {
-      const response = await axios.post('https://drnkly.in/api/auth/login', { mobile, password });
+      const response = await axios.post('http://localhost:5000/api/auth/login', { mobile, password });
   
       if (response.data.message === 'Login successful') {
         // ✅ Status Check
