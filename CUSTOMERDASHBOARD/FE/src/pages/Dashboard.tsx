@@ -85,7 +85,7 @@ function Dashboard() {
         if (token && userId) {
           setIsLoggedIn(true);
   
-          const response = await axios.get(`http://drnkly.in/api/users/${userId}`, {
+          const response = await axios.get(`http://localhost:5000/api/users/${userId}`, {
             headers: {
               Authorization: `Bearer ${token}`, // ✅ SEND token properly
             },

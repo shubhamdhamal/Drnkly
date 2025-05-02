@@ -159,7 +159,7 @@ function SignUp() {
   
     try {
       // Submit the form data to the backend
-      const res = await axios.post('http://69.62.74.167:5000/api/auth/signup', finalData, {
+      const res = await axios.post('http://localhost:5000/api/auth/signup', finalData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
   

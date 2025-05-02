@@ -30,7 +30,7 @@ const OrderHistory: React.FC = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const res = await axios.get(`http://69.62.74.167:5000/api/orders/user/${userId}`);
+        const res = await axios.get(`http://localhost:5000/api/orders/user/${userId}`);
         setOrders(res.data.orders);
       } catch (error) {
         setError('Error fetching orders. Please try again later.');
