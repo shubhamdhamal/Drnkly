@@ -21,54 +21,54 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 
-// Enhanced FAQ Data with bilingual support
-const FAQ_DATA = [
-  {
-    q: "shop timings|दुकान वेळ|timing|वेळ",
-    a: "Our shop is open from 10 AM to 10 PM every day.\nआमचं दुकान दररोज सकाळी १० ते रात्री १० वाजेपर्यंत उघडं असतं."
-  },
-  {
-    q: "location|address|दुकान कुठे|पत्ता",
-    a: "We have multiple stores across the city. Please check your nearest store using the location selector.\nशहरात आमची अनेक दुकाने आहेत. कृपया लोकेशन सिलेक्टर वापरून तुमच्या जवळचं दुकान तपासा."
-  },
-  {
-    q: "brands|ब्रँड्स|विकता",
-    a: "We offer a wide selection of premium brands including:\n\n🥃 Whiskey: Jack Daniel's, Glenfiddich, Chivas Regal\n🍷 Wine: Sula, Grover, Jacob's Creek\n🍺 Beer: Kingfisher, Heineken, Corona\n\nआम्ही प्रीमियम ब्रँड्सची विस्तृत निवड देतो."
-  },
-  {
-    q: "delivery|डिलिव्हरी|होम डिलिव्हरी",
-    a: "Yes, we offer home delivery! 🚚\n\n• Delivery Hours: 10 AM to 10 PM\n• Minimum Order: ₹500\n• Free delivery on orders above ₹2000\n\nहो, आम्ही होम डिलिव्हरी देतो! 🚚"
-  },
-  {
-    q: "payment|पेमेंट|payment methods|पैसे",
-    a: "We accept multiple payment methods:\n\n💳 Credit/Debit Cards\n📱 UPI (GPay, PhonePe)\n💰 Cash on Delivery\n\nआम्ही विविध पेमेंट पद्धती स्वीकारतो."
-  },
-  {
-    q: "age|वय|legal age|कायदेशीर वय",
-    a: "Legal drinking age is 21 years. Valid ID proof is mandatory.\n\nकायदेशीर वय २१ वर्षे आहे. वैध ओळखपत्र आवश्यक आहे."
-  },
-  {
-    q: "offers|ऑफर|discount|सूट",
-    a: "🎉 Current Offers:\n\n• 10% off on premium whiskey\n• Buy 2 get 1 free on selected wines\n• Special weekend discounts\n\nCheck our app regularly for new offers!"
-  },
-  {
-    q: "return|refund|परतावा|रिफंड",
-    a: "Returns accepted only for damaged or incorrect products within 24 hours.\n\nनुकसान झालेल्या किंवा चुकीच्या प्रॉडक्टसाठी २४ तासांच्या आत परतावा स्वीकारला जातो."
-  },
-  {
-    q: "hello|hi|hey|नमस्कार|हाय",
-    a: "Hello! 👋 Welcome to Liquor Shop. How can I help you today?\n\nनमस्कार! 👋 लिकर शॉपमध्ये आपले स्वागत आहे. मी आपली कशी मदत करू शकतो?"
-  },
-  {
-    q: "bye|goodbye|thank|धन्यवाद|बाय",
-    a: "Thank you for chatting with us! 🙏 Have a great day!\n\nचॅट केल्याबद्दल धन्यवाद! 🙏 आपला दिवस चांगला जावो!"
-  }
-];
+// // Enhanced FAQ Data with bilingual support
+// const FAQ_DATA = [
+//   {
+//     q: "shop timings|दुकान वेळ|timing|वेळ",
+//     a: "Our shop is open from 10 AM to 10 PM every day.\nआमचं दुकान दररोज सकाळी १० ते रात्री १० वाजेपर्यंत उघडं असतं."
+//   },
+//   {
+//     q: "location|address|दुकान कुठे|पत्ता",
+//     a: "We have multiple stores across the city. Please check your nearest store using the location selector.\nशहरात आमची अनेक दुकाने आहेत. कृपया लोकेशन सिलेक्टर वापरून तुमच्या जवळचं दुकान तपासा."
+//   },
+//   {
+//     q: "brands|ब्रँड्स|विकता",
+//     a: "We offer a wide selection of premium brands including:\n\n🥃 Whiskey: Jack Daniel's, Glenfiddich, Chivas Regal\n🍷 Wine: Sula, Grover, Jacob's Creek\n🍺 Beer: Kingfisher, Heineken, Corona\n\nआम्ही प्रीमियम ब्रँड्सची विस्तृत निवड देतो."
+//   },
+//   {
+//     q: "delivery|डिलिव्हरी|होम डिलिव्हरी",
+//     a: "Yes, we offer home delivery! 🚚\n\n• Delivery Hours: 10 AM to 10 PM\n• Minimum Order: ₹500\n• Free delivery on orders above ₹2000\n\nहो, आम्ही होम डिलिव्हरी देतो! 🚚"
+//   },
+//   {
+//     q: "payment|पेमेंट|payment methods|पैसे",
+//     a: "We accept multiple payment methods:\n\n💳 Credit/Debit Cards\n📱 UPI (GPay, PhonePe)\n💰 Cash on Delivery\n\nआम्ही विविध पेमेंट पद्धती स्वीकारतो."
+//   },
+//   {
+//     q: "age|वय|legal age|कायदेशीर वय",
+//     a: "Legal drinking age is 21 years. Valid ID proof is mandatory.\n\nकायदेशीर वय २१ वर्षे आहे. वैध ओळखपत्र आवश्यक आहे."
+//   },
+//   {
+//     q: "offers|ऑफर|discount|सूट",
+//     a: "🎉 Current Offers:\n\n• 10% off on premium whiskey\n• Buy 2 get 1 free on selected wines\n• Special weekend discounts\n\nCheck our app regularly for new offers!"
+//   },
+//   {
+//     q: "return|refund|परतावा|रिफंड",
+//     a: "Returns accepted only for damaged or incorrect products within 24 hours.\n\nनुकसान झालेल्या किंवा चुकीच्या प्रॉडक्टसाठी २४ तासांच्या आत परतावा स्वीकारला जातो."
+//   },
+//   {
+//     q: "hello|hi|hey|नमस्कार|हाय",
+//     a: "Hello! 👋 Welcome to Liquor Shop. How can I help you today?\n\nनमस्कार! 👋 लिकर शॉपमध्ये आपले स्वागत आहे. मी आपली कशी मदत करू शकतो?"
+//   },
+//   {
+//     q: "bye|goodbye|thank|धन्यवाद|बाय",
+//     a: "Thank you for chatting with us! 🙏 Have a great day!\n\nचॅट केल्याबद्दल धन्यवाद! 🙏 आपला दिवस चांगला जावो!"
+//   }
+// ];
 
-interface Message {
-  text: string;
-  isBot: boolean;
-}
+// interface Message {
+//   text: string;
+//   isBot: boolean;
+// }
 
 const Profile = () => {
   const [activeTab, setActiveTab] = useState('profile');
