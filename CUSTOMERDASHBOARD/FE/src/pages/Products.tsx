@@ -33,8 +33,8 @@ function Products() {
     const fetchData = async () => {
       try {
         const [productRes, categoryRes] = await Promise.all([
-          axios.get('http://drnkly.in/api/products'),
-          axios.get('http://drnkly.in/api/categories'),
+          axios.get('http://69.62.74.167:5000/api/products'),
+          axios.get('http://69.62.74.167:5000/api/categories'),
         ]);
         setProducts(productRes.data);
         setCategories(categoryRes.data);
