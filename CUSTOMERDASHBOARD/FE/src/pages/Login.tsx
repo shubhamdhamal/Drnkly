@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Wine, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 import axios from 'axios';
-const API = import.meta.env.VITE_API_URL;
 
 function Login() {
   const navigate = useNavigate();
@@ -59,7 +58,7 @@ function Login() {
   
     // Make the API call to login
     try {
-      const response = await axios.post('https://${API}/api/auth/login', { mobile, password });
+      const response = await axios.post('https://drnkly.in/api/auth/login', { mobile, password });
   
       if (response.data.message === 'Login successful') {
         // ✅ Status Check
