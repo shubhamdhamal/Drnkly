@@ -50,7 +50,7 @@ function App() {
           <Navigation isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} />
 
         </div>
-      </BrowserRouter
+      </BrowserRouter>
     </CartProvider>
   );
 }
