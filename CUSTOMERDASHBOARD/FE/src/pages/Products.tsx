@@ -33,8 +33,8 @@ function Products() {
     const fetchData = async () => {
       try {
         const [productRes, categoryRes] = await Promise.all([
-          axios.get('http://localhost:5000/api/products'),
-          axios.get('http://localhost:5000/api/categories'),
+          axios.get('http://drnkly.in/api/products'),
+          axios.get('http://drnkly.in/api/categories'),
         ]);
         setProducts(productRes.data);
         setCategories(categoryRes.data);
@@ -57,7 +57,7 @@ function Products() {
   
     try {
       // Proceed to add the product to the cart
-      const res = await axios.post('http://localhost:5000/api/cart/add', {
+      const res = await axios.post('http://drnkly.in/api/cart/add', {
         userId,
         productId: product._id,
         name: product.name,
@@ -322,7 +322,7 @@ function Products() {
             style={{ background: 'white', borderRadius: '12px', padding: '10px', textAlign: 'center' }}
           >
             <img
-              src={`http://localhost:5000${product.image}`}
+              src={`http://drnkly.in${product.image}`}
               alt={product.name}
               style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px' }}
             />
