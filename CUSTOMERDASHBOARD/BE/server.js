@@ -25,7 +25,9 @@ app.use('/uploads/issues', express.static('uploads/issues'));
 // Routes
 app.use('/api/issues', issueRoutes);
 
-
+app.get('/', (req, res) => {
+  res.send('API is working on port 5000!');
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
