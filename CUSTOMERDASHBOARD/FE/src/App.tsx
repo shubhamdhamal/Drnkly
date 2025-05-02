@@ -17,7 +17,7 @@ import IssueReport from './pages/IssueReport';     // ✅ Already Added
 import IssueTracking from './pages/IssueTracking'; // ✅ NEW
 import Navigation from './components/Navigation';
 import { CartProvider } from './context/CartContext';
-import ChatBox from './pages/Chatbox'; // Add the ChatBox import
+// import ChatBox from './pages/Chatbox'; // Add the ChatBox import
 import './styles/global.css';
 
 function App() {
@@ -48,8 +48,8 @@ function App() {
           </main>
           {/* Pass the isChatOpen and setIsChatOpen to Navigation component */}
           <Navigation isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} />
-          {/* Display the ChatBox component conditionally */}
-          <ChatBox isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} />
+{/*           {/* Display the ChatBox component conditionally */}
+          <ChatBox isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} /> */}
         </div>
       </BrowserRouter>
     </CartProvider>
