@@ -59,7 +59,7 @@ function Login() {
   
     // Make the API call to login
     try {
-      const response = await axios.post('http://${API}/api/auth/login', { mobile, password });
+      const response = await axios.post('https://${API}/api/auth/login', { mobile, password });
   
       if (response.data.message === 'Login successful') {
         // ✅ Status Check
