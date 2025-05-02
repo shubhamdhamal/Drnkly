@@ -10,7 +10,10 @@ connectDB(); // Call the DB connection
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: 'https://www.drnkly.in',
+  credentials: true
+}));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', require('./routes/authRoutes'));
