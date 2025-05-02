@@ -159,7 +159,7 @@ function SignUp() {
   
     try {
       // Submit the form data to the backend
-      const res = await axios.post('http://drnkly.in/api/auth/signup', finalData, {
+      const res = await axios.post('https://drnkly.in/api/auth/signup', finalData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
   
