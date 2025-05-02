@@ -24,7 +24,9 @@ app.use('/api', orderRoutes);
 app.use('/uploads/issues', express.static('uploads/issues'));
 // Routes
 app.use('/api/issues', issueRoutes);
-
+app.get('/' , (req, res) => {
+  res.send('API IS WORKING');
+});
 
 
 const PORT = process.env.PORT || 5000;
