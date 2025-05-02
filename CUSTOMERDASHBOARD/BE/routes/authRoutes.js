@@ -8,8 +8,6 @@ const upload = multer({ dest: 'uploads/idproofs/' }); // Set up file storage for
 // User Signup Route
 router.post('/signup', upload.single('idProof'), signup);
 
-module.exports = router;
-
 const { login } = require('../controllers/authController');
 
 router.post('/login', login);
