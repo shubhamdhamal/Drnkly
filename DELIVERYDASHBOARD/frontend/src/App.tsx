@@ -108,7 +108,7 @@ function App() {
       const token = localStorage.getItem('authToken');
       if (!token) return;
 
-      const res = await fetch('http://localhost:5000/api/auth/profile', {
+      const res = await fetch('https://delivery.drnkly.in/api/auth/profile', {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -134,7 +134,7 @@ function App() {
         const token = localStorage.getItem('authToken');
         if (!token) return;
   
-        const res = await fetch('http://localhost:5000/api/orders/handedOver', {
+        const res = await fetch('https://delivery.drnkly.in/api/orders/handedOver', {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -177,7 +177,7 @@ const handleItemAction = async (orderId: string, itemId: string, action: 'accept
       const token = localStorage.getItem('authToken');
       if (!token) return;
 
-      const res = await fetch(`http://localhost:5000/api/orders/${orderId}/items/${itemId}/accept`, {
+      const res = await fetch(`https://delivery.drnkly.in/api/orders/${orderId}/items/${itemId}/accept`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -221,7 +221,7 @@ const handleItemAction = async (orderId: string, itemId: string, action: 'accept
       const token = localStorage.getItem('authToken');
       if (!token) return;
 
-      const res = await fetch(`http://localhost:5000/api/orders/${orderId}/items/${itemId}/reject`, {
+      const res = await fetch(`https://delivery.drnkly.in/api/orders/${orderId}/items/${itemId}/reject`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -262,7 +262,7 @@ const handleItemAction = async (orderId: string, itemId: string, action: 'accept
       const token = localStorage.getItem('authToken');
       if (!token) return;
 
-      const res = await fetch(`http://localhost:5000/api/orders/${orderId}/items/${itemId}/deliver`, {
+      const res = await fetch(`https://delivery.drnkly.in/api/orders/${orderId}/items/${itemId}/deliver`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -321,7 +321,7 @@ const handleItemAction = async (orderId: string, itemId: string, action: 'accept
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       try {
-        const response = await fetch('http://localhost:5000/api/auth/login', {
+        const response = await fetch('https://delivery.drnkly.in/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password })
@@ -408,7 +408,7 @@ const handleItemAction = async (orderId: string, itemId: string, action: 'accept
       }
     
       try {
-        const response = await fetch('http://localhost:5000/api/auth/register', {
+        const response = await fetch('https://delivery.drnkly.in/api/auth/register', {
           method: 'POST',
           body: formDataToSend
         });
