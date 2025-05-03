@@ -322,7 +322,7 @@ function Products() {
             style={{ background: 'white', borderRadius: '12px', padding: '10px', textAlign: 'center' }}
           >
             <img
-              src={`https://drnkly.in${product.image}`}
+              src={`https://drnkly.in/vendor${product.image}`}
               alt={product.name}
               style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px' }}
             />
