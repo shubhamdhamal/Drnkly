@@ -27,33 +27,8 @@ const categories = [
 ];
 
 const stores = [
-  {
-    id: 1,
-    name: "Premium Spirits",
-    rating: 4.8,
-    image: "https://images.unsplash.com/photo-1597290282695-edc43d0e7129?w=600&h=400&fit=crop",
-    address: "123 Main St",
-    distance: "0.8 miles",
-    openTime: "10:00 AM - 10:00 PM"
-  },
-  {
-    id: 2,
-    name: "Wine & More",
-    rating: 4.5,
-    image: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=600&h=400&fit=crop",
-    address: "456 Oak Ave",
-    distance: "1.2 miles",
-    openTime: "11:00 AM - 9:00 PM"
-  },
-  {
-    id: 3,
-    name: "Craft Beer House",
-    rating: 4.7,
-    image: "https://images.unsplash.com/photo-1546552356-3fae876a61ca?w=600&h=400&fit=crop",
-    address: "789 Pine St",
-    distance: "1.5 miles",
-    openTime: "12:00 PM - 11:00 PM"
-  }
+  { id: 1, name: "PK Wines", rating: 4.8, image: "https://images.unsplash.com/photo-1597290282695-edc43d0e7129?w=600&h=400&fit=crop", address: "123 Main St", distance: "0.8 miles", openTime: "10:00 AM - 10:00 PM" },
+  { id: 2, name: "Sunrise Family Garden Restaurant", rating: 4.5, image: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=600&h=400&fit=crop", address: "456 Oak Ave", distance: "1.2 miles", openTime: "11:00 AM - 9:00 PM" }
 ];
 
 function Dashboard() {
@@ -190,51 +165,20 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="relative overflow-hidden rounded-2xl mb-8">
-          <div className="absolute inset-0 bg-gradient-to-r from-[#cd6839] to-[#e88a5d]" style={{ animation: 'gradientShift 8s ease infinite' }} />
-          <div className="absolute inset-0 overflow-hidden">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="absolute" style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                width: '100px',
-                height: '100px',
-                background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)',
-                animation: `float ${3 + i}s ease-in-out infinite`,
-                animationDelay: `${i * 0.5}s`
-              }} />
-            ))}
-          </div>
-
-          <Sparkles
-            className="absolute text-white/30"
-            style={{
-              left: `${sparklePosition.x}%`,
-              top: `${sparklePosition.y}%`,
-              transition: 'all 2s ease-in-out',
-              animation: 'sparkle 2s ease-in-out infinite'
-            }}
-            size={24}
+        <div
+          onClick={() => navigate('/products')}
+          className="relative mb-8 rounded-2xl overflow-hidden shadow-md cursor-pointer group"
+        >
+          <img
+            src="../src/pages/banner.jpg"
+            alt="The Glenwalk Banner"
+            className="w-full h-auto object-cover transition-all duration-1000 ease-in-out scale-100 group-hover:scale-105"
           />
+        </div>
 
-          <div className="relative z-10 p-8">
-            <div className="max-w-md">
-              <h2 className="text-3xl font-bold text-white mb-2">Up to 30% Off</h2>
-              <p className="text-white/90 text-lg mb-6">On Your First Order</p>
-              <button
-                onClick={() => navigate('/products')}
-                className="bg-white text-[#cd6839] px-8 py-3 rounded-full font-semibold hover:bg-opacity-90 transition-all transform hover:scale-105"
-              >
-                Shop Now
-              </button>
-            </div>
-          </div>
-
-          <div className="absolute top-0 right-0 w-1/3 h-full">
-            <Wine size={200} className="text-white/10 transform rotate-12" style={{ animation: 'float 6s ease-in-out infinite' }} />
-          </div>
+        <div className="drink-warning text-center text-[#cd6839] font-bold text-lg md:text-xl hidden md:block mb-8">
+          Drink Responsibly – Alcohol consumption is injurious to health 🍷
         </div>
 
         {/* Categories */}
