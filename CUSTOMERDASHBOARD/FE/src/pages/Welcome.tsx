@@ -105,7 +105,7 @@ function Welcome() {
               animation: 'float 3s ease-in-out infinite'
             }}
           >
-            Up to 30% Off
+            GET 90 ML FREE
           </h2>
           <p 
             className="text-gray-300"
