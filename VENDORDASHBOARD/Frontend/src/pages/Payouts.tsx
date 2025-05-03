@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Calendar, Download } from 'lucide-react';
 import Button from '../components/Button';
-import jsPDF from 'jspdf';
+import jsPDF from 'jspdf/dist/jspdf.umd.min.js';
 import axios from 'axios';
 
 const Payouts: React.FC = () => {
