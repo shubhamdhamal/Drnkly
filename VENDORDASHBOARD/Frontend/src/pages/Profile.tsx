@@ -24,7 +24,7 @@ const Profile: React.FC = () => {
 
       try {
         // Send the request to the backend to fetch the profile data
-        const response = await axios.get('http://localhost:5000/api/vendor/profile', {
+        const response = await axios.get('https://drnkly.in/vendor/api/vendor/profile', {
           headers: {
             Authorization: `Bearer ${token}`, // Send token in Authorization header
           },

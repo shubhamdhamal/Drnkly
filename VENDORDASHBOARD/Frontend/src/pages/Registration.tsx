@@ -39,7 +39,7 @@ const Registration: React.FC = () => {
     if (!vendorId) return;
     const fetchStatus = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/vendor/status/${vendorId}`);
+        const res = await axios.get(`https://drnkly.in/vendor/api/vendor/status/${vendorId}`);
         setVerificationStatus(res.data.verificationStatus);
       } catch (err) {
         console.error('Error fetching vendor status:', err);
@@ -130,7 +130,7 @@ const Registration: React.FC = () => {
       };
   
       try {
-        const res = await axios.post('http://localhost:5000/api/vendor/register', registrationData);
+        const res = await axios.post('https://drnkly.in/vendor/api/vendor/register', registrationData);
         setVendorId(res.data.vendorId);
         navigate('/login'); // move to login after successful registration
       } catch (error: any) {

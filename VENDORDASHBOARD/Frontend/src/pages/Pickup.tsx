@@ -30,7 +30,7 @@ const Pickup: React.FC = () => {
   const fetchPickupOrders = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const res = await axios.get('http://localhost:5000/vendor/ready-for-pickup', {
+      const res = await axios.get('https://drnkly.in/vendor/vendor/ready-for-pickup', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -47,7 +47,7 @@ const Pickup: React.FC = () => {
     try {
       const token = localStorage.getItem('authToken');
       const res = await axios.put(
-        `http://localhost:5000/vendor/orders/handover`,
+        `https://drnkly.in/vendor/vendor/orders/handover`,
         { productId, orderNumber },
         {
           headers: {

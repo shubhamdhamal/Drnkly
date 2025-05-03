@@ -42,7 +42,7 @@ const Products: React.FC = () => {
           return;
         }
   
-        const response = await axios.get('http://localhost:5000/api/products/vendor', {
+        const response = await axios.get('https://drnkly.in/vendor/api/products/vendor', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -56,7 +56,7 @@ const Products: React.FC = () => {
   
     const fetchCategories = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/categories');
+        const response = await axios.get('https://drnkly.in/vendor/api/categories');
         setCategories(response.data.categories); // Update state with categories
       } catch (error) {
         console.error('Error fetching categories:', error);
@@ -80,7 +80,7 @@ const handleAddProduct = async (e: React.FormEvent) => {
   }
 
   try {
-    const response = await axios.post('http://localhost:5000/api/products/add', formData, {
+    const response = await axios.post('https://drnkly.in/vendor/api/products/add', formData, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'multipart/form-data', // Important to set this header
@@ -130,7 +130,7 @@ const handleAddProduct = async (e: React.FormEvent) => {
 
       // Sending the PUT request to update the product
       const response = await axios.put(
-        `http://localhost:5000/api/products/${updatedProduct._id}`, // Use _id instead of id
+        `https://drnkly.in/vendor/api/products/${updatedProduct._id}`, // Use _id instead of id
         updatedProduct,
         {
           headers: {
@@ -165,7 +165,7 @@ const handleAddProduct = async (e: React.FormEvent) => {
         }
 
         // Send DELETE request to backend
-        await axios.delete(`http://localhost:5000/api/products/${productId}`, {
+        await axios.delete(`https://drnkly.in/vendor/api/products/${productId}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -310,7 +310,7 @@ const handleAddProduct = async (e: React.FormEvent) => {
           <div key={product._id} className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
             <div className="relative">
               <img
-                src={`http://localhost:5000${product.image}`} // The image path returned by the backend
+                src={`https://drnkly.in/vendor${product.image}`} // The image path returned by the backend
                 alt={product.name}
                 className="w-full h-48 object-cover"
               />

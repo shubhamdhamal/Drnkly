@@ -12,7 +12,7 @@ const Payouts: React.FC = () => {
   useEffect(() => {
     const fetchQRCode = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/qr/get-qr', {
+        const res = await axios.get('https://drnkly.in/vendor/api/qr/get-qr', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("authToken")}`,
           },
@@ -99,7 +99,7 @@ const Payouts: React.FC = () => {
     formData.append('qrCode', file);
 
     try {
-      const res = await axios.post('http://localhost:5000/api/qr/upload-qr', formData, {
+      const res = await axios.post('https://drnkly.in/vendor/api/qr/upload-qr', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${localStorage.getItem('authToken')}`,

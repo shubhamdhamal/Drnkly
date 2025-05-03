@@ -16,7 +16,7 @@ const DeliveryPartners: React.FC = () => {
   useEffect(() => {
     const fetchDeliveryPartners = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/delivery-partners', {
+        const response = await axios.get('https://drnkly.in/vendor/api/delivery-partners', {
           headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` },
         });
         setDeliveryPartners(response.data.deliveryPartners);

@@ -37,7 +37,7 @@ const Orders: React.FC = () => {
         setLoading(true);
         const token = localStorage.getItem('authToken');
 
-        const res = await axios.get('http://localhost:5000/vendor/orders', {
+        const res = await axios.get('https://drnkly.in/vendor/vendor/orders', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -81,7 +81,7 @@ const Orders: React.FC = () => {
 
     try {
       await axios.put(
-        `http://localhost:5000/vendor/orders/${orderId}/status`,
+        `https://drnkly.in/vendor/vendor/orders/${orderId}/status`,
         { productId, status },
         {
           headers: {
