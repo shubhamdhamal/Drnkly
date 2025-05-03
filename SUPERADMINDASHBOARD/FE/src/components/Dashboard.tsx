@@ -30,7 +30,7 @@ function Dashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/dashboard-stats');
+        const res = await axios.get('https://admin.drnkly.in/api/dashboard-stats');
         setStats(res.data);
       } catch (error) {
         console.error('Failed to load dashboard stats', error);
