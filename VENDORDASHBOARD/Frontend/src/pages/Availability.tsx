@@ -62,7 +62,7 @@ const Availability: React.FC = () => {
       }));
   
       // Send updated inStock status for each product to the backend
-      const response = await axios.put('http://localhost:5000/api/products/update-stock', { products: updatedProducts }, {
+      const response = await axios.put('https://drnkly.in/vendor/api/products/update-stock', { products: updatedProducts }, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

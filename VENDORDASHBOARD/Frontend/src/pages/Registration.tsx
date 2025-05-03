@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Upload, MapPin, Wine, Store, FileCheck, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import Input from '../components/Input';
 import Button from '../components/Button';
 import FileUpload from '../components/FileUpload';
@@ -39,7 +40,7 @@ const Registration: React.FC = () => {
     if (!vendorId) return;
     const fetchStatus = async () => {
       try {
-        const res = await axios.get(`https://drnkly.in/vendor/api/vendor/status/${vendorId}`);
+        const res = await axios.get(`http://drnkly.in/vendor/api/vendor/status/${vendorId}`);
         setVerificationStatus(res.data.verificationStatus);
       } catch (err) {
         console.error('Error fetching vendor status:', err);
@@ -112,14 +113,35 @@ const Registration: React.FC = () => {
       return;
     }
   
-    if (step === 4) {
-      // 🚀 Just move to Step 5 without API call yet
-      setStep(5);
-      return;
-    }
+// === Replace Step 4 block ===
+if (step === 4) {
+  const registrationData = {
+    businessName,
+    businessEmail,
+    businessPhone,
+    password,
+    location,
+    productCategories: selectedCategories,
+  };
+  console.log('📦 Sending registration data:', registrationData);
+
+
+  try {
+    const res = await axios.post('http://drnkly.in/vendor/api/vendor/register', registrationData);
+    setVendorId(res.data.vendorId);
+    setVerificationStatus('pending');
+    toast.success("Registration submitted! Awaiting admin approval.");
+    setStep(5); // Move to status page
+  } catch (error: any) {
+    console.error('❌ Registration failed:', error.response?.data || error.message);
+    toast.error("Registration failed. Try again.");
+  }
+
+  return;
+}
+
   
-    if (step === 5 && verificationStatus === 'verified') {
-      // 🚀 Now submit the API finally
+    if (step === 5) {
       const registrationData = {
         businessName,
         businessEmail,
@@ -128,15 +150,19 @@ const Registration: React.FC = () => {
         location,
         productCategories: selectedCategories,
       };
-  
+    
       try {
-        const res = await axios.post('https://drnkly.in/vendor/api/vendor/register', registrationData);
+        const res = await axios.post('http://drnkly.in/vendor/api/vendor/register', registrationData);
         setVendorId(res.data.vendorId);
-        navigate('/login'); // move to login after successful registration
+        setVerificationStatus('pending'); // update status to track
+        toast.success("Registration submitted! Awaiting admin approval.");
+        navigate('/login');
       } catch (error: any) {
         console.error('❌ Registration failed:', error.response?.data || error.message);
+        toast.error("Registration failed. Try again.");
       }
     }
+    
   };
   
 
@@ -276,14 +302,15 @@ const Registration: React.FC = () => {
                 </Button>
               )}
               <div className="flex flex-col">
-                <Button type="submit" disabled={step === 5 && verificationStatus !== 'verified'}>
-                  {step === 5 ? 'Complete Registration' : 'Continue'}
-                </Button>
-                {step === 5 && verificationStatus !== 'verified' && (
-                  <p className="text-sm text-red-600 mt-2">
-                    Admin approval is required to proceed.
-                  </p>
-                )}
+              <Button type="submit">
+  {step === 5 ? 'Refresh Status' : 'Continue'}
+</Button>
+{step === 5 && verificationStatus !== 'verified' && (
+  <p className="text-sm text-red-600 mt-2">
+    Admin approval is required to proceed.
+  </p>
+)}
+
               </div>
             </div>
           </form>
