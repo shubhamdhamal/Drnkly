@@ -19,7 +19,7 @@ const Availability: React.FC = () => {
       try {
         const token = localStorage.getItem('authToken'); // Get the auth token from localStorage
         if (token) {
-          const response = await axios.get('http://localhost:5000/api/vendor/products', {
+          const response = await axios.get('http://drnkly.in/vendor/api/vendor/products', {
             headers: {
               Authorization: `Bearer ${token}`,
             },

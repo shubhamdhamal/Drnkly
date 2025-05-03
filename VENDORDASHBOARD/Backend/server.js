@@ -48,7 +48,7 @@ app.use('/api/issues', issueRoutes);
 app.use('/api/qr', require('./routes/qrRoutes'));
 
 // ✅ 6. Start the server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
