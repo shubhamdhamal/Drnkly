@@ -48,7 +48,7 @@ function Login({ onLogin }: LoginProps) {
     }
 
     try {
-      const res = await axios.post('http://localhost:5000/api/superadmin/login', {
+      const res = await axios.post('https://admin.drnkly.in/api/superadmin/login', {
         emailOrMobile: email,
         password,
       });
