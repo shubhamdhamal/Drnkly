@@ -4,7 +4,8 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   optimizeDeps: {
-    exclude: ['html2canvas', 'core-js', 'jspdf', 'canvg'],
+    include: ['jspdf'],
+    exclude: ['html2canvas', 'core-js', 'canvg'],
   },
   build: {
     rollupOptions: {
