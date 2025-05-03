@@ -129,12 +129,19 @@ function Products() {
   };
 
   return (
-    <div className="container">
+    <div className="container" style={{ padding: '20px' }}>
       {/* Top Navbar */}
-      <div style={{ display: 'flex', alignItems: 'center', padding: '20px 0' }}>
-        <h1 style={{ margin: '0 auto' }}>Logo</h1>
-        <ShoppingCart onClick={() => navigate('/cart')} style={{ cursor: 'pointer' }} />
-      </div>
+     
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <img
+         src="../src/pages/logo2.png"
+          alt="Drnkly Logo"
+          className="h-32 w-48 object-contain"
+
+        />
+        <ShoppingCart onClick={() => navigate('/cart')} style={{ cursor: 'pointer' }} />
+      </div>
 
       {/* Search Bar */}
       <div className="mt-4 relative">

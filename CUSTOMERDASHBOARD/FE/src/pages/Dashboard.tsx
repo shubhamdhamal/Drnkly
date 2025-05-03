@@ -149,11 +149,7 @@ function Dashboard() {
             </div>
           </div>
 
-          <img
-              src="../src/pages/logo2.png"
-              alt="Drnkly Logo"
-              className="h-32 object-contain"
-            />
+
 
            {/* Search Bar */}
            <form onSubmit={handleSearchSubmit}>
