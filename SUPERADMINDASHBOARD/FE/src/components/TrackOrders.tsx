@@ -18,7 +18,7 @@ function TrackOrders() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/orders');
+        const res = await axios.get('https://admin.drnkly.in/api/orders');
         setOrders(res.data.orders);
       } catch (err) {
         console.error('Failed to fetch orders:', err);

@@ -63,6 +63,22 @@ const OrderHistory: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 px-4 py-6">
+
+
+<div className="flex justify-center mb-6">
+
+<img
+
+src="../src/pages/logo2.png"
+
+alt="Drnkly Logo"
+
+className="h-32 w-48 object-contain"
+
+/>
+
+</div>
+      
       <h1 className="text-2xl font-bold mb-6">Order History</h1>
 
       {loading ? (

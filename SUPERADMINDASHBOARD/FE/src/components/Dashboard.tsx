@@ -39,7 +39,7 @@ function Dashboard() {
 
     const fetchVendors = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/recent-vendors');
+        const res = await axios.get('https://admin.drnkly.in/api/recent-vendors');
         setRecentApplications(res.data.vendors);
       } catch (error) {
         console.error('Failed to load recent vendor applications', error);
