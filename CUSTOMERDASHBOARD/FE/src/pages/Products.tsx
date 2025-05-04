@@ -135,7 +135,7 @@ function Products() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <img
-         src="../src/pages/logo2.png"
+         src="/logo2.png"
           alt="Drnkly Logo"
           className="h-32 w-48 object-contain"
 
