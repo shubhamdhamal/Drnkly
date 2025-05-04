@@ -286,7 +286,7 @@ const Profile = () => {
   onClick={() => navigate('/dashboard')}
 >
 <img
-              src="../src/pages/logo2.png"
+              src="/logo2.png"
               alt="Drnkly Logo"
               className="h-32 object-contain"
             />
