@@ -173,7 +173,7 @@ function Dashboard() {
           className="relative mb-8 rounded-2xl overflow-hidden shadow-md cursor-pointer group"
         >
           <img
-            src="../src/pages/banner.jpg"
+            src="https://report.livingliquidz.com/Content/wp-content/uploads/HomeBanner/Glenwalkbannerwebsite20242121177.jpg"
             alt="The Glenwalk Banner"
             className="w-full h-auto object-cover transition-all duration-1000 ease-in-out scale-100 group-hover:scale-105"
           />
