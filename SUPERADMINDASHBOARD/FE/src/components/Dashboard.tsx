@@ -40,11 +40,13 @@ function Dashboard() {
     const fetchVendors = async () => {
       try {
         const res = await axios.get('https://admin.drnkly.in/api/recent-vendors');
-        setRecentApplications(res.data.vendors);
+        setRecentApplications(Array.isArray(res.data.vendors) ? res.data.vendors : []);
       } catch (error) {
         console.error('Failed to load recent vendor applications', error);
+        setRecentApplications([]); // fallback to avoid undefined
       }
     };
+    
 
     fetchStats();
     fetchVendors();
@@ -121,27 +123,34 @@ function Dashboard() {
               </tr>
             </thead>
             <tbody>
-              {recentApplications.map((app) => (
-                <tr key={app.id} className="border-b">
-                  <td className="py-3 px-4">{app.id}</td>
-                  <td className="py-3 px-4">{app.businessName}</td>
-                  <td className="py-3 px-4">
-                    <span className={`px-2 py-1 rounded-full text-sm ${
-                      app.status === 'Approved' ? 'bg-green-100 text-green-800' :
-                      app.status === 'Rejected' ? 'bg-red-100 text-red-800' :
-                      'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {app.status}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4">{app.appliedDate}</td>
-                  <td className="py-3 px-4">{app.documentsCount} files</td>
-                  <td className="py-3 px-4">
-                    <button className="text-blue-600 hover:text-blue-800">Review</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
+  {Array.isArray(recentApplications) && recentApplications.length > 0 ? (
+    recentApplications.map((app) => (
+      <tr key={app.id} className="border-b">
+        <td className="py-3 px-4">{app.id}</td>
+        <td className="py-3 px-4">{app.businessName}</td>
+        <td className="py-3 px-4">
+          <span className={`px-2 py-1 rounded-full text-sm ${
+            app.status === 'Approved' ? 'bg-green-100 text-green-800' :
+            app.status === 'Rejected' ? 'bg-red-100 text-red-800' :
+            'bg-yellow-100 text-yellow-800'
+          }`}>
+            {app.status}
+          </span>
+        </td>
+        <td className="py-3 px-4">{app.appliedDate}</td>
+        <td className="py-3 px-4">{app.documentsCount} files</td>
+        <td className="py-3 px-4">
+          <button className="text-blue-600 hover:text-blue-800">Review</button>
+        </td>
+      </tr>
+    ))
+  ) : (
+    <tr>
+      <td colSpan={6} className="text-center text-gray-500 py-4">No recent applications found.</td>
+    </tr>
+  )}
+</tbody>
+
           </table>
         </div>
       </div>
