@@ -69,7 +69,7 @@ const OrderHistory: React.FC = () => {
 
 <img
 
-src="../src/pages/logo2.png"
+src="/logo2.png"
 
 alt="Drnkly Logo"
 
