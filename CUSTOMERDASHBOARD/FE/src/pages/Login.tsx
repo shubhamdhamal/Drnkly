@@ -268,7 +268,7 @@ function Login() {
             {/* Alcohol Health Warning Banner */}
 <div className="py-4 px-2 flex justify-center items-center">
   <img
-    src="../src/pages/photo1.jpeg"
+    src="https://github.com/kodeosoftwaretechnology/Drnkly/tree/main/CUSTOMERDASHBOARD/FE/src/pages/photo1.jpeg"
     alt="Alcohol is Dangerous Warning"
     className="w-[500px] h-[100px] object-cover"
   />
