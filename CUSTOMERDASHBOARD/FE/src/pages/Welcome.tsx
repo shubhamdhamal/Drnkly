@@ -35,29 +35,24 @@ function Welcome() {
       {/* Content Container */}
       <div className="relative z-10 max-w-md w-11/12 text-center px-4">
         {/* Logo */}
-        <div 
-          className="mx-auto mb-8 w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg"
-          style={{
-            animation: 'float 3s ease-in-out infinite',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
-          }}
-        >
-          <Wine 
-            size={40} 
-            className="text-gray-800"
-            style={{
-              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
-            }}
-          />
-        </div>
+    
 
         {/* Title */}
         <img
-         src="/logo2.png"
-          alt="Drnkly Logo"
-          className="h-32 w-48 object-contain"
+  src="/logo2.png"
+  alt="Drnkly Logo"
+  className="h-16 md:h-24 lg:h-32 mx-auto object-contain"
+/>
+<h1 
+  className="text-4xl font-bold text-gray-900 mb-4"
+  style={{
+    animation: 'slideUp 0.8s ease-out',
+    letterSpacing: '1px'
+  }}
+>
+  ONLINE LIQUOR DELIVERY
+</h1>
 
-        />
 
         {/* Subtitle */}
         <p 

@@ -86,15 +86,16 @@ const Cart = () => {
       <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
       <div className="flex justify-center mb-6">
 
-<img
-
-src="../src/pages/logo2.png"
-
-alt="Drnkly Logo"
-
-className="h-32 w-48 object-contain"
-
-/>
+      <div 
+        className="cursor-pointer inline-block"
+        onClick={() => navigate('/dashboard')}
+      >
+        <img
+          src="/logo2.png"
+          alt="Drnkly Logo"
+          className="h-32 w-48 object-contain"
+        />
+      </div>
 
 </div>
         <div className="flex items-center mb-8">

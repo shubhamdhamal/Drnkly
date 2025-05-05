@@ -67,9 +67,39 @@ const Navigation: React.FC<NavigationProps> = ({ isChatOpen, setIsChatOpen }) =>
               <h3 className="text-xl text-red-600 font-semibold mb-2">
                 Terms & Conditions
               </h3>
-              <p className="text-sm text-gray-700 leading-relaxed">
-                By accessing this app, you affirm you're of legal drinking age. Use of this app in restricted states or by underage users is punishable by law. If you're a business, you must have a valid license.
+              <p className="text-sm text-gray-700 mb-4">
+              1. Age Verification & Legal Drinking Age:The customer must confirm they are 21 years or older (Hard Liquor Prohibited) or 25 years or older (for All liquor) as per Maharashtra excise rules.Age verification via government ID (Aadhaar, PAN, Driving License, Passport) is mandatory before delivery.  </p>
+              <p className="text-sm text-gray-700 mb-4">
+              2. Prohibition of Sale to Intoxicated Persons:Liquor will not be delivered to anyone who appears intoxicated at the time of delivery.            </p>
+              <p className="text-sm text-gray-700 mb-4">
+              3. Prohibition of Sale in Dry Areas:Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone.            </p>
+            
+              <p className="text-sm text-gray-700 mb-4">
+              4. Restricted Timings for Sale & Delivery:Liquor delivery is allowed only during permitted hours (typically 11 AM to 11 PM in most areas, subject to local regulations).          </p>
+              <p className="text-sm text-gray-700 mb-4">
+              5. Quantity Restrictions:Customers cannot purchase beyond the permissible limit (e.g., 3 liters of IMFL or 9 liters of beer per person per transaction). Bulk purchases may require additional permits.          </p>
+              <p className="text-sm text-gray-700 mb-4">
+              6. No Resale or Supply to Minors:The customer must agree not to resell liquor and not to supply it to minors (under 21/25).         </p>
+              <p className="text-sm text-gray-700 mb-4">
+              7. Valid ID Proof Required at Delivery:The delivery agent will verify the customer’s original ID at the time of delivery. If ID is not provided, the order will be cancelled. </p> 
+              <p className="text-sm text-gray-700 mb-4">
+              8. No Returns or Refunds for Sealed Liquor Bottles:Once liquor is sold, returns or refunds are not permitted unless the product is damaged/spoiled (as per excise rules).
               </p>
+             <p className="text-sm text-gray-700 mb-4">
+             9. Compliance with Local Municipal & Police Regulations:The customer must ensure that liquor consumption at their location complies with local laws (e.g., no consumption in public places).</p>
+             <p className="text-sm text-gray-700 mb-4">
+             10. Liability Disclaimer:The business is not responsible for misuse, overconsumption, or illegal resale by the customer.</p>
+<p className="text-sm text-gray-700 mb-4">
+11. Right to Refuse Service
+      The business reserves the right to cancel orders if:
+            The customer fails age verification.
+            The delivery location is in a dry area or restricted zone.
+            Suspicion of fraudulent activity.</p>
+<p className="text-sm text-gray-700 mb-4">
+             12. Data Privacy & Use of Customer Information:Customer ID and personal data will be stored as per excise department requirements and may be shared with authorities if required.
+</p>
+<p className="text-sm text-gray-700 mb-4">
+13. Mandatory Compliance with Maharashtra Excise Laws:The customer agrees that the sale is governed by the Maharashtra Prohibition Act, 1949, and any violation may lead to legal action.</p>
             </section>
 
             <section className="mb-6">
@@ -114,7 +144,7 @@ const Navigation: React.FC<NavigationProps> = ({ isChatOpen, setIsChatOpen }) =>
 
             <section className="mt-6">
               <p className="text-lg text-red-600 font-semibold">
-                🚭 तुमच्या कुटुंबासाठी मद्यपान आणि धूम्रपान सोडा🚯 – आरोग्य हाच खरा धन आहे ❤️🍀
+                🚭 तुमच्या कुटुंबासाठी मद्यपान आणि धूम्रपान सोडा🚯 – आरोग्य हाच खरा धन आहे ❤🍀
               </p>
             </section>
           </div>
@@ -156,30 +186,11 @@ const Navigation: React.FC<NavigationProps> = ({ isChatOpen, setIsChatOpen }) =>
           />
         </div>
         <div className="py-1 text-center text-red-500 text-sm font-semibold">
-        🚭 तुमच्या कुटुंबासाठी मद्यपान आणि धूम्रपान सोडा 🚯– आरोग्य हाच खरा धन आहे🍀
+        🚭 तुमच्या कुटुंबासाठी मद्यपान आणि धूम्रपान सोडा 🚯
         </div>
       </nav>
 
-{/* Chat Button (Floating on the right side) */}
-<div 
-          className="fixed right-4 bottom-32 w-[50px] h-[50px] bg-blue-500 rounded-full flex items-center justify-center text-white text-3xl font-bold z-50 sm:bottom-6 sm:w-[50px] sm:h-[50px] sm:text-2xl"
-          onClick={() => handleNavClick('chat')}
-        >
-          💬
-        </div>
 
-      {/* Chat Bot */}
-      {isChatOpen && (
-        <div className="fixed bottom-0 right-0 bg-white w-[300px] h-[400px] shadow-lg rounded-lg">
-          {/* Your chat bot UI */}
-          <div className="p-4">
-            <h2 className="text-lg font-semibold">Chat Bot</h2>
-            <div className="mt-2">
-              {/* Add your chatbot interaction here */}
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 };

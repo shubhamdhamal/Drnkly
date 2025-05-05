@@ -134,12 +134,16 @@ function Products() {
      
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div 
+        className="cursor-pointer inline-block"
+        onClick={() => navigate('/dashboard')}
+      >
         <img
-         src="/logo2.png"
+          src="/logo2.png"
           alt="Drnkly Logo"
           className="h-32 w-48 object-contain"
-
-        />
+        />
+      </div>
         <ShoppingCart onClick={() => navigate('/cart')} style={{ cursor: 'pointer' }} />
       </div>
 

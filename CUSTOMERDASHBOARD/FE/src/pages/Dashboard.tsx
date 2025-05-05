@@ -111,12 +111,16 @@ function Dashboard() {
               <Menu size={24} />
             </button>
 
+            <div 
+        className="cursor-pointer inline-block"
+        onClick={() => navigate('/dashboard')}
+      >
         <img
-         src="/logo2.png"
+          src="/logo2.png"
           alt="Drnkly Logo"
           className="h-32 w-48 object-contain"
-
-        />
+        />
+      </div>
 
 
             <div className="flex items-center space-x-4">

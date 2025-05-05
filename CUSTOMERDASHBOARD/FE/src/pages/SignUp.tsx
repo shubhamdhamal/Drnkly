@@ -179,9 +179,14 @@ function SignUp() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">
       <div className="w-full max-w-md">
         <div className="text-center mb-6">
-          <div className="w-16 h-16 mx-auto bg-white shadow rounded-full flex items-center justify-center">
-            <Wine size={28} className="text-orange-500" />
-          </div>
+        <div className="flex justify-center">
+  <img
+    src="/logo2.png"
+    alt="Drnkly Logo"
+    className="h-32 w-48 object-contain"
+  />
+</div>
+
           <h2 className="text-2xl font-bold mt-4">User Registration</h2>
           <p className="text-sm text-gray-500">Step {step} of 4</p>
         </div>
@@ -529,14 +534,38 @@ function SignUp() {
             <div className="bg-white rounded-lg shadow-lg p-6 max-w-lg w-full text-left overflow-y-auto max-h-[90vh]">
               <h2 className="text-lg font-bold mb-2 text-center">Terms & Conditions (English)</h2>
               <p className="text-sm text-gray-700 mb-4">
-                By accessing and using this website, you acknowledge and affirm that you are at least 21 years of age, or meet the minimum legal drinking age applicable in your state, as mandated by the governing State Excise Laws. For example, in Maharashtra and Karnataka, the minimum drinking age is 21, while in states like Delhi it is 25.
-              </p>
+              1. Age Verification & Legal Drinking Age:The customer must confirm they are 21 years or older (Hard Liquor Prohibited) or 25 years or older (for All liquor) as per Maharashtra excise rules.Age verification via government ID (Aadhaar, PAN, Driving License, Passport) is mandatory before delivery.  </p>
               <p className="text-sm text-gray-700 mb-4">
-                You understand that the purchase, possession, or consumption of alcohol without meeting this minimum age is a punishable offense under the relevant Prohibition and Excise Acts, and by continuing, you take full responsibility for complying with such laws.
-              </p>
+              2. Prohibition of Sale to Intoxicated Persons:Liquor will not be delivered to anyone who appears intoxicated at the time of delivery.            </p>
               <p className="text-sm text-gray-700 mb-4">
-                If you are accessing this platform on behalf of a business or licensed establishment, or for purposes involving resale or bulk purchases, you are required to hold a valid liquor license issued by the applicable State Excise Department.
+              3. Prohibition of Sale in Dry Areas:Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone.            </p>
+            
+              <p className="text-sm text-gray-700 mb-4">
+              4. Restricted Timings for Sale & Delivery:Liquor delivery is allowed only during permitted hours (typically 11 AM to 11 PM in most areas, subject to local regulations).          </p>
+              <p className="text-sm text-gray-700 mb-4">
+              5. Quantity Restrictions:Customers cannot purchase beyond the permissible limit (e.g., 3 liters of IMFL or 9 liters of beer per person per transaction). Bulk purchases may require additional permits.          </p>
+              <p className="text-sm text-gray-700 mb-4">
+              6. No Resale or Supply to Minors:The customer must agree not to resell liquor and not to supply it to minors (under 21/25).         </p>
+              <p className="text-sm text-gray-700 mb-4">
+              7. Valid ID Proof Required at Delivery:The delivery agent will verify the customer’s original ID at the time of delivery. If ID is not provided, the order will be cancelled. </p> 
+              <p className="text-sm text-gray-700 mb-4">
+              8. No Returns or Refunds for Sealed Liquor Bottles:Once liquor is sold, returns or refunds are not permitted unless the product is damaged/spoiled (as per excise rules).
               </p>
+             <p className="text-sm text-gray-700 mb-4">
+             9. Compliance with Local Municipal & Police Regulations:The customer must ensure that liquor consumption at their location complies with local laws (e.g., no consumption in public places).</p>
+             <p className="text-sm text-gray-700 mb-4">
+             10. Liability Disclaimer:The business is not responsible for misuse, overconsumption, or illegal resale by the customer.</p>
+<p className="text-sm text-gray-700 mb-4">
+11. Right to Refuse Service
+      The business reserves the right to cancel orders if:
+            The customer fails age verification.
+            The delivery location is in a dry area or restricted zone.
+            Suspicion of fraudulent activity.</p>
+<p className="text-sm text-gray-700 mb-4">
+             12. Data Privacy & Use of Customer Information:Customer ID and personal data will be stored as per excise department requirements and may be shared with authorities if required.
+</p>
+<p className="text-sm text-gray-700 mb-4">
+13. Mandatory Compliance with Maharashtra Excise Laws:The customer agrees that the sale is governed by the Maharashtra Prohibition Act, 1949, and any violation may lead to legal action.</p>
               <h3 className="text-sm text-gray-700 mb-4"><strong>Government Rules & Excise Acts:</strong></h3>
               <ul className="list-disc pl-5">
                 <li>✔ Maharashtra: Age 21</li>

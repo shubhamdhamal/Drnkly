@@ -3,10 +3,11 @@
 @tailwind utilities;
 
 /* Base styles */
-html, body {
+html, body, #root {
   height: 100%;
   margin: 0;
   padding: 0;
+  overflow-x: hidden;
 }
 
 body {

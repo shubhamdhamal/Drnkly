@@ -21,6 +21,7 @@ interface Order {
 }
 
 const OrderHistory: React.FC = () => {
+  const navigate = useNavigate(); // Add this line to define navigate
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -67,15 +68,16 @@ const OrderHistory: React.FC = () => {
 
 <div className="flex justify-center mb-6">
 
-<img
-
-src="/logo2.png"
-
-alt="Drnkly Logo"
-
-className="h-32 w-48 object-contain"
-
-/>
+<div 
+        className="cursor-pointer inline-block"
+        onClick={() => navigate('/dashboard')}
+      >
+        <img
+          src="/logo2.png"
+          alt="Drnkly Logo"
+          className="h-32 w-48 object-contain"
+        />
+      </div>
 
 </div>
       

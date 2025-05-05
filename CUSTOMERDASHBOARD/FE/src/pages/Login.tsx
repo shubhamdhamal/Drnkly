@@ -158,10 +158,15 @@ function Login() {
       <div className="flex-1 flex flex-col items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <Wine size={48} className="mx-auto text-[#cd6839]" />
+            <img
+              src="/logo2.png"
+              alt="Drnkly Logo"
+              className="h-16 md:h-24 lg:h-32 mx-auto object-contain"
+            />
             <h1 className="text-2xl font-bold mt-4">Welcome Back</h1>
             <p className="text-gray-600 mt-2">Sign in to continue</p>
           </div>
+  
 
           {/* Error Message */}
           {error && (
@@ -320,9 +325,39 @@ function Login() {
       {/* Terms & Conditions Content */}
       <div className="text-sm text-gray-700 mb-4">
         <p><strong>Terms & Conditions:</strong></p>
-        <p>
-          By accessing this app, you affirm you're of legal drinking age. Use of this app in restricted states or by underage users is punishable by law. If you're a business, you must have a valid license.
-        </p>
+        <p className="text-sm text-gray-700 mb-4">
+              1. Age Verification & Legal Drinking Age:The customer must confirm they are 21 years or older (Hard Liquor Prohibited) or 25 years or older (for All liquor) as per Maharashtra excise rules.Age verification via government ID (Aadhaar, PAN, Driving License, Passport) is mandatory before delivery.  </p>
+              <p className="text-sm text-gray-700 mb-4">
+              2. Prohibition of Sale to Intoxicated Persons:Liquor will not be delivered to anyone who appears intoxicated at the time of delivery.            </p>
+              <p className="text-sm text-gray-700 mb-4">
+              3. Prohibition of Sale in Dry Areas:Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone.            </p>
+            
+              <p className="text-sm text-gray-700 mb-4">
+              4. Restricted Timings for Sale & Delivery:Liquor delivery is allowed only during permitted hours (typically 11 AM to 11 PM in most areas, subject to local regulations).          </p>
+              <p className="text-sm text-gray-700 mb-4">
+              5. Quantity Restrictions:Customers cannot purchase beyond the permissible limit (e.g., 3 liters of IMFL or 9 liters of beer per person per transaction). Bulk purchases may require additional permits.          </p>
+              <p className="text-sm text-gray-700 mb-4">
+              6. No Resale or Supply to Minors:The customer must agree not to resell liquor and not to supply it to minors (under 21/25).         </p>
+              <p className="text-sm text-gray-700 mb-4">
+              7. Valid ID Proof Required at Delivery:The delivery agent will verify the customer’s original ID at the time of delivery. If ID is not provided, the order will be cancelled. </p> 
+              <p className="text-sm text-gray-700 mb-4">
+              8. No Returns or Refunds for Sealed Liquor Bottles:Once liquor is sold, returns or refunds are not permitted unless the product is damaged/spoiled (as per excise rules).
+              </p>
+             <p className="text-sm text-gray-700 mb-4">
+             9. Compliance with Local Municipal & Police Regulations:The customer must ensure that liquor consumption at their location complies with local laws (e.g., no consumption in public places).</p>
+             <p className="text-sm text-gray-700 mb-4">
+             10. Liability Disclaimer:The business is not responsible for misuse, overconsumption, or illegal resale by the customer.</p>
+<p className="text-sm text-gray-700 mb-4">
+11. Right to Refuse Service
+      The business reserves the right to cancel orders if:
+            The customer fails age verification.
+            The delivery location is in a dry area or restricted zone.
+            Suspicion of fraudulent activity.</p>
+<p className="text-sm text-gray-700 mb-4">
+             12. Data Privacy & Use of Customer Information:Customer ID and personal data will be stored as per excise department requirements and may be shared with authorities if required.
+</p>
+<p className="text-sm text-gray-700 mb-4">
+13. Mandatory Compliance with Maharashtra Excise Laws:The customer agrees that the sale is governed by the Maharashtra Prohibition Act, 1949, and any violation may lead to legal action.</p>
       </div>
 
       {/* Declaration Section */}
