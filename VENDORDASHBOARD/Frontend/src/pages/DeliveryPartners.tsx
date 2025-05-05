@@ -16,7 +16,7 @@ const DeliveryPartners: React.FC = () => {
   useEffect(() => {
     const fetchDeliveryPartners = async () => {
       try {
-        const response = await axios.get('https://drnkly.in/vendor/api/delivery-partners', {
+        const response = await axios.get('https://vendor.drnkly.in/api/delivery-partners', {
           headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` },
         });
         setDeliveryPartners(response.data.deliveryPartners);
@@ -39,7 +39,7 @@ const DeliveryPartners: React.FC = () => {
 
     try {
       const response = await axios.post(
-        'http://localhost:5000/api/delivery-partners/add',
+        'https://vendor.drnkly.in/api/delivery-partners/add',
         {
           name: partnerName,
           email: partnerEmail,

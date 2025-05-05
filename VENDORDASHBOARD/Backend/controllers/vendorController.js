@@ -95,19 +95,26 @@ exports.uploadFiles = (req, res) => {
 };
 
 // Update verification status
-// PATCH /api/vendor/verify
 exports.updateVerificationStatus = async (req, res) => {
   const { vendorId, status } = req.body;
 
-  const vendor = await Vendor.findById(vendorId);
-  if (!vendor) return res.status(404).json({ error: 'Vendor not found' });
+  try {
+    const vendor = await Vendor.findById(vendorId);
+    if (!vendor) {
+      return res.status(404).json({ error: 'Vendor not found' });
+    }
 
-  vendor.verificationStatus = status;
-  await vendor.save();
+    vendor.verificationStatus = status;
+    await vendor.save();
 
-  res.status(200).json({ message: 'Verification status updated' });
+    res.status(200).json({
+      message: 'Verification status updated',
+      vendor: vendor,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
-
 
 // Vendor login
 
@@ -120,6 +127,7 @@ exports.loginVendor = async (req, res) => {
       return res.status(400).json({ error: 'Email/Phone and password are required' });
     }
 
+    // Find vendor by email or phone
     const vendor = await Vendor.findOne({
       $or: [{ businessEmail: emailOrPhone }, { businessPhone: emailOrPhone }],
     });
@@ -128,16 +136,13 @@ exports.loginVendor = async (req, res) => {
       return res.status(400).json({ error: 'Invalid credentials' });
     }
 
-    // 🚫 BLOCK IF NOT VERIFIED
-    if (vendor.verificationStatus !== 'verified') {
-      return res.status(403).json({ error: 'Your account is not verified by admin yet.' });
-    }
-
+    // Compare the provided password with the stored hashed password
     const isMatch = await bcrypt.compare(password, vendor.password);
     if (!isMatch) {
       return res.status(400).json({ error: 'Invalid credentials' });
     }
 
+    // Generate JWT token
     const token = jwt.sign({ vendorId: vendor._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
     res.status(200).json({ token });
@@ -146,7 +151,6 @@ exports.loginVendor = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
-
 
 
 exports.getVendorProfile = async (req, res) => {

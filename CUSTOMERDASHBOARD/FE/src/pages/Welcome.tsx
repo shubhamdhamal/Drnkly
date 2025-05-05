@@ -52,15 +52,12 @@ function Welcome() {
         </div>
 
         {/* Title */}
-        <h1 
-          className="text-4xl font-bold text-gray-900 mb-4"
-          style={{
-            animation: 'slideUp 0.8s ease-out',
-            letterSpacing: '1px'
-          }}
-        >
-          ONLINE LIQUOR DELIVERY
-        </h1>
+        <img
+         src="/logo2.png"
+          alt="Drnkly Logo"
+          className="h-32 w-48 object-contain"
+
+        />
 
         {/* Subtitle */}
         <p 

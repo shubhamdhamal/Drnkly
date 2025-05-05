@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Calendar, Download } from 'lucide-react';
 import Button from '../components/Button';
-
+import jsPDF from 'jspdf';
 import axios from 'axios';
 
 const Payouts: React.FC = () => {
@@ -12,7 +12,7 @@ const Payouts: React.FC = () => {
   useEffect(() => {
     const fetchQRCode = async () => {
       try {
-        const res = await axios.get('https://drnkly.in/vendor/api/qr/get-qr', {
+        const res = await axios.get('https://vendor.drnkly.in/api/qr/get-qr', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("authToken")}`,
           },
@@ -74,7 +74,22 @@ const Payouts: React.FC = () => {
     document.body.removeChild(link);
   };
 
-  
+  const handleDownloadInvoice = (payout: any) => {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text('Payout Invoice', 14, 22);
+
+    doc.setFontSize(12);
+    doc.text(`Payout ID: ${payout.id}`, 14, 35);
+    doc.text(`Date: ${new Date(payout.date).toLocaleDateString()}`, 14, 43);
+    doc.text(`Amount: ₹${payout.amount}`, 14, 51);
+    doc.text(`Commission: ₹${payout.commission}`, 14, 59);
+    doc.text(`Status: ${payout.status}`, 14, 67);
+
+    doc.setFontSize(10);
+    doc.text('Thank you for using our platform!', 14, 80);
+    doc.save(`Invoice_${payout.id}.pdf`);
+  };
 
   const handleQRUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -84,7 +99,7 @@ const Payouts: React.FC = () => {
     formData.append('qrCode', file);
 
     try {
-      const res = await axios.post('https://drnkly.in/vendor/api/qr/upload-qr', formData, {
+      const res = await axios.post('https://vendor.drnkly.in/api/qr/upload-qr', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${localStorage.getItem('authToken')}`,

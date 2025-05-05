@@ -19,7 +19,7 @@ const Availability: React.FC = () => {
       try {
         const token = localStorage.getItem('authToken'); // Get the auth token from localStorage
         if (token) {
-          const response = await axios.get('http://drnkly.in/vendor/api/vendor/products', {
+          const response = await axios.get('https://vendor.drnkly.in/api/vendor/products', {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -62,7 +62,7 @@ const Availability: React.FC = () => {
       }));
   
       // Send updated inStock status for each product to the backend
-      const response = await axios.put('https://drnkly.in/vendor/api/products/update-stock', { products: updatedProducts }, {
+      const response = await axios.put('https://vendor.drnkly.in/api/products/update-stock', { products: updatedProducts }, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
