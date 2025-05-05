@@ -10,7 +10,11 @@ const app = express();
 const PORT = 5003;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:5173', 'https://admin.drnkly.in'],
+  credentials: true
+}));
+
 app.use(express.json());
 // Serve static files (uploaded files like ID proof) from the 'uploads' directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

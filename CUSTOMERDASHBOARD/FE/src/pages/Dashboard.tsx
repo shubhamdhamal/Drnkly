@@ -111,10 +111,13 @@ function Dashboard() {
               <Menu size={24} />
             </button>
 
-            <div className="flex items-center">
-              <Wine size={32} className="text-[#cd6839]" />
-              <span className="ml-2 text-xl font-semibold">Liquor Store</span>
-            </div>
+        <img
+         src="/logo2.png"
+          alt="Drnkly Logo"
+          className="h-32 w-48 object-contain"
+
+        />
+
 
             <div className="flex items-center space-x-4">
               {isLoggedIn ? (
