@@ -73,7 +73,7 @@ import axios from 'axios';
 const Profile = () => {
   const [activeTab, setActiveTab] = useState('profile');
   const [balance, setBalance] = useState(0);
-  const [selectedLocation, setSelectedLocation] = useState('Mumbai, Maharashtra');
+  const [selectedLocation, setSelectedLocation] = useState('pune, Maharashtra');
   const [searchQuery, setSearchQuery] = useState('');
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
