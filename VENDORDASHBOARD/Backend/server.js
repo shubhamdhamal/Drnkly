@@ -13,18 +13,17 @@ const deliveryPartnerRoutes = require('./routes/deliveryPartnerRoutes');
 const issueRoutes = require('./routes/issueRoutes');
 const orderRoutes = require('./controllers/orderController');
 
-
 const app = express();
 
 // ✅ 1. Ensure 'uploads' folder exists for storing product images
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
+  fs.mkdirSync(uploadDir, { recursive: true });  // Ensures the folder is created
   console.log('✅ uploads/ folder created');
 }
 
 // ✅ 2. Serve uploaded images statically
-app.use('/uploads', express.static(uploadDir));
+app.use('/uploads', express.static(uploadDir));  // This serves files from the 'uploads' folder
 
 // ✅ 3. Apply middlewares
 app.use(cors({
