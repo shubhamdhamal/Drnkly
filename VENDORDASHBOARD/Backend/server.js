@@ -27,7 +27,11 @@ if (!fs.existsSync(uploadDir)) {
 app.use('/uploads', express.static(uploadDir));
 
 // ✅ 3. Apply middlewares
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:5173', 'https://vendor.drnkly.in'],
+  credentials: true
+}));
+
 app.use(bodyParser.json());
 
 // ✅ 4. MongoDB Connection
