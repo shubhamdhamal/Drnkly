@@ -69,7 +69,7 @@ const getOrdersForVendor = async (vendorId) => {
   
 
 // 🔥 Attach middleware here
-router.get('/vendor/orders', authenticateVendor, async (req, res) => {
+router.get('/api/vendor/orders', authenticateVendor, async (req, res) => {
     const vendorId = req.vendorId; // ✅ Now dynamically set from JWT
   
     try {
