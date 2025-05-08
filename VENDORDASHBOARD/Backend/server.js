@@ -27,7 +27,7 @@ app.use('/uploads', express.static(uploadDir));  // This serves files from the '
 
 // ✅ 3. Apply middlewares
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://vendor.drnkly.in'],
+  origin: ['http://localhost:5173', 'https://vendor.drnkly.com'],
   credentials: true
 }));
 
