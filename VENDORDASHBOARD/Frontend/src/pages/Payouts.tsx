@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Calendar, Download } from 'lucide-react';
 import Button from '../components/Button';
-//import { jsPDF } from 'jspdf'; // ✅ This is correct for bundled Vite projects
-
+//import jsPDF from 'jspdf';
 import axios from 'axios';
 
 const Payouts: React.FC = () => {

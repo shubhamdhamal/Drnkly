@@ -1,4 +1,4 @@
-const Issue = require('../models/issue');
+const Issue = require('../models/Issue');
 const multer = require('multer');
 const path = require('path');
 const jwt = require('jsonwebtoken');
