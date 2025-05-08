@@ -11,7 +11,7 @@ const vendorRoutes = require('./routes/vendorRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const deliveryPartnerRoutes = require('./routes/deliveryPartnerRoutes');
 const issueRoutes = require('./routes/issueRoutes');
-const orderRoutes = require('./controllers/orderController');
+const orderRoutes = require('./routes/orderRoutes');
 
 const app = express();
 
@@ -46,7 +46,7 @@ app.use('/api/vendor', vendorRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/delivery-partners', deliveryPartnerRoutes);
-app.use(orderRoutes);
+app.use('/api', orderRoutes); 
 app.use('/api/issues', issueRoutes);
 app.use('/api/qr', require('./routes/qrRoutes'));
 
