@@ -70,7 +70,7 @@ const Login: React.FC = () => {
     }
 
     try {
-      const response = await axios.post('https://vendor.drnkly.in/api/vendor/login', {
+      const response = await axios.post('https://vendor.drnkly.com/api/vendor/login', {
         emailOrPhone,
         password,
       });

@@ -30,7 +30,7 @@ function Dashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await axios.get('https://admin.drnkly.in/api/dashboard-stats');
+        const res = await axios.get('https://admin.drnkly.com/api/dashboard-stats');
         setStats(res.data);
       } catch (error) {
         console.error('Failed to load dashboard stats', error);
@@ -39,7 +39,7 @@ function Dashboard() {
 
     const fetchVendors = async () => {
       try {
-        const res = await axios.get('https://admin.drnkly.in/api/recent-vendors');
+        const res = await axios.get('https://admin.drnkly.com/api/recent-vendors');
         setRecentApplications(Array.isArray(res.data.vendors) ? res.data.vendors : []);
       } catch (error) {
         console.error('Failed to load recent vendor applications', error);
