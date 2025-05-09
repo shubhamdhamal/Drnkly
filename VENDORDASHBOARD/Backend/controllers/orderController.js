@@ -120,10 +120,9 @@ router.put('/api/vendor/orders/:orderId/status', authenticateVendor, async (req,
       return res.status(500).json({ message: 'Server error' });
   }
 });
-
   
 
-  router.get('/vendor/ready-for-pickup', authenticateVendor, async (req, res) => {
+  router.get('/api/vendor/ready-for-pickup', authenticateVendor, async (req, res) => {
     const vendorId = req.vendorId;
   
     try {
@@ -167,7 +166,7 @@ router.put('/api/vendor/orders/:orderId/status', authenticateVendor, async (req,
   });
   
 // ✅ Update order item handover status
-router.put('/vendor/orders/handover', authenticateVendor, async (req, res) => {
+router.put('/api/vendor/orders/handover', authenticateVendor, async (req, res) => {
   const { productId, orderNumber } = req.body;
   const vendorId = req.vendorId;
 
