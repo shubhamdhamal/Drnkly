@@ -145,7 +145,7 @@ router.put('/vendor/orders/:orderId/status', authenticateVendor, async (req, res
               price: item.price,
               orderNumber: order.orderNumber,
               customerName: order.deliveryAddress?.fullName || 'Customer',
-              customerAddress: ${order.deliveryAddress?.street}, ${order.deliveryAddress?.city},
+              customerAddress: `${order.deliveryAddress?.street}, ${order.deliveryAddress?.city}`,
               orderId: order._id,
               totalAmount: item.price * item.quantity,
               readyTime: order.createdAt, // you can adjust this if you track a separate ready time
