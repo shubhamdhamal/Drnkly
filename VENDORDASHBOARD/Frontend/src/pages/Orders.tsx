@@ -81,7 +81,7 @@ const Orders: React.FC = () => {
 
     try {
       await axios.put(
-        `https://vendor.drnkly.com/vendor/orders/${orderId}/status`,
+        `https://vendor.drnkly.com/api/vendor/orders/${orderId}/status`,
         { productId, status },
         {
           headers: {
