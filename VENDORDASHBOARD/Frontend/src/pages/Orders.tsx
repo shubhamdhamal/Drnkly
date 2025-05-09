@@ -88,7 +88,7 @@ const Orders: React.FC = () => {
             Authorization: `Bearer ${token}`,
           },
         }
-      );
+      );      
 
       setOrders((prev) =>
         prev.map((order) =>
