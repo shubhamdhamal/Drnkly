@@ -46,7 +46,7 @@ app.use('/api/vendor', vendorRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/delivery-partners', deliveryPartnerRoutes);
-app.use(orderRoutes);
+app.use('/api/vendor',orderRoutes);
 app.use('/api/issues', issueRoutes);
 app.use('/api/qr', require('./routes/qrRoutes'));
 

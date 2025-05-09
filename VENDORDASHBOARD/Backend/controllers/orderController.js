@@ -69,7 +69,7 @@ const getOrdersForVendor = async (vendorId) => {
   
 
 // 🔥 Attach middleware here
-router.get('/api/vendor/orders', authenticateVendor, async (req, res) => {
+router.get('/orders', authenticateVendor, async (req, res) => {
     const vendorId = req.vendorId; // ✅ Now dynamically set from JWT
   
     try {
@@ -122,7 +122,7 @@ router.put('/orders/:orderId/status', authenticateVendor, async (req, res) => {
 });
   
 
-  router.get('/api/vendor/ready-for-pickup', authenticateVendor, async (req, res) => {
+  router.get('/ready-for-pickup', authenticateVendor, async (req, res) => {
     const vendorId = req.vendorId;
   
     try {
@@ -166,7 +166,7 @@ router.put('/orders/:orderId/status', authenticateVendor, async (req, res) => {
   });
   
 // ✅ Update order item handover status
-router.put('/api/vendor/orders/handover', authenticateVendor, async (req, res) => {
+router.put('/orders/handover', authenticateVendor, async (req, res) => {
   const { productId, orderNumber } = req.body;
   const vendorId = req.vendorId;
 
