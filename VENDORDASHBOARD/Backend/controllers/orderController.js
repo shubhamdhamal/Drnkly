@@ -81,45 +81,46 @@ router.get('/api/vendor/orders', authenticateVendor, async (req, res) => {
   });
 
 
-  // ✅ Update order item status (Accept / Reject) by Vendor
-router.put('/vendor/orders/:orderId/status', authenticateVendor, async (req, res) => {
-    const { orderId } = req.params;
-    const { productId, status } = req.body;
-    const vendorId = req.vendorId;
-  
-    if (!['accepted', 'rejected'].includes(status)) {
+// ✅ Update order item status (Accept / Reject) by Vendor
+router.put('/api/vendor/orders/:orderId/status', authenticateVendor, async (req, res) => {
+  const { orderId } = req.params;
+  const { productId, status } = req.body;
+  const vendorId = req.vendorId;
+
+  if (!['accepted', 'rejected'].includes(status)) {
       return res.status(400).json({ message: 'Invalid status value' });
-    }
-  
-    try {
+  }
+
+  try {
       const order = await Order.findById(orderId);
       if (!order) return res.status(404).json({ message: 'Order not found' });
-  
+
       let updated = false;
-  
+
       // Loop through each item and update status only if vendor owns the product
       for (let item of order.items) {
-        if (
-          item.productId.toString() === productId &&
-          (await Product.findOne({ _id: productId, vendorId }))
-        ) {
-          item.status = status; // ✅ set status
-          updated = true;
-          break;
-        }
+          if (
+              item.productId.toString() === productId &&
+              (await Product.findOne({ _id: productId, vendorId }))
+          ) {
+              item.status = status; // ✅ set status
+              updated = true;
+              break;
+          }
       }
-  
+
       if (!updated) {
-        return res.status(403).json({ message: 'Not authorized to update this item' });
+          return res.status(403).json({ message: 'Not authorized to update this item' });
       }
-  
+
       await order.save();
       return res.status(200).json({ message: 'Order item status updated' });
-    } catch (err) {
+  } catch (err) {
       console.error('❌ Error updating order status:', err);
       return res.status(500).json({ message: 'Server error' });
-    }
-  });
+  }
+});
+
   
 
   router.get('/vendor/ready-for-pickup', authenticateVendor, async (req, res) => {
