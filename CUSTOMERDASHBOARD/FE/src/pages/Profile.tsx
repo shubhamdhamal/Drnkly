@@ -88,7 +88,7 @@ const Profile = () => {
       const fetchUserProfile = async () => {
         try {
           const userId = localStorage.getItem('userId'); // Replace with your actual auth logic
-          const response = await axios.get(`https://drnkly.com/api/users/${userId}`);
+          const response = await axios.get(`https://peghouse.in/api/users/${userId}`);
           const user = response.data;
   
           setUserInfo({
@@ -178,7 +178,7 @@ const Profile = () => {
     try {
       const userId = localStorage.getItem('userId');
       const response = await axios.put(
-        `https://drnkly.com/api/users/profile/${userId}`,
+        `https://peghouse.in/api/users/profile/${userId}`,
         userInfo
       );
       setUserInfo(response.data);

@@ -57,7 +57,7 @@ function Login() {
   
     // Make the API call to login
     try {
-      const response = await axios.post('https://drnkly.com/api/auth/login', { mobile, password });
+      const response = await axios.post('https://peghouse.in/api/auth/login', { mobile, password });
   
       if (response.data.message === 'Login successful') {
         // ✅ Status Check

@@ -25,7 +25,7 @@ function Checkout() {
   useEffect(() => {
     const fetchCart = async () => {
       try {
-        const res = await axios.get(`https://drnkly.com/api/cart/${userId}`);
+        const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
         setItems(res.data.items);
       } catch (err) {
         console.error('Error fetching cart:', err);
@@ -154,7 +154,7 @@ function Checkout() {
   
     try {
       // 🔁 Step 1: Fetch actual cart from backend
-      const cartRes = await axios.get(`https://drnkly.com/api/cart/${userId}`);
+      const cartRes = await axios.get(`https://peghouse.in/api/cart/${userId}`);
       const cartItems = cartRes.data.items;
   
       if (!cartItems || cartItems.length === 0) {
@@ -179,7 +179,7 @@ function Checkout() {
       
   
       // 🧾 Step 3: Place order
-      const res = await axios.post('https://drnkly.com/api/orders', {
+      const res = await axios.post('https://peghouse.in/api/orders', {
         userId,
         items: formattedItems,
         address,

@@ -33,8 +33,8 @@ function Products() {
     const fetchData = async () => {
       try {
         const [productRes, categoryRes] = await Promise.all([
-          axios.get('https://drnkly.com/api/products'),
-          axios.get('https://drnkly.com/api/categories'),
+          axios.get('https://peghouse.in/api/products'),
+          axios.get('https://peghouse.in/api/categories'),
         ]);
         setProducts(productRes.data);
         setCategories(categoryRes.data);
@@ -57,7 +57,7 @@ function Products() {
   
     try {
       // Proceed to add the product to the cart
-      const res = await axios.post('https://drnkly.com/api/cart/add', {
+      const res = await axios.post('https://peghouse.in/api/cart/add', {
         userId,
         productId: product._id,
         name: product.name,
@@ -338,7 +338,7 @@ function Products() {
             style={{ background: 'white', borderRadius: '12px', padding: '10px', textAlign: 'center' }}
           >
             <img
-              src={`https://drnkly.com/vendor${product.image}`}
+              src={`https://peghouse.in/vendor${product.image}`}
               alt={product.name}
               style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px' }}
             />

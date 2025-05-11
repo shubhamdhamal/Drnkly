@@ -11,7 +11,7 @@ connectDB(); // Call the DB connection
 const app = express();
 
 app.use(cors({
-  origin: 'https://www.drnkly.in',
+  origin: 'https://www.peghouse.in',
   credentials: true
 }));
 app.use(express.json());

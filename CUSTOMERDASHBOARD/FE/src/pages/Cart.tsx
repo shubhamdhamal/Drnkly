@@ -28,7 +28,7 @@ const Cart = () => {
       if (!userId) return toast.error('User not logged in');
 
       try {
-        const res = await axios.get(`https://drnkly.com/api/cart/${userId}`);
+        const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
         setItems(res.data.items);
       } catch (error) {
         toast.error('Failed to load cart');
@@ -44,7 +44,7 @@ const Cart = () => {
     if (quantity < 1) return;
 
     try {
-      const res = await axios.put('https://drnkly.com/api/cart/update', {
+      const res = await axios.put('https://peghouse.in/api/cart/update', {
         userId,
         productId,
         quantity,
@@ -59,7 +59,7 @@ const Cart = () => {
   // Remove item from cart
   const removeFromCart = async (productId: string) => {
     try {
-      const res = await axios.delete('https://drnkly.com/api/cart/remove', {
+      const res = await axios.delete('https://peghouse.in/api/cart/remove', {
         data: { userId, productId },
       });
       setItems(res.data.cart.items);
