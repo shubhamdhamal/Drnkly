@@ -153,7 +153,7 @@ function SignUp() {
       setError(err.response?.data?.message || 'Something went wrong!');
     }
   };
-  
+
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">
