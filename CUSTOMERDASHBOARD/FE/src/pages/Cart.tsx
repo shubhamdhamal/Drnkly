@@ -83,24 +83,23 @@ const Cart = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-      <div className="flex justify-center mb-6">
-
-      <div 
-        className="cursor-pointer inline-block"
-        onClick={() => navigate('/dashboard')}
-      >
-        <img
-          src="/logo2.png"
-          alt="Drnkly Logo"
-          className="h-32 w-48 object-contain"
-        />
-      </div>
-
-</div>
-        <div className="flex items-center mb-8">
+    <div className="max-w-7xl mx-auto px-1 py-1 sm:px-1 lg:px-1">
+      <div className="flex justify-center mb-2">
+        <div
+          className="cursor-pointer inline-block"
+          onClick={() => navigate('/dashboard')}
+        >
+          <img
+            src="/finallogo.png"
+            alt="Drnkly Logo"
+            className="h-21 md:h-28 lg:h-25 mx-auto object-contain"
+          />
+        </div>
+      </div>
+  
+        <div className="flex items-center mb-6">
           <ShoppingCart className="h-8 w-8 text-gray-900 mr-3" />
-          <h1 className="text-3xl font-bold text-gray-900">Your Cart</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Your Cart</h1>
         </div>
 
         <div className="bg-white rounded-lg shadow">

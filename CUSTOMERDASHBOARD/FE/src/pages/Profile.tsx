@@ -279,17 +279,18 @@ const Profile = () => {
     return (
       <header className="sticky top-0 z-50 bg-white shadow-sm">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between py-4 px-6">
+          <div className="flex items-center justify-between py-2 px-1">
             <div className="flex items-center space-x-8">
             <div 
   className="flex items-center cursor-pointer"
   onClick={() => navigate('/dashboard')}
 >
 <img
-              src="/logo2.png"
-              alt="Drnkly Logo"
-              className="h-32 object-contain"
-            />
+  src="/finallogo.png"
+  alt="Drnkly Logo"
+  className="h-20 md:h-28 lg:h-35 mx-auto object-contain"
+/>
+
 
  
 </div>

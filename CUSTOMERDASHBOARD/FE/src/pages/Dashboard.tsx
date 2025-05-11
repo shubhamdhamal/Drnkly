@@ -102,59 +102,61 @@ function Dashboard() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={toggleMenu}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-            >
-              <Menu size={24} />
-            </button>
+  <div className="max-w-7xl mx-auto px-4 py-1">
+    <div className="flex items-center justify-between h-16">
+      <button
+        onClick={toggleMenu}
+        className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+      >
+        <Menu size={20} />
+      </button>
 
-            <div 
+      <div
         className="cursor-pointer inline-block"
         onClick={() => navigate('/dashboard')}
       >
         <img
-          src="/logo2.png"
-          alt="Drnkly Logo"
-          className="h-32 w-48 object-contain"
-        />
-      </div>
+  src="/finallogo.png"
+  alt="Drnkly Logo"
+  className="mx-auto object-contain w-32 md:w-48 lg:w-64"
+/>
 
+      </div>
 
-            <div className="flex items-center space-x-4">
-              {isLoggedIn ? (
-                <button
-                  onClick={handleLogout}
-                  className="bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition-colors"
-                >
-                  Logout
-                </button>
-              ) : (
-                <>
-                  <button
-                    onClick={() => navigate('/login')}
-                    className="text-[#cd6839] font-medium hover:underline"
-                  >
-                    Login
-                  </button>
-                  <button
-                    onClick={() => navigate('/signup')}
-                    className="bg-[#cd6839] text-white px-4 py-2 rounded-full hover:bg-[#b55a31] transition-colors"
-                  >
-                    Sign Up
-                  </button>
-                </>
-              )}
-              <button
-                onClick={() => navigate('/cart')}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-              >
-                <ShoppingCart size={24} />
-              </button>
-            </div>
-          </div>
+      <div className="flex items-center space-x-3">
+        {isLoggedIn ? (
+          <button
+            onClick={handleLogout}
+            className="bg-red-500 text-white px-3 py-1 rounded-full hover:bg-red-600 transition-colors text-sm"
+          >
+            Logout
+          </button>
+        ) : (
+          <>
+            <button
+              onClick={() => navigate('/login')}
+              className="text-[#cd6839] font-medium hover:underline text-sm"
+            >
+              Login
+            </button>
+            <button
+              onClick={() => navigate('/signup')}
+              className="bg-[#cd6839] text-white px-3 py-1 rounded-full hover:bg-[#b55a31] transition-colors text-sm"
+            >
+              Sign Up
+            </button>
+          </>
+        )}
+        <button
+          onClick={() => navigate('/cart')}
+          className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+        >
+          <ShoppingCart size={20} />
+        </button>
+      </div>
+    </div>
+  
+
 
 
 

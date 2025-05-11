@@ -63,7 +63,7 @@ const OrderHistory: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 px-4 py-6">
+    <div className="min-h-screen bg-gray-80 px-3 py-">
 
 
 <div className="flex justify-center mb-6">
@@ -72,11 +72,12 @@ const OrderHistory: React.FC = () => {
         className="cursor-pointer inline-block"
         onClick={() => navigate('/dashboard')}
       >
-        <img
-          src="/logo2.png"
-          alt="Drnkly Logo"
-          className="h-32 w-48 object-contain"
-        />
+         <img
+  src="/finallogo.png"
+  alt="Drnkly Logo"
+  className="h-20 md:h-28 lg:h-38 mx-auto object-contain"
+/>
+
       </div>
 
 </div>

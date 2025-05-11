@@ -24,8 +24,6 @@ function SignUp() {
     state: '',
     city: '',
     dob: '',
-    aadhaar: '',
-    idProof: null as File | null,
     selfDeclaration: false,
   });
 
@@ -58,14 +56,7 @@ function SignUp() {
     'Jammu & Kashmir': ['Srinagar', 'Jammu'],
     'Ladakh': ['Leh', 'Kargil'],
   };
-   // Aadhaar number validation
-   const handleAadhaarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (/^\d{0,12}$/.test(value)) {
-      setExtraData({ ...extraData, aadhaar: value });
-      setErrorMessage('');
-    }
-  };
+ 
    // Name validation for first and last name
    const validateNameWithoutSpace = (name: string) => {
     const nameParts = name.trim().split(' ');
@@ -92,13 +83,7 @@ function SignUp() {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
   
-  const handleAadhaarBlur = () => {
-    if (extraData.aadhaar.length !== 12) {
-      setErrorMessage('Aadhaar number should be exactly 12 digits.');
-    } else {
-      setErrorMessage('');
-    }
-  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
   
@@ -108,12 +93,7 @@ function SignUp() {
       return;
     }
   
-    // Validate Aadhaar
-    if (!extraData.aadhaar || extraData.aadhaar.length !== 12) {
-      setError('Please enter a valid 12-digit Aadhaar number');
-      return;
-    }
-  
+ 
   
     // Validate Name (First name and Last name together in one field)
     if (!formData.name || !validateNameWithoutSpace(formData.name)) {
@@ -180,11 +160,12 @@ function SignUp() {
       <div className="w-full max-w-md">
         <div className="text-center mb-6">
         <div className="flex justify-center">
-  <img
-    src="/logo2.png"
-    alt="Drnkly Logo"
-    className="h-32 w-48 object-contain"
-  />
+        <img
+  src="/finallogo.png"
+  alt="Drnkly Logo"
+  className="h-24 md:h-32 lg:h-40 mx-auto object-contain"
+/>
+
 </div>
 
           <h2 className="text-2xl font-bold mt-4">User Registration</h2>
@@ -267,45 +248,17 @@ function SignUp() {
                       setExtraData(prev => ({
                         ...prev,
                         dob: '',
-                        aadhaar: '',
-                        idProof: null,
                         selfDeclaration: false
                       }));
                     }
                   }}
                 />
               </div>
-              <div>
-            <label>Aadhaar Number</label>
-            <input
-              type="text"
-              className="w-full border px-3 py-2 rounded"
-              placeholder="Enter Aadhaar"
-              value={extraData.aadhaar}
-              onChange={handleAadhaarChange}
-              maxLength={12}
-              onBlur={handleAadhaarBlur}
-            />
-            {errorMessage && <p className="text-red-500">{errorMessage}</p>} {/* Display error message */}
-          </div>
             </>
           )}
 
           {step === 3 && (
             <>
-              <div>
-                <label>ID Proof (Upload)</label>
-                <input
-                  type="file"
-                  className="w-full"
-                  onChange={(e) =>
-                    setExtraData({
-                      ...extraData,
-                      idProof: e.target.files?.[0] || null,
-                    })
-                  }
-                />
-              </div>
               <div className="mt-2">
                 <label className="flex items-center space-x-2">
                   <input
@@ -456,58 +409,61 @@ function SignUp() {
 )}
 
 
-          {/* Navigation Buttons */}
-          <div className="flex justify-between items-center pt-2">
-            {step > 1 && (
-              <button
-                type="button"
-                onClick={() => setStep(step - 1)}
-                className="px-4 py-2 bg-gray-300 rounded"
-              >
-                Back
-              </button>
-            )}
-            {step < 4 ? (
-           <button
-           type="button"
-           onClick={() => {
-             if (step === 1) {
-               if (!extraData.state || !extraData.city) {
-                 setError('Please select both State and City to continue.');
-                 return;
-               }
-             }
-             if (step === 2) {
-               if (!extraData.dob || extraData.aadhaar.length !== 12) {
-                 setError('Please enter valid Date of Birth and 12-digit Aadhaar number.');
-                 return;
-               }
-             }
-             if (step === 3) {
-               if (!extraData.idProof || !extraData.selfDeclaration) {
-                 setError('Please upload ID proof and declare the information.');
-                 return;
-               }
-             }
-             // If no validation errors, move to next step
-             setError('');
-             setStep(step + 1);
-           }}
-           className="ml-auto px-4 py-2 bg-orange-500 text-white rounded flex items-center space-x-1"
-         >
-           <span>Continue</span>
-           <ArrowRight size={18} />
-         </button>
-         
-            ) : (
-              <button
-                type="submit"
-                className="ml-auto px-4 py-2 bg-green-600 text-white rounded"
-              >
-                Submit
-              </button>
-            )}
-          </div>
+        {/* Navigation Buttons */}
+<div className="flex justify-between items-center pt-2">
+  {step > 1 && (
+    <button
+      type="button"
+      onClick={() => setStep(step - 1)}
+      className="px-4 py-2 bg-gray-300 rounded"
+    >
+      Back
+    </button>
+  )}
+
+  {step < 4 ? (
+    <button
+      type="button"
+      onClick={() => {
+        if (step === 1) {
+          if (!extraData.state || !extraData.city) {
+            setError('Please select both State and City to continue.');
+            return;
+          }
+        }
+
+        if (step === 2) {
+          if (!extraData.dob) {
+            setError('Please enter your Date of Birth.');
+            return;
+          }
+        }
+
+        if (step === 3) {
+          if (!extraData.selfDeclaration) {
+            setError('Please declare that your information is correct.');
+            return;
+          }
+        }
+
+        setError('');
+        setStep(step + 1);
+      }}
+      className="ml-auto px-4 py-2 bg-orange-500 text-white rounded flex items-center space-x-1"
+    >
+      <span>Continue</span>
+      <ArrowRight size={18} />
+    </button>
+  ) : (
+    <button
+      type="submit"
+      className="ml-auto px-4 py-2 bg-green-600 text-white rounded"
+    >
+      Submit
+    </button>
+  )}
+</div>
+
         </form>
 
         {/* ✅ Info Modal */}

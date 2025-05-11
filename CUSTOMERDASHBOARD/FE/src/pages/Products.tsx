@@ -133,19 +133,24 @@ function Products() {
       {/* Top Navbar */}
      
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <div 
-        className="cursor-pointer inline-block"
-        onClick={() => navigate('/dashboard')}
-      >
-        <img
-          src="/logo2.png"
-          alt="Drnkly Logo"
-          className="h-32 w-48 object-contain"
-        />
-      </div>
-        <ShoppingCart onClick={() => navigate('/cart')} style={{ cursor: 'pointer' }} />
-      </div>
+      <div className="flex justify-between items-center px-2 py-1">
+  <div
+    className="cursor-pointer"
+    onClick={() => navigate('/dashboard')}
+  >
+    <img
+      src="/finallogo.png"
+      alt="Drnkly Logo"
+      className="h-20 md:h-24 lg:h-26 object-contain"
+    />
+  </div>
+  <ShoppingCart
+    onClick={() => navigate('/cart')}
+    className="cursor-pointer"
+  />
+</div>
+
+
 
       {/* Search Bar */}
       <div className="mt-4 relative">

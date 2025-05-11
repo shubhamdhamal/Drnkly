@@ -158,11 +158,12 @@ function Login() {
       <div className="flex-1 flex flex-col items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <img
-              src="/logo2.png"
-              alt="Drnkly Logo"
-              className="h-16 md:h-24 lg:h-32 mx-auto object-contain"
-            />
+          <img
+  src="/finallogo.png"
+  alt="Drnkly Logo"
+  className="h-24 md:h-32 lg:h-40 mx-auto object-contain"
+/>
+
             <h1 className="text-2xl font-bold mt-4">Welcome Back</h1>
             <p className="text-gray-600 mt-2">Sign in to continue</p>
           </div>

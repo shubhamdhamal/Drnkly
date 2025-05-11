@@ -87,17 +87,29 @@ const Registration: React.FC = () => {
     }
   
     if (step === 2) {
-      if (!uploadedFiles.license || !uploadedFiles.id) {
+      if (!uploadedFiles.license) {
         setErrors((prev: any) => ({
           ...prev,
-          documentUpload: 'Both Shop License and ID Proof are required.'
+          documentUpload: 'Shop License is required to proceed.'
+        }));
+        return; // ❗ This return stops further step change
+      }
+    
+      // Double-check that the uploaded license is a valid File object
+      if (!(uploadedFiles.license instanceof File)) {
+        setErrors((prev: any) => ({
+          ...prev,
+          documentUpload: 'Invalid license file. Please re-upload.'
         }));
         return;
       }
+    
       setErrors({});
-      setStep(step + 1);
+      setStep(3); // ✅ Explicitly go to Step 3
       return;
     }
+    
+    
   
     if (step === 3) {
       if (!location.addressLine1 || !location.city || !location.state || !location.postalCode) {
@@ -188,7 +200,6 @@ const Registration: React.FC = () => {
           <div className="space-y-6">
             <h2 className="text-xl font-semibold">Document Upload</h2>
             <FileUpload label="Shop License" icon={<FileCheck className="w-12 h-12" />} accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileUpload('license')} description="" />
-            <FileUpload label="ID Proof" icon={<Upload className="w-12 h-12" />} accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileUpload('id')} description="" />
             {errors.documentUpload && <p className="text-red-500">{errors.documentUpload}</p>}
           </div>
         );

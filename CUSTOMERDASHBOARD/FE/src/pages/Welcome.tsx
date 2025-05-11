@@ -39,10 +39,11 @@ function Welcome() {
 
         {/* Title */}
         <img
-  src="/logo2.png"
+  src="/finallogo.png"
   alt="Drnkly Logo"
-  className="h-16 md:h-24 lg:h-32 mx-auto object-contain"
+  className="h-24 md:h-32 lg:h-40 mx-auto object-contain"
 />
+
 <h1 
   className="text-4xl font-bold text-gray-900 mb-4"
   style={{
