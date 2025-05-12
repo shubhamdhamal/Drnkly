@@ -310,7 +310,7 @@ const handleAddProduct = async (e: React.FormEvent) => {
           <div key={product._id} className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
             <div className="relative">
               <img
-                src={`https://image.peghouse.in${product.image}`} // The image path returned by the backend
+                src={product.image} // The image path returned by the backend
                 alt={product.name}
                 className="w-full h-48 object-cover"
               />

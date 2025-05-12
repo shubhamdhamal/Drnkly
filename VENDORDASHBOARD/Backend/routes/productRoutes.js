@@ -29,7 +29,6 @@ const upload = multer({
 });
 
 
-
 // ✅ Add Product (with image)
 router.post('/add', authenticateVendor, upload.single('image'), productController.addProduct);
 

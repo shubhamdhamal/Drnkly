@@ -35,8 +35,11 @@ exports.addProduct = async (req, res) => {
     // Check the liquor type based on alcohol content
     const liquorType = categorizeLiquor(alcoholContent);
 
-    // ✅ Check image file from multer
-    const image = req.file ? `https://image.peghouse.in/uploads/${req.file.filename}` : null;
+    if (!req.file) {
+  return res.status(400).json({ error: "Image upload failed or no file provided" });
+}
+const image = `https://image.peghouse.in/uploads/${req.file.filename}`;
+
 
     const newProduct = new Product({
       name,
@@ -110,22 +113,6 @@ exports.getProductsByVendor = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch products' });
   }
 };
-
-
-  
-  
-  // Fetch products for the logged-in vendor
-  exports.getProductsByVendor = async (req, res) => {
-    try {
-      const vendorId = req.vendorId; // Extract vendorId from the JWT token
-      const products = await Product.find({ vendorId }); // Fetch all products by the vendorId
-      
-      res.status(200).json({ products });
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      res.status(500).json({ error: 'Failed to fetch products' });
-    }
-  };
   
   
   // productController.js
