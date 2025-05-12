@@ -23,7 +23,8 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 
-app.use('/uploads', express.static('/var/www/Drnkly/images/uploads')); 
+app.use('/uploads', express.static(path.join(__dirname, '../var/www/Drnkly/images/uploads')));
+
   // This serves files from the 'uploads' folder
 
 // ✅ 3. Apply middlewares

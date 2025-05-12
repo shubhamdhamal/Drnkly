@@ -8,13 +8,16 @@ const path = require('path');
 // ✅ Correct multer storage config to save images with correct names
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, '/var/www/Drnkly/images/uploads');  // ✅ Matches Nginx path
+    const uploadPath = '/var/www/Drnkly/images/uploads';
+    console.log("Saving image to:", uploadPath);
+    cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
-    cb(null, Date.now() + ext); 
+    cb(null, Date.now() + ext);
   }
 });
+
 
 const upload = multer({
   storage,
