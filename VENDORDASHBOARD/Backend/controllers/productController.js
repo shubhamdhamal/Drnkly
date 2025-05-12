@@ -35,7 +35,7 @@ exports.addProduct = async (req, res) => {
     const liquorType = categorizeLiquor(alcoholContent);
 
     // ✅ Check image file from multer
-    const image = req.file ? `/uploads/${req.file.filename}` : null;
+    const image = req.file ? `https://image.peghouse.in/uploads/${req.file.filename}` : null;
 
     const newProduct = new Product({
       name,
