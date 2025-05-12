@@ -133,18 +133,6 @@ function Dashboard() {
           </button>
         ) : (
           <>
-            <button
-              onClick={() => navigate('/login')}
-              className="text-[#cd6839] font-medium hover:underline text-sm"
-            >
-              Login
-            </button>
-            <button
-              onClick={() => navigate('/signup')}
-              className="bg-[#cd6839] text-white px-3 py-1 rounded-full hover:bg-[#b55a31] transition-colors text-sm"
-            >
-              Sign Up
-            </button>
           </>
         )}
         <button

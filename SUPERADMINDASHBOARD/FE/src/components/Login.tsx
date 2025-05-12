@@ -48,7 +48,7 @@ function Login({ onLogin }: LoginProps) {
     }
 
     try {
-      const res = await axios.post('https://admin.drnkly.com/api/superadmin/login', {
+      const res = await axios.post('https://admin.peghouse.in/api/superadmin/login', {
         emailOrMobile: email,
         password,
       });

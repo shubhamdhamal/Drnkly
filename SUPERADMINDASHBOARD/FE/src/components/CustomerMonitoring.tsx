@@ -31,7 +31,7 @@ function CustomerMonitoring() {
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
-        const res = await axios.get('https://admin.drnkly.com/api/customers');
+        const res = await axios.get('https://admin.peghouse.in/api/customers');
         const formatted = res.data.customers.map((user: any) => ({
           id: user._id,
           name: user.name,
@@ -71,7 +71,7 @@ function CustomerMonitoring() {
 
   const handleAccept = async (customerId: string) => {
     try {
-      const response = await axios.put(`https://admin.drnkly.com/api/customers/accept/${customerId}`);
+      const response = await axios.put(`https://admin.peghouse.in/api/customers/accept/${customerId}`);
       alert(response.data.message); // Show success message
       setCustomers(customers.map((customer) =>
         customer.id === customerId ? { ...customer, status: 'Verified' } : customer
@@ -83,7 +83,7 @@ function CustomerMonitoring() {
 
   const handleReject = async (customerId: string) => {
     try {
-      const response = await axios.put(`https://admin.drnkly.com/api/customers/reject/${customerId}`);
+      const response = await axios.put(`https://admin.peghouse.in/api/customers/reject/${customerId}`);
       alert(response.data.message); // Show success message
       setCustomers(customers.map((customer) =>
         customer.id === customerId ? { ...customer, status: 'Rejected' } : customer
@@ -174,7 +174,7 @@ function CustomerMonitoring() {
                   {/* Add the download link for the ID Proof */}
                   {shop.idProof && (
                     <a 
-                      href={`https://admin.drnkly.com${shop.idProof}`} 
+                      href={`https://admin.peghouse.in${shop.idProof}`} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       download
@@ -234,7 +234,7 @@ function CustomerMonitoring() {
               {selectedCustomer.idProof && (
                 <p>
                   <strong>ID Proof:</strong> 
-                  <a href={`https://admin.drnkly.com${selectedCustomer.idProof}`} target="_blank" rel="noopener noreferrer">
+                  <a href={`https://admin.peghouse.in${selectedCustomer.idProof}`} target="_blank" rel="noopener noreferrer">
                     View ID Proof
                   </a>
                 </p>

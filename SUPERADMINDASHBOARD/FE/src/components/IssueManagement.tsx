@@ -27,7 +27,7 @@ const IssueManagement: React.FC = () => {
 
   const fetchIssues = async () => {
     try {
-      const res = await axios.get('https://admin.drnkly.com/api/issues');
+      const res = await axios.get('https://admin.peghouse.in/api/issues');
       setIssues(res.data);
     } catch (err) {
       console.error('Error fetching issues:', err);
@@ -36,7 +36,7 @@ const IssueManagement: React.FC = () => {
 
   const updateStatus = async (id: string, status: 'resolved' | 'escalated') => {
     try {
-      const res = await axios.put(`https://admin.drnkly.com/api/issues/${id}/status`, { status });
+      const res = await axios.put(`https://admin.peghouse.in/api/issues/${id}/status`, { status });
       setIssues(prev => prev.map(issue => (issue._id === id ? res.data : issue)));
     } catch (error) {
       console.error('Error updating status:', error);

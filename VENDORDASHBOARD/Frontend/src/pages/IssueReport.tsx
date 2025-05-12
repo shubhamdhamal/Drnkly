@@ -39,7 +39,7 @@ const IssueReport: React.FC = () => {
         return;
       }
   
-      const response = await fetch('https://vendor.drnkly.com/api/issues/report', {
+      const response = await fetch('https://vendor.peghouse.in/api/issues/report', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`, // Include token for authentication

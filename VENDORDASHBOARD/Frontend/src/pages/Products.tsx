@@ -42,7 +42,7 @@ const Products: React.FC = () => {
           return;
         }
   
-        const response = await axios.get('https://vendor.drnkly.com/api/products/vendor', {
+        const response = await axios.get('https://vendor.peghouse.in/api/products/vendor', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -56,7 +56,7 @@ const Products: React.FC = () => {
   
     const fetchCategories = async () => {
       try {
-        const response = await axios.get('https://vendor.drnkly.com/api/categories');
+        const response = await axios.get('https://vendor.peghouse.in/api/categories');
         setCategories(response.data.categories); // Update state with categories
       } catch (error) {
         console.error('Error fetching categories:', error);
@@ -80,7 +80,7 @@ const handleAddProduct = async (e: React.FormEvent) => {
   }
 
   try {
-    const response = await axios.post('https://vendor.drnkly.com/api/products/add', formData, {
+    const response = await axios.post('https://vendor.peghouse.in/api/products/add', formData, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'multipart/form-data', // Important to set this header
@@ -130,7 +130,7 @@ const handleAddProduct = async (e: React.FormEvent) => {
 
       // Sending the PUT request to update the product
       const response = await axios.put(
-        `https://vendor.drnkly.com/api/products/${updatedProduct._id}`, // Use _id instead of id
+        `https://vendor.peghouse.in/api/products/${updatedProduct._id}`, // Use _id instead of id
         updatedProduct,
         {
           headers: {
@@ -165,7 +165,7 @@ const handleAddProduct = async (e: React.FormEvent) => {
         }
 
         // Send DELETE request to backend
-        await axios.delete(`https://vendor.drnkly.com/api/products/${productId}`, {
+        await axios.delete(`https://vendor.peghouse.in/api/products/${productId}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -310,7 +310,7 @@ const handleAddProduct = async (e: React.FormEvent) => {
           <div key={product._id} className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
             <div className="relative">
               <img
-                src={`https://vendor.drnkly.com${product.image}`} // The image path returned by the backend
+                src={`https://vendor.peghouse.in${product.image}`} // The image path returned by the backend
                 alt={product.name}
                 className="w-full h-48 object-cover"
               />

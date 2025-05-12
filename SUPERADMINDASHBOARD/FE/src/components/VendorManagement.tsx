@@ -17,7 +17,7 @@ function VendorManagement() {
   // Fetch vendors from backend
   const fetchVendors = async () => {
     try {
-      const res = await axios.get('https://admin.drnkly.com/api/vendors');
+      const res = await axios.get('https://admin.peghouse.in/api/vendors');
       setVendors(res.data.vendors);
     } catch (err) {
       console.error('Error fetching vendors:', err);

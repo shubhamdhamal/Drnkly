@@ -15,7 +15,7 @@ const Dashboard: React.FC = () => {
       try {
         const token = localStorage.getItem('authToken');
         if (token) {
-          const response = await axios.get('https://vendor.drnkly.com/api/vendor/products', {
+          const response = await axios.get('https://vendor.peghouse.in/api/vendor/products', {
             headers: {
               Authorization: `Bearer ${token}`,
             },
