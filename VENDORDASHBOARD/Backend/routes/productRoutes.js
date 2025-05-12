@@ -8,7 +8,7 @@ const path = require('path');
 // ✅ Correct multer storage config to save images with correct names
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, '/var/www/Drnkly/images/uploads'); // ✅ Correct path for image storage
+    cb(null, '/var/www/Drnkly/images/uploads');  // ✅ Matches Nginx path
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
@@ -16,7 +16,8 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage }).single('image'); 
+const upload = multer({ storage }).single('image');
+
 
 
 // ✅ Add Product (with image)

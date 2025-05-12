@@ -4,7 +4,7 @@ const multer = require('multer');
 // Define storage configuration for multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, '/var/www/Drnkly/images/uploads'); // ✅ Correct path for image storage
+    cb(null, '/var/www/Drnkly/images/uploads');  // ✅ Matches Nginx path
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
@@ -12,7 +12,8 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage }).single('image'); 
+const upload = multer({ storage }).single('image');
+
 
 
 // Function to categorize liquor based on alcohol content
