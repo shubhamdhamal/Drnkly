@@ -4,15 +4,15 @@ const multer = require('multer');
 // Define storage configuration for multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Store files in 'uploads' folder
+    cb(null, '/var/www/Drnkly/images/uploads'); // ✅ Correct path for image storage
   },
   filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname); // Get the file extension
-    cb(null, Date.now() + ext); // Add a timestamp to the filename to avoid collisions
+    const ext = path.extname(file.originalname);
+    cb(null, Date.now() + ext); 
   }
 });
 
-const upload = multer({ storage }).single('image'); // Set the field name for the image to 'image'
+const upload = multer({ storage }).single('image'); 
 
 
 // Function to categorize liquor based on alcohol content

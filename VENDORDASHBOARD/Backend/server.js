@@ -16,14 +16,15 @@ const orderRoutes = require('./controllers/orderController');
 const app = express();
 
 // ✅ 1. Ensure 'uploads' folder exists for storing product images
-const uploadDir = path.join(__dirname, 'uploads');
+const uploadDir = '/var/www/Drnkly/images/uploads';
 if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });  // Ensures the folder is created
+  fs.mkdirSync(uploadDir, { recursive: true });
   console.log('✅ uploads/ folder created');
 }
 
-// ✅ 2. Serve uploaded images statically
-app.use('/uploads', express.static(uploadDir));  // This serves files from the 'uploads' folder
+
+app.use('/uploads', express.static('/var/www/Drnkly/images/uploads')); 
+  // This serves files from the 'uploads' folder
 
 // ✅ 3. Apply middlewares
 app.use(cors({

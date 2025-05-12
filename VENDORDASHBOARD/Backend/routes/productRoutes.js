@@ -8,15 +8,16 @@ const path = require('path');
 // ✅ Correct multer storage config to save images with correct names
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '../uploads'));
+    cb(null, '/var/www/Drnkly/images/uploads'); // ✅ Correct path for image storage
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
-    cb(null, Date.now() + ext); // 1713123456789.jpg
+    cb(null, Date.now() + ext); 
   }
 });
 
-const upload = multer({ storage });
+const upload = multer({ storage }).single('image'); 
+
 
 // ✅ Add Product (with image)
 router.post('/add', authenticateVendor, upload.single('image'), productController.addProduct);
