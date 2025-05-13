@@ -1,13 +1,17 @@
 const express = require('express');
 const router = express.Router();
+const { signup } = require('../controllers/authController');
 
-// Import the necessary functions from the controller
-const { signup, login } = require('../controllers/authController');
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/idproofs/' }); // Set up file storage for ID Proof
 
 // User Signup Route
-router.post('/signup', signup);
+router.post('/signup', upload.single('idProof'), signup);
 
-// User Login Route
+module.exports = router;
+
+const { login } = require('../controllers/authController');
+
 router.post('/login', login);
 
 module.exports = router;
