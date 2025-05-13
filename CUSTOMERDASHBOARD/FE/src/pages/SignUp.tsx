@@ -12,20 +12,19 @@ function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    mobile: '',
-    password: '',
-    confirmPassword: '',
-  });
+const [formData, setFormData] = useState({
+  name: '',
+  email: '',
+  mobile: '',
+  password: '',
+  confirmPassword: '',
+  state: '',
+  city: '',
+  dob: '',
+  selfDeclaration: false,
+});
 
-  const [extraData, setExtraData] = useState({
-    state: '',
-    city: '',
-    dob: '',
-    selfDeclaration: false,
-  });
+
 
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState('');
@@ -38,97 +37,91 @@ function SignUp() {
   };
 
    // Name validation for first and last name
-   const validateNameWithoutSpace = (name: string) => {
-    const nameParts = name.trim().split(' ');
+const validateNameWithoutSpace = (name: string) => {
+  const nameParts = name.trim().split(' ');
+  if (nameParts.length !== 2) return false;
+  const nameRegex = /^[A-Za-z]{2,}$/;
+  return nameRegex.test(nameParts[0]) && nameRegex.test(nameParts[1]);
+};
 
-    // Ensure there are exactly two parts (first name and last name)
-    if (nameParts.length !== 2) {
-      return false;
-    }
+const validateMobile = (mobile: string) => {
+  return /^\d{10}$/.test(mobile);
+};
 
-    const firstName = nameParts[0];
-    const lastName = nameParts[1];
+const validateEmail = (email: string) => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+};
 
-    const nameRegex = /^[A-Za-z]{2,}$/; // Only letters, at least two characters
+  
 
-    return nameRegex.test(firstName) && nameRegex.test(lastName);
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  
+  // Log data to check if all fields are populated
+  const requestData = {
+    ...formData,
   };
   
-  
-  const validateMobile = (mobile: string) => {
-    return /^\d{10}$/.test(mobile);
-  };
-  
-  const validateEmail = (email: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
-  
+  console.log('Data to be sent:', requestData);  // Log the data to check
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-  
-    // Check if the user agreed to the terms and conditions
-    if (!agreed) {
-      setError('Please agree to the terms and conditions');
-      return;
-    }
-  
-  
-    // Validate Name (First name and Last name together in one field)
-    if (!formData.name || !validateNameWithoutSpace(formData.name)) {
-      setError('Please enter your first name and last name together without space (e.g., John Doe).');
-      return;
-    }
-    // Validate Email
-    if (!formData.email || !validateEmail(formData.email)) {
-      setError('Please enter a valid email address.');
-      return;
-    }
-  
-    // Validate Mobile
-    if (!formData.mobile || !validateMobile(formData.mobile)) {
-      setError('Please enter a valid 10-digit mobile number.');
-      return;
-    }
-  
-    // Validate Passwords
-    if (!formData.password || !formData.confirmPassword) {
-      setError('Please fill both password fields.');
-      return;
-    }
-  
-    if (formData.password.length < 6) {
-      setError('Password should be at least 6 characters long.');
-      return;
-    }
-  
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match.');
-      return;
-    }
-  
-    // ✅ If all validations passed, Prepare the data for submission
-    const finalData = new FormData();
-    Object.entries(extraData).forEach(([key, val]) =>
-  finalData.append(key, String(val))  // Only append fields that are required
-);
-  
-    try {
-      // Submit the form data to the backend
-      const res = await axios.post('https://peghouse.in/api/auth/signup', finalData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-  
-      console.log(res.data);
-  
-      // After successful submission
-      setIsSubmitted(true);
-      setShowInfo(true);
-      setTimeout(() => navigate('/login'), 4000);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Something went wrong!');
-    }
-  };
+  // Check if the user agreed to the terms and conditions
+  if (!agreed) {
+    setError('Please agree to the terms and conditions');
+    return;
+  }
+
+  // Validate Name (First name and Last name together in one field)
+  if (!formData.name || !validateNameWithoutSpace(formData.name)) {
+    setError('Please enter your first name and last name together without space (e.g., John Doe).');
+    return;
+  }
+  // Validate Email
+  if (!formData.email || !validateEmail(formData.email)) {
+    setError('Please enter a valid email address.');
+    return;
+  }
+
+  // Validate Mobile
+  if (!formData.mobile || !validateMobile(formData.mobile)) {
+    setError('Please enter a valid 10-digit mobile number.');
+    return;
+  }
+
+  // Validate Passwords
+  if (!formData.password || !formData.confirmPassword) {
+    setError('Please fill both password fields.');
+    return;
+  }
+
+  if (formData.password.length < 6) {
+    setError('Password should be at least 6 characters long.');
+    return;
+  }
+
+  if (formData.password !== formData.confirmPassword) {
+    setError('Passwords do not match.');
+    return;
+  }
+
+  try {
+    // Send the data to the backend as JSON
+    const res = await axios.post('https://peghouse.in/api/auth/signup', requestData, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    console.log(res.data);
+
+    // After successful submission
+    setIsSubmitted(true);
+    setShowInfo(true);
+    setTimeout(() => navigate('/login'), 4000);
+  } catch (err: any) {
+    setError(err.response?.data?.message || 'Something went wrong!');
+  }
+};
+
+
+
   
 
   return (
@@ -148,293 +141,177 @@ function SignUp() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {step === 1 && (
-            <>
-              <div>
-                <label>State</label>
-                <select
-                  className="w-full border px-3 py-2 rounded"
-                  value={extraData.state}
-                  onChange={(e) =>
-                    setExtraData({ ...extraData, state: e.target.value, city: '' })
-                  }
-                >
-                  <option value="">-- Select State --</option>
-                  {Object.keys(allowedAlcoholStates).map((state) => (
-                    <option key={state} value={state}>
-                      {state}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label>City</label>
-                <select
-                  className="w-full border px-3 py-2 rounded"
-                  value={extraData.city}
-                  onChange={(e) =>
-                    setExtraData({ ...extraData, city: e.target.value })
-                  }
-                  disabled={!extraData.state}
-                >
-                  <option value="">-- Select City --</option>
-                  {extraData.state &&
-                    allowedAlcoholStates[extraData.state].map((city) => (
-                      <option key={city} value={city}>
-                        {city}
-                      </option>
-                    ))}
-                </select>
-              </div>
-            </>
-          )}
-
+<form onSubmit={handleSubmit} className="space-y-4">
+  {step === 1 && (
+    <>
+      <div>
+        <label>State</label>
+        <select
+          className="w-full border px-3 py-2 rounded"
+          value={formData.state}
+          onChange={(e) =>
+            setFormData({ ...formData, state: e.target.value, city: '' })
+          }
+        >
+          <option value="">-- Select State --</option>
+          {Object.keys(allowedAlcoholStates).map((state) => (
+            <option key={state} value={state}>
+              {state}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label>City</label>
+        <select
+          className="w-full border px-3 py-2 rounded"
+          value={formData.city}
+          onChange={(e) =>
+            setFormData({ ...formData, city: e.target.value })
+          }
+          disabled={!formData.state}
+        >
+          <option value="">-- Select City --</option>
+          {formData.state &&
+            allowedAlcoholStates[formData.state].map((city) => (
+              <option key={city} value={city}>
+                {city}
+              </option>
+            ))}
+        </select>
+      </div>
+    </>
+  )}
   {step === 2 && (
-  <>
     <div>
       <label>DOB</label>
       <input
         type="date"
         className="w-full border px-3 py-2 rounded"
-        value={extraData.dob}
-        onChange={(e) => {
-          const dob = e.target.value;
-          const today = new Date();
-          const birthDate = new Date(dob);
-          let age = today.getFullYear() - birthDate.getFullYear();
-          const m = today.getMonth() - birthDate.getMonth();
-          if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-            age--;
-          }
-
-          if (age >= 25) {
-            setExtraData(prev => ({
-              ...prev,
-              dob: dob
-            }));
-          } else {
-            alert('Your age is less than 25. You are not allowed to register.');
-            setExtraData(prev => ({
-              ...prev,
-              dob: '',
-              selfDeclaration: false
-            }));
-          }
-        }}
+        value={formData.dob}
+        onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
       />
     </div>
-  </>
-)}
+  )}
 
-
-
-          {step === 3 && (
-            <>
-              
-              <div className="mt-2">
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={extraData.selfDeclaration}
-                    onChange={() =>
-                      setExtraData({
-                        ...extraData,
-                        selfDeclaration: !extraData.selfDeclaration,
-                      })
-                    }
-                  />
-                  <span>I declare the above information is correct</span>
-                </label>
-              </div>
-            </>
-          )}
-
-        {step === 4 && (
-  <>
-            <div>
-                <label>Name</label>
-                <input
-                  type="text"
-                  className="w-full border px-3 py-2 rounded"
-                  placeholder="First Name and Last Name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-                {formData.name && !validateNameWithoutSpace(formData.name) && (
-                  <p className="text-red-500 text-xs mt-1">Enter the First Name and Last Name.</p>
-                )}
-              </div>
-
-    <div>
-      <label>Email</label>
-      <input
-        type="email"
-        className="w-full border px-3 py-2 rounded"
-        placeholder="Email"
-        value={formData.email}
-        onChange={(e) =>
-          setFormData({ ...formData, email: e.target.value })
-        }
-      />
-      {formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) && (
-        <p className="text-red-500 text-xs mt-1">Please enter a valid email address.</p>
-      )}
-    </div>
-
-    <div>
-      <label>Mobile</label>
-      <input
-        type="tel"
-        className="w-full border px-3 py-2 rounded"
-        placeholder="Mobile Number"
-        value={formData.mobile}
-        onChange={(e) => {
-          const value = e.target.value;
-          if (/^\d{0,10}$/.test(value)) {
-            setFormData({ ...formData, mobile: value });
+  {step === 3 && (
+    <div className="mt-2">
+      <label className="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          checked={formData.selfDeclaration}
+          onChange={() =>
+            setFormData({
+              ...formData,
+              selfDeclaration: !formData.selfDeclaration,
+            })
           }
-        }}
-      />
-      {formData.mobile && formData.mobile.length !== 10 && (
-        <p className="text-red-500 text-xs mt-1">Mobile number must be exactly 10 digits.</p>
-      )}
+        />
+        <span>I declare the above information is correct</span>
+      </label>
     </div>
+  )}
 
-    <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Password
-                </label>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
-                  placeholder="Enter your password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-10 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  tabIndex={-1}
-                >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
+  {step === 4 && (
+    <>
+      <div>
+        <label>Name</label>
+        <input
+          type="text"
+          className="w-full border px-3 py-2 rounded"
+          placeholder="First Name and Last Name"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+        />
+      </div>
 
+      <div>
+        <label>Email</label>
+        <input
+          type="email"
+          className="w-full border px-3 py-2 rounded"
+          placeholder="Email"
+          value={formData.email}
+          onChange={(e) =>
+            setFormData({ ...formData, email: e.target.value })
+          }
+        />
+      </div>
 
-              <div className="relative">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Confirm Password
-                        </label>
-                        <input
-                          type={showConfirmPassword ? "text" : "password"}
-                          className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
-                          placeholder="Confirm your password"
-                          value={formData.confirmPassword}
-                          onChange={(e) =>
-                            setFormData({ ...formData, confirmPassword: e.target.value })
-                          }
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute right-4 top-10 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                          tabIndex={-1}
-                        >
-                          {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                        </button>
-                      </div>
+      <div>
+        <label>Mobile</label>
+        <input
+          type="tel"
+          className="w-full border px-3 py-2 rounded"
+          placeholder="Mobile Number"
+          value={formData.mobile}
+          onChange={(e) => {
+            const value = e.target.value;
+            if (/^\d{0,10}$/.test(value)) {
+              setFormData({ ...formData, mobile: value });
+            }
+          }}
+        />
+      </div>
 
+      <div className="relative">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Password
+        </label>
+        <input
+          type={showPassword ? 'text' : 'password'}
+          className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
+          placeholder="Enter your password"
+          value={formData.password}
+          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+        />
+      </div>
 
+      <div className="relative">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Confirm Password
+        </label>
+        <input
+          type={showConfirmPassword ? 'text' : 'password'}
+          className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
+          placeholder="Confirm your password"
+          value={formData.confirmPassword}
+          onChange={(e) =>
+            setFormData({ ...formData, confirmPassword: e.target.value })
+          }
+        />
+      </div>
+    </>
+  )}
 
-    {/* Terms Modal Trigger */}
-    <div className="mt-2 flex items-center space-x-2">
-  <input
-    type="checkbox"
-    checked={agreed}
-    readOnly
-    onClick={() => setShowTermsModal(true)} // ✅ Always open Terms modal on click
-  />
-  <span className="text-sm text-gray-800">
-    I agree to the{" "}
-    <button
-      type="button"
-      onClick={() => setShowTermsModal(true)}
-      className="text-blue-600 underline hover:text-blue-800"
-    >
-      Terms & Conditions
-    </button>
-  </span>
-</div>
-
-
-    {/* ✅ Show message only after Submit */}
-    {isSubmitted && (
-      <p
-        className="text-sm text-green-700 font-medium mt-4 cursor-pointer hover:underline"
-        onClick={() => setShowInfo(true)}
+  {/* Navigation Buttons */}
+  <div className="flex justify-between items-center pt-2">
+    {step > 1 && (
+      <button
+        type="button"
+        onClick={() => setStep(step - 1)}
+        className="px-4 py-2 bg-gray-300 rounded"
       >
-        ✅ Account will be verified within 24 hours
-      </p>
+        Back
+      </button>
     )}
-  </>
-)}
+    {step < 4 ? (
+      <button
+        type="button"
+        onClick={() => setStep(step + 1)}
+        className="ml-auto px-4 py-2 bg-orange-500 text-white rounded flex items-center space-x-1"
+      >
+        <span>Continue</span>
+        <ArrowRight size={18} />
+      </button>
+    ) : (
+      <button type="submit" className="ml-auto px-4 py-2 bg-green-600 text-white rounded">
+        Submit
+      </button>
+    )}
+  </div>
+</form>
 
-
-          {/* Navigation Buttons */}
-          <div className="flex justify-between items-center pt-2">
-            {step > 1 && (
-              <button
-                type="button"
-                onClick={() => setStep(step - 1)}
-                className="px-4 py-2 bg-gray-300 rounded"
-              >
-                Back
-              </button>
-            )}
-            {step < 4 ? (
-           <button
-           type="button"
-           onClick={() => {
-             if (step === 1) {
-               if (!extraData.state || !extraData.city) {
-                 setError('Please select both State and City to continue.');
-                 return;
-               }
-             }
-             if (step === 2) {
-               if (!extraData.dob) {
-                 setError('Please enter valid Date of Birth');
-                 return;
-               }
-             }
-             if (step === 3) {
-               if (!extraData.selfDeclaration) {
-                 setError('Please declare the information.');
-                 return;
-               }
-             }
-             // If no validation errors, move to next step
-             setError('');
-             setStep(step + 1);
-           }}
-           className="ml-auto px-4 py-2 bg-orange-500 text-white rounded flex items-center space-x-1"
-         >
-           <span>Continue</span>
-           <ArrowRight size={18} />
-         </button>
-         
-            ) : (
-              <button
-                type="submit"
-                className="ml-auto px-4 py-2 bg-green-600 text-white rounded"
-              >
-                Submit
-              </button>
-            )}
-          </div>
-        </form>
 
 {/* ✅ Info Modal */}
         {showInfo && (

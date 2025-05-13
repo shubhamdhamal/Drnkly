@@ -11,9 +11,11 @@ connectDB(); // Call the DB connection
 const app = express();
 
 app.use(cors({
-  origin: 'https://www.peghouse.in',
+  origin: 'https://peghouse.in', // Replace with your frontend URL
   credentials: true
 }));
+
+// app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', require('./routes/authRoutes'));

@@ -8,8 +8,13 @@ const fs = require('fs');
 // Secret key for JWT signing
 const JWT_SECRET = 'your_jwt_secret_key'; // Ideally, store this in an environment variable
 
+// Backend - authController.js
+
 exports.signup = async (req, res) => {
   try {
+    // Log the entire request body
+    console.log("Received data:", req.body);
+
     const { 
       name, 
       email, 
@@ -21,7 +26,7 @@ exports.signup = async (req, res) => {
       selfDeclaration 
     } = req.body;
 
-    // Validate input fields
+    // Check if all necessary fields are provided
     if (!name || (!email && !mobile) || !password || !state || !city || !dob || !selfDeclaration) {
       return res.status(400).json({ message: 'Please provide all necessary fields.' });
     }
@@ -60,9 +65,12 @@ exports.signup = async (req, res) => {
     res.status(201).json({ message: 'User created successfully!', token });
 
   } catch (error) {
+    console.error("Error during signup:", error);  // Add detailed error logging
     res.status(500).json({ message: 'Server error.', error: error.message });
   }
 };
+
+
 
 
 exports.login = async (req, res) => {
