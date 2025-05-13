@@ -18,12 +18,11 @@ exports.signup = async (req, res) => {
       state, 
       city, 
       dob, 
-      aadhaar, 
       selfDeclaration 
     } = req.body;
 
     // Validate input fields
-    if (!name || (!email && !mobile) || !password || !state || !city || !dob || !aadhaar || !selfDeclaration) {
+    if (!name || (!email && !mobile) || !password || !state || !city || !dob || !selfDeclaration) {
       return res.status(400).json({ message: 'Please provide all necessary fields.' });
     }
 
@@ -39,9 +38,6 @@ exports.signup = async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create a new user with uploaded file
-    const idProof = req.file ? path.join('/uploads/idproofs', req.file.filename) : null;
-
     // Create user object
     const user = new User({
       name,
@@ -51,8 +47,6 @@ exports.signup = async (req, res) => {
       state,
       city,
       dob,
-      aadhaar,
-      idProof,  // Path to uploaded ID proof
       selfDeclaration
     });
 
@@ -69,6 +63,7 @@ exports.signup = async (req, res) => {
     res.status(500).json({ message: 'Server error.', error: error.message });
   }
 };
+
 
 exports.login = async (req, res) => {
   const { mobile, password } = req.body;
