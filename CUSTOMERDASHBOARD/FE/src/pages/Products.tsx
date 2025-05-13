@@ -338,7 +338,7 @@ function Products() {
             style={{ background: 'white', borderRadius: '12px', padding: '10px', textAlign: 'center' }}
           >
             <img
-              src={`https://peghouse.in/vendor${product.image}`}
+              src={`https://image.peghouse.in/uploads${product.image}`}
               alt={product.name}
               style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px' }}
             />
