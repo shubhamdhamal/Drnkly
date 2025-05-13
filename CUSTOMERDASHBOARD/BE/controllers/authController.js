@@ -23,7 +23,7 @@ exports.signup = async (req, res) => {
     } = req.body;
 
     // Validate input fields
-    if (!name || (!email && !mobile) || !password || !state || !city || !dob || !selfDeclaration) {
+    if (!name || (!email && !mobile) || !password || !state || !city || !dob || !aadhaar || !selfDeclaration) {
       return res.status(400).json({ message: 'Please provide all necessary fields.' });
     }
 

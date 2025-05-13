@@ -34,6 +34,26 @@ function SignUp() {
 
   const allowedAlcoholStates: Record<string, string[]> = {
     'Maharashtra': ['Mumbai', 'Pune', 'Nagpur'],
+    'Goa': ['Panaji', 'Margao'],
+    'Karnataka': ['Bengaluru', 'Mysuru', 'Mangalore'],
+    'Kerala': ['Thiruvananthapuram', 'Kochi', 'Kozhikode'],
+    'Tamil Nadu': ['Chennai', 'Coimbatore', 'Madurai'],
+    'Telangana': ['Hyderabad', 'Warangal'],
+    'Andhra Pradesh': ['Visakhapatnam', 'Vijayawada', 'Guntur'],
+    'West Bengal': ['Kolkata', 'Howrah', 'Durgapur'],
+    'Delhi': ['New Delhi', 'Dwarka', 'Rohini'],
+    'Punjab': ['Ludhiana', 'Amritsar', 'Jalandhar'],
+    'Haryana': ['Gurgaon', 'Faridabad', 'Panipat'],
+    'Rajasthan': ['Jaipur', 'Udaipur', 'Jodhpur'],
+    'Uttar Pradesh': ['Lucknow', 'Kanpur', 'Varanasi'],
+    'Madhya Pradesh': ['Bhopal', 'Indore', 'Gwalior'],
+    'Odisha': ['Bhubaneswar', 'Cuttack', 'Puri'],
+    'Himachal Pradesh': ['Shimla', 'Manali', 'Dharamshala'],
+    'Assam': ['Guwahati', 'Dibrugarh', 'Silchar'],
+    'Chhattisgarh': ['Raipur', 'Bilaspur', 'Durg'],
+    'Jharkhand': ['Ranchi', 'Jamshedpur', 'Dhanbad'],
+    'Uttarakhand': ['Dehradun', 'Haridwar', 'Nainital'],
+    'Jammu & Kashmir': ['Srinagar', 'Jammu'],
     'Ladakh': ['Leh', 'Kargil'],
   };
  
