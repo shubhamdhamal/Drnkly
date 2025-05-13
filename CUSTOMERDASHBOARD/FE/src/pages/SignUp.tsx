@@ -427,6 +427,95 @@ function SignUp() {
             )}
           </div>
         </form>
+        {/* ✅ Info Modal */}
+        {showInfo && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-80 text-center shadow-xl">
+              <h3 className="text-lg font-semibold mb-2">Verification Process</h3>
+              <p className="text-sm text-gray-600">
+                Your account and uploaded documents will be reviewed. You’ll receive confirmation mail if everything is valid.
+              </p>
+              <button
+                onClick={() => setShowInfo(false)}
+                className="mt-4 px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ✅ Terms Modal */}
+        {showTermsModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
+            <div className="bg-white rounded-lg shadow-lg p-6 max-w-lg w-full text-left overflow-y-auto max-h-[90vh]">
+              <h2 className="text-lg font-bold mb-2 text-center">Terms & Conditions (English)</h2>
+              <p className="text-sm text-gray-700 mb-4">
+              1. Age Verification & Legal Drinking Age:The customer must confirm they are 21 years or older (Hard Liquor Prohibited) or 25 years or older (for All liquor) as per Maharashtra excise rules.Age verification via government ID (Aadhaar, PAN, Driving License, Passport) is mandatory before delivery.</p>
+              <p className="text-sm text-gray-700 mb-4">
+              2. Prohibition of Sale to Intoxicated Persons:Liquor will not be delivered to anyone who appears intoxicated at the time of delivery.</p>
+              <p className="text-sm text-gray-700 mb-4">
+              3. Prohibition of Sale in Dry Areas:Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone. </p>
+              <p className="text-sm text-gray-700 mb-4">
+              4. Restricted Timings for Sale & Delivery:Liquor delivery is allowed only during permitted hours (typically 11 AM to 11 PM in most areas, subject to local regulations).</p>
+<p className="text-sm text-gray-700 mb-4">              
+5. Quantity Restrictions:Customers cannot purchase beyond the permissible limit (e.g., 3 liters of IMFL or 9 liters of beer per person per transaction). Bulk purchases may require additional permits.
+ </p>
+  <p className="text-sm text-gray-700 mb-4">
+              6. No Resale or Supply to Minors:The customer must agree not to resell liquor and not to supply it to minors (under 21/25).</p>
+     <p className="text-sm text-gray-700 mb-4">
+              3. Prohibition of Sale in Dry Areas:Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone. </p>
+              <p className="text-sm text-gray-700 mb-4">
+              3. Prohibition of Sale in Dry Areas:Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone. </p>
+              <p className="text-sm text-gray-700 mb-4">
+              3. Prohibition of Sale in Dry Areas:Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone. </p>
+              <p className="text-sm text-gray-700 mb-4">
+              3. Prohibition of Sale in Dry Areas:Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone. </p>
+              <p className="text-sm text-gray-700 mb-4">
+              3. Prohibition of Sale in Dry Areas:Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone. </p>
+              <p className="text-sm text-gray-700 mb-4">
+              3. Prohibition of Sale in Dry Areas:Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone. </p>
+              <p className="text-sm text-gray-700 mb-4">
+              3. Prohibition of Sale in Dry Areas:Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone. </p>
+            
+
+
+
+
+              <h3 className="text-sm text-gray-700 mb-4"><strong>Government Rules & Excise Acts:</strong></h3>
+              <ul className="list-disc pl-5">
+                <li>✔ Maharashtra: Age 21</li>
+                <li>✔ Delhi: Age 25</li>
+                <li>✔ Karnataka: Age 21</li>
+                <li>✔ Tamil Nadu: Only TASMAC allowed</li>
+                <li>✔ Gujarat: Alcohol banned</li>
+                <li>✔ Telangana: Excise Act applies</li>
+              </ul>
+              <p className="text-sm text-gray-700 mb-4">
+                🚭 तुमच्या कुटुंबासाठी मद्यपान आणि धूम्रपान सोडा – आरोग्य हाच खरा धन आहे ❤️🍀
+              </p>
+              <div className="text-center">
+              <button
+                onClick={() => {
+                  setAgreed(true);
+                  setError(''); // clear error
+                  setShowTermsModal(false);
+                }}
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded mr-2"
+              >
+                Agree & Continue
+              </button>
+
+                <button
+                  onClick={() => setShowTermsModal(false)}
+                  className="bg-gray-300 hover:bg-gray-400 text-black px-6 py-2 rounded"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
