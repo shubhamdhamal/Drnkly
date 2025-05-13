@@ -1,9 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const { signup, login } = require('../controllers/authController');
+const { signup } = require('../controllers/authController');
+
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/idproofs/' }); // Set up file storage for ID Proof
 
 // User Signup Route
-router.post('/signup', express.json(), signup);  // ✅ Use express.json() instead of multer
+router.post('/signup', upload.single('idProof'), signup);
+
+const { login } = require('../controllers/authController');
+
 router.post('/login', login);
 
 module.exports = router;

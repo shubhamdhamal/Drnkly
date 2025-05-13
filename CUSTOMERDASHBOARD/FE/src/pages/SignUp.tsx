@@ -29,14 +29,16 @@ function SignUp() {
 
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState('');
+  
   const [errorMessage, setErrorMessage] = useState('');
 
   const allowedAlcoholStates: Record<string, string[]> = {
     'Maharashtra': ['Mumbai', 'Pune', 'Nagpur'],
+    'Ladakh': ['Leh', 'Kargil'],
   };
  
-  // Name validation for first and last name
-  const validateNameWithoutSpace = (name: string) => {
+   // Name validation for first and last name
+   const validateNameWithoutSpace = (name: string) => {
     const nameParts = name.trim().split(' ');
 
     // Ensure there are exactly two parts (first name and last name)
@@ -51,7 +53,8 @@ function SignUp() {
 
     return nameRegex.test(firstName) && nameRegex.test(lastName);
   };
-
+  
+  
   const validateMobile = (mobile: string) => {
     return /^\d{10}$/.test(mobile);
   };
@@ -59,64 +62,69 @@ function SignUp() {
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
+  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     // Check if the user agreed to the terms and conditions
     if (!agreed) {
       setError('Please agree to the terms and conditions');
       return;
     }
-
+  
+ 
+  
     // Validate Name (First name and Last name together in one field)
     if (!formData.name || !validateNameWithoutSpace(formData.name)) {
       setError('Please enter your first name and last name together without space (e.g., John Doe).');
       return;
     }
-
     // Validate Email
     if (!formData.email || !validateEmail(formData.email)) {
       setError('Please enter a valid email address.');
       return;
     }
-
+  
     // Validate Mobile
     if (!formData.mobile || !validateMobile(formData.mobile)) {
       setError('Please enter a valid 10-digit mobile number.');
       return;
     }
-
+  
     // Validate Passwords
     if (!formData.password || !formData.confirmPassword) {
       setError('Please fill both password fields.');
       return;
     }
-
+  
     if (formData.password.length < 6) {
       setError('Password should be at least 6 characters long.');
       return;
     }
-
+  
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match.');
       return;
     }
-
-    // ✅ If all validations passed, Prepare the data for submission as JSON
-    const dataToSubmit = {
-      ...formData,
-      ...extraData,
-    };
-
+  
+    // ✅ If all validations passed, Prepare the data for submission
+    const finalData = new FormData();
+    Object.entries(formData).forEach(([key, val]) => finalData.append(key, val));
+    Object.entries(extraData).forEach(([key, val]) =>
+      key === 'idProof'
+        ? val && finalData.append(key, val as Blob)
+        : finalData.append(key, String(val))
+    );
+  
     try {
       // Submit the form data to the backend
-      const res = await axios.post('https://peghouse.in/api/auth/signup', dataToSubmit, {
-        headers: { 'Content-Type': 'application/json' }, // Send as JSON
+      const res = await axios.post('https://peghouse.in/api/auth/signup', finalData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
-
+  
       console.log(res.data);
-
+  
       // After successful submission
       setIsSubmitted(true);
       setShowInfo(true);
@@ -126,17 +134,19 @@ function SignUp() {
     }
   };
 
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">
       <div className="w-full max-w-md">
         <div className="text-center mb-6">
-          <div className="flex justify-center">
-            <img
-              src="/finallogo.png"
-              alt="Drnkly Logo"
-              className="h-24 md:h-32 lg:h-40 mx-auto object-contain"
-            />
-          </div>
+        <div className="flex justify-center">
+        <img
+  src="/finallogo.png"
+  alt="Drnkly Logo"
+  className="h-24 md:h-32 lg:h-40 mx-auto object-contain"
+/>
+
+</div>
 
           <h2 className="text-2xl font-bold mt-4">User Registration</h2>
           <p className="text-sm text-gray-500">Step {step} of 4</p>
@@ -247,9 +257,9 @@ function SignUp() {
             </>
           )}
 
-          {step === 4 && (
-            <>
-              <div>
+        {step === 4 && (
+  <>
+            <div>
                 <label>Name</label>
                 <input
                   type="text"
@@ -263,40 +273,42 @@ function SignUp() {
                 )}
               </div>
 
-              <div>
-                <label>Email</label>
-                <input
-                  type="email"
-                  className="w-full border px-3 py-2 rounded"
-                  placeholder="Email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                />
-                {formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) && (
-                  <p className="text-red-500 text-xs mt-1">Please enter a valid email address.</p>
-                )}
-              </div>
+    <div>
+      <label>Email</label>
+      <input
+        type="email"
+        className="w-full border px-3 py-2 rounded"
+        placeholder="Email"
+        value={formData.email}
+        onChange={(e) =>
+          setFormData({ ...formData, email: e.target.value })
+        }
+      />
+      {formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) && (
+        <p className="text-red-500 text-xs mt-1">Please enter a valid email address.</p>
+      )}
+    </div>
 
-              <div>
-                <label>Mobile</label>
-                <input
-                  type="tel"
-                  className="w-full border px-3 py-2 rounded"
-                  placeholder="Mobile Number"
-                  value={formData.mobile}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (/^\d{0,10}$/.test(value)) {
-                      setFormData({ ...formData, mobile: value });
-                    }
-                  }}
-                />
-                {formData.mobile && formData.mobile.length !== 10 && (
-                  <p className="text-red-500 text-xs mt-1">Mobile number must be exactly 10 digits.</p>
-                )}
-              </div>
+    <div>
+      <label>Mobile</label>
+      <input
+        type="tel"
+        className="w-full border px-3 py-2 rounded"
+        placeholder="Mobile Number"
+        value={formData.mobile}
+        onChange={(e) => {
+          const value = e.target.value;
+          if (/^\d{0,10}$/.test(value)) {
+            setFormData({ ...formData, mobile: value });
+          }
+        }}
+      />
+      {formData.mobile && formData.mobile.length !== 10 && (
+        <p className="text-red-500 text-xs mt-1">Mobile number must be exactly 10 digits.</p>
+      )}
+    </div>
 
-              <div className="relative">
+    <div className="relative">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Password
                 </label>
@@ -317,116 +329,123 @@ function SignUp() {
                 </button>
               </div>
 
+
               <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Confirm Password
-                </label>
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
-                  placeholder="Confirm your password"
-                  value={formData.confirmPassword}
-                  onChange={(e) =>
-                    setFormData({ ...formData, confirmPassword: e.target.value })
-                  }
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-4 top-10 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  tabIndex={-1}
-                >
-                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Confirm Password
+                        </label>
+                        <input
+                          type={showConfirmPassword ? "text" : "password"}
+                          className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
+                          placeholder="Confirm your password"
+                          value={formData.confirmPassword}
+                          onChange={(e) =>
+                            setFormData({ ...formData, confirmPassword: e.target.value })
+                          }
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-4 top-10 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                          tabIndex={-1}
+                        >
+                          {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        </button>
+                      </div>
 
-              {/* Terms Modal Trigger */}
-              <div className="mt-2 flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={agreed}
-                  readOnly
-                  onClick={() => setShowTermsModal(true)} // ✅ Always open Terms modal on click
-                />
-                <span className="text-sm text-gray-800">
-                  I agree to the{" "}
-                  <button
-                    type="button"
-                    onClick={() => setShowTermsModal(true)}
-                    className="text-blue-600 underline hover:text-blue-800"
-                  >
-                    Terms & Conditions
-                  </button>
-                </span>
-              </div>
 
-              {/* ✅ Show message only after Submit */}
-              {isSubmitted && (
-                <p
-                  className="text-sm text-green-700 font-medium mt-4 cursor-pointer hover:underline"
-                  onClick={() => setShowInfo(true)}
-                >
-                  ✅ Account will be verified within 24 hours
-                </p>
-              )}
-            </>
-          )}
 
-          {/* Navigation Buttons */}
-          <div className="flex justify-between items-center pt-2">
-            {step > 1 && (
-              <button
-                type="button"
-                onClick={() => setStep(step - 1)}
-                className="px-4 py-2 bg-gray-300 rounded"
-              >
-                Back
-              </button>
-            )}
+    {/* Terms Modal Trigger */}
+    <div className="mt-2 flex items-center space-x-2">
+  <input
+    type="checkbox"
+    checked={agreed}
+    readOnly
+    onClick={() => setShowTermsModal(true)} // ✅ Always open Terms modal on click
+  />
+  <span className="text-sm text-gray-800">
+    I agree to the{" "}
+    <button
+      type="button"
+      onClick={() => setShowTermsModal(true)}
+      className="text-blue-600 underline hover:text-blue-800"
+    >
+      Terms & Conditions
+    </button>
+  </span>
+</div>
 
-            {step < 4 ? (
-              <button
-                type="button"
-                onClick={() => {
-                  if (step === 1) {
-                    if (!extraData.state || !extraData.city) {
-                      setError('Please select both State and City to continue.');
-                      return;
-                    }
-                  }
 
-                  if (step === 2) {
-                    if (!extraData.dob) {
-                      setError('Please enter your Date of Birth.');
-                      return;
-                    }
-                  }
+    {/* ✅ Show message only after Submit */}
+    {isSubmitted && (
+      <p
+        className="text-sm text-green-700 font-medium mt-4 cursor-pointer hover:underline"
+        onClick={() => setShowInfo(true)}
+      >
+        ✅ Account will be verified within 24 hours
+      </p>
+    )}
+  </>
+)}
 
-                  if (step === 3) {
-                    if (!extraData.selfDeclaration) {
-                      setError('Please declare that your information is correct.');
-                      return;
-                    }
-                  }
 
-                  setError('');
-                  setStep(step + 1);
-                }}
-                className="ml-auto px-4 py-2 bg-orange-500 text-white rounded flex items-center space-x-1"
-              >
-                <span>Continue</span>
-                <ArrowRight size={18} />
-              </button>
-            ) : (
-              <button
-                type="submit"
-                className="ml-auto px-4 py-2 bg-green-600 text-white rounded"
-              >
-                Submit
-              </button>
-            )}
-          </div>
+        {/* Navigation Buttons */}
+<div className="flex justify-between items-center pt-2">
+  {step > 1 && (
+    <button
+      type="button"
+      onClick={() => setStep(step - 1)}
+      className="px-4 py-2 bg-gray-300 rounded"
+    >
+      Back
+    </button>
+  )}
+
+  {step < 4 ? (
+    <button
+      type="button"
+      onClick={() => {
+        if (step === 1) {
+          if (!extraData.state || !extraData.city) {
+            setError('Please select both State and City to continue.');
+            return;
+          }
+        }
+
+        if (step === 2) {
+          if (!extraData.dob) {
+            setError('Please enter your Date of Birth.');
+            return;
+          }
+        }
+
+        if (step === 3) {
+          if (!extraData.selfDeclaration) {
+            setError('Please declare that your information is correct.');
+            return;
+          }
+        }
+
+        setError('');
+        setStep(step + 1);
+      }}
+      className="ml-auto px-4 py-2 bg-orange-500 text-white rounded flex items-center space-x-1"
+    >
+      <span>Continue</span>
+      <ArrowRight size={18} />
+    </button>
+  ) : (
+    <button
+      type="submit"
+      className="ml-auto px-4 py-2 bg-green-600 text-white rounded"
+    >
+      Submit
+    </button>
+  )}
+</div>
+
         </form>
+
         {/* ✅ Info Modal */}
         {showInfo && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -451,37 +470,38 @@ function SignUp() {
             <div className="bg-white rounded-lg shadow-lg p-6 max-w-lg w-full text-left overflow-y-auto max-h-[90vh]">
               <h2 className="text-lg font-bold mb-2 text-center">Terms & Conditions (English)</h2>
               <p className="text-sm text-gray-700 mb-4">
-              1. Age Verification & Legal Drinking Age:The customer must confirm they are 21 years or older (Hard Liquor Prohibited) or 25 years or older (for All liquor) as per Maharashtra excise rules.Age verification via government ID (Aadhaar, PAN, Driving License, Passport) is mandatory before delivery.</p>
+              1. Age Verification & Legal Drinking Age:The customer must confirm they are 21 years or older (Hard Liquor Prohibited) or 25 years or older (for All liquor) as per Maharashtra excise rules.Age verification via government ID (Aadhaar, PAN, Driving License, Passport) is mandatory before delivery.  </p>
               <p className="text-sm text-gray-700 mb-4">
-              2. Prohibition of Sale to Intoxicated Persons:Liquor will not be delivered to anyone who appears intoxicated at the time of delivery.</p>
+              2. Prohibition of Sale to Intoxicated Persons:Liquor will not be delivered to anyone who appears intoxicated at the time of delivery.            </p>
               <p className="text-sm text-gray-700 mb-4">
-              3. Prohibition of Sale in Dry Areas:Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone. </p>
-              <p className="text-sm text-gray-700 mb-4">
-              4. Restricted Timings for Sale & Delivery:Liquor delivery is allowed only during permitted hours (typically 11 AM to 11 PM in most areas, subject to local regulations).</p>
-<p className="text-sm text-gray-700 mb-4">              
-5. Quantity Restrictions:Customers cannot purchase beyond the permissible limit (e.g., 3 liters of IMFL or 9 liters of beer per person per transaction). Bulk purchases may require additional permits.
- </p>
-  <p className="text-sm text-gray-700 mb-4">
-              6. No Resale or Supply to Minors:The customer must agree not to resell liquor and not to supply it to minors (under 21/25).</p>
-     <p className="text-sm text-gray-700 mb-4">
-              3. Prohibition of Sale in Dry Areas:Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone. </p>
-              <p className="text-sm text-gray-700 mb-4">
-              3. Prohibition of Sale in Dry Areas:Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone. </p>
-              <p className="text-sm text-gray-700 mb-4">
-              3. Prohibition of Sale in Dry Areas:Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone. </p>
-              <p className="text-sm text-gray-700 mb-4">
-              3. Prohibition of Sale in Dry Areas:Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone. </p>
-              <p className="text-sm text-gray-700 mb-4">
-              3. Prohibition of Sale in Dry Areas:Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone. </p>
-              <p className="text-sm text-gray-700 mb-4">
-              3. Prohibition of Sale in Dry Areas:Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone. </p>
-              <p className="text-sm text-gray-700 mb-4">
-              3. Prohibition of Sale in Dry Areas:Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone. </p>
+              3. Prohibition of Sale in Dry Areas:Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone.            </p>
             
-
-
-
-
+              <p className="text-sm text-gray-700 mb-4">
+              4. Restricted Timings for Sale & Delivery:Liquor delivery is allowed only during permitted hours (typically 11 AM to 11 PM in most areas, subject to local regulations).          </p>
+              <p className="text-sm text-gray-700 mb-4">
+              5. Quantity Restrictions:Customers cannot purchase beyond the permissible limit (e.g., 3 liters of IMFL or 9 liters of beer per person per transaction). Bulk purchases may require additional permits.          </p>
+              <p className="text-sm text-gray-700 mb-4">
+              6. No Resale or Supply to Minors:The customer must agree not to resell liquor and not to supply it to minors (under 21/25).         </p>
+              <p className="text-sm text-gray-700 mb-4">
+              7. Valid ID Proof Required at Delivery:The delivery agent will verify the customer’s original ID at the time of delivery. If ID is not provided, the order will be cancelled. </p> 
+              <p className="text-sm text-gray-700 mb-4">
+              8. No Returns or Refunds for Sealed Liquor Bottles:Once liquor is sold, returns or refunds are not permitted unless the product is damaged/spoiled (as per excise rules).
+              </p>
+             <p className="text-sm text-gray-700 mb-4">
+             9. Compliance with Local Municipal & Police Regulations:The customer must ensure that liquor consumption at their location complies with local laws (e.g., no consumption in public places).</p>
+             <p className="text-sm text-gray-700 mb-4">
+             10. Liability Disclaimer:The business is not responsible for misuse, overconsumption, or illegal resale by the customer.</p>
+<p className="text-sm text-gray-700 mb-4">
+11. Right to Refuse Service
+      The business reserves the right to cancel orders if:
+            The customer fails age verification.
+            The delivery location is in a dry area or restricted zone.
+            Suspicion of fraudulent activity.</p>
+<p className="text-sm text-gray-700 mb-4">
+             12. Data Privacy & Use of Customer Information:Customer ID and personal data will be stored as per excise department requirements and may be shared with authorities if required.
+</p>
+<p className="text-sm text-gray-700 mb-4">
+13. Mandatory Compliance with Maharashtra Excise Laws:The customer agrees that the sale is governed by the Maharashtra Prohibition Act, 1949, and any violation may lead to legal action.</p>
               <h3 className="text-sm text-gray-700 mb-4"><strong>Government Rules & Excise Acts:</strong></h3>
               <ul className="list-disc pl-5">
                 <li>✔ Maharashtra: Age 21</li>

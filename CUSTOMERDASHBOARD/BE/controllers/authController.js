@@ -2,8 +2,11 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken'); // Import jsonwebtoken
 
-// Secret key for JWT signing (read from environment variables)
-const JWT_SECRET = process.env.JWT_SECRET;
+const path = require('path');
+const fs = require('fs');
+
+// Secret key for JWT signing
+const JWT_SECRET = 'your_jwt_secret_key'; // Ideally, store this in an environment variable
 
 exports.signup = async (req, res) => {
   try {
@@ -14,10 +17,15 @@ exports.signup = async (req, res) => {
       password, 
       state, 
       city, 
-      dob,  
+      dob, 
+      aadhaar, 
       selfDeclaration 
     } = req.body;
 
+    // Validate input fields
+    if (!name || (!email && !mobile) || !password || !state || !city || !dob || !selfDeclaration) {
+      return res.status(400).json({ message: 'Please provide all necessary fields.' });
+    }
 
     // Check if user already exists by email or mobile
     let userExists = await User.findOne({
@@ -31,6 +39,9 @@ exports.signup = async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Create a new user with uploaded file
+    const idProof = req.file ? path.join('/uploads/idproofs', req.file.filename) : null;
+
     // Create user object
     const user = new User({
       name,
@@ -39,7 +50,9 @@ exports.signup = async (req, res) => {
       password: hashedPassword,
       state,
       city,
-      dob,  
+      dob,
+      aadhaar,
+      idProof,  // Path to uploaded ID proof
       selfDeclaration
     });
 
@@ -53,11 +66,9 @@ exports.signup = async (req, res) => {
     res.status(201).json({ message: 'User created successfully!', token });
 
   } catch (error) {
-    console.error(error); // Log the error
     res.status(500).json({ message: 'Server error.', error: error.message });
   }
 };
-
 
 exports.login = async (req, res) => {
   const { mobile, password } = req.body;
