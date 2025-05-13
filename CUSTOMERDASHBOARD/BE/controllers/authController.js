@@ -1,12 +1,10 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken'); // Import jsonwebtoken
+const dotenv = require('dotenv');  // Environment variable package
+dotenv.config();
 
-const path = require('path');
-const fs = require('fs');
-
-// Secret key for JWT signing
-const JWT_SECRET = 'your_jwt_secret_key'; // Ideally, store this in an environment variable
+const JWT_SECRET = process.env.JWT_SECRET; // Using environment variable for security
 
 exports.signup = async (req, res) => {
   try {
@@ -21,7 +19,22 @@ exports.signup = async (req, res) => {
       selfDeclaration 
     } = req.body;
 
+    // Check if all required fields are provided
+    if (!name || !email || !mobile || !password || !state || !city || !dob || selfDeclaration === undefined) {
+      return res.status(400).json({ message: 'All fields are required.' });
+    }
 
+    // Validate email and mobile format (basic validation)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const mobileRegex = /^\d{10}$/;
+
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: 'Please provide a valid email address.' });
+    }
+
+    if (!mobileRegex.test(mobile)) {
+      return res.status(400).json({ message: 'Please provide a valid 10-digit mobile number.' });
+    }
 
     // Check if user already exists by email or mobile
     let userExists = await User.findOne({
@@ -35,7 +48,6 @@ exports.signup = async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    
     // Create user object
     const user = new User({
       name,
@@ -55,12 +67,17 @@ exports.signup = async (req, res) => {
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
 
     // Send success response with JWT token
-    res.status(201).json({ message: 'User created successfully!', token });
+    res.status(201).json({
+      message: 'User created successfully!',
+      token,
+    });
 
   } catch (error) {
+    console.error('Signup error: ', error);
     res.status(500).json({ message: 'Server error.', error: error.message });
   }
 };
+
 
 exports.login = async (req, res) => {
   const { mobile, password } = req.body;
