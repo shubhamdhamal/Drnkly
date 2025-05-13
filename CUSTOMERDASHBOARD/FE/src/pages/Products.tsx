@@ -337,6 +337,14 @@ function Products() {
             key={product._id}
             style={{ background: 'white', borderRadius: '12px', padding: '10px', textAlign: 'center' }}
           >
+            <div style={{ 
+              width: '100%',
+              paddingTop: '100%', // Creates a square aspect ratio
+              position: 'relative',
+              borderRadius: '8px',
+              overflow: 'hidden'
+            }}>
+
             <img
               src={product.image}
               alt={product.name}

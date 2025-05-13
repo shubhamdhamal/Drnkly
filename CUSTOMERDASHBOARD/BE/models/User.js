@@ -8,8 +8,6 @@ const userSchema = new mongoose.Schema({
   state: { type: String, required: true },
   city: { type: String, required: true },
   dob: { type: Date, required: true },
-  aadhaar: { type: String, required: true },
-  idProof: { type: String }, // Path to the ID proof file
   selfDeclaration: { type: Boolean, required: true },
   status: { type: String, enum: ['Pending', 'Verified', 'Rejected'], default: 'Pending' }, // New field for verification status
   createdAt: { type: Date, default: Date.now }
