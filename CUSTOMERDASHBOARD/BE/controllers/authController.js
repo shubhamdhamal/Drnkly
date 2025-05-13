@@ -19,10 +19,8 @@ exports.signup = async (req, res) => {
       selfDeclaration 
     } = req.body;
 
-    // Check if all required fields are provided
-    if (!name || !email || !mobile || !password || !state || !city || !dob || selfDeclaration === undefined) {
-      return res.status(400).json({ message: 'All fields are required.' });
-    }
+    // Remove the previous 'All fields are required' validation
+    // Instead of checking all fields, you can either validate individual fields or skip this validation completely
 
     // Validate email and mobile format (basic validation)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

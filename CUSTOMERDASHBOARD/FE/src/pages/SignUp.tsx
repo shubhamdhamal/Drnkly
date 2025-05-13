@@ -62,24 +62,24 @@ function SignUp() {
     }
 
     // Validate Name
-    if (!formData.name || !validateNameWithoutSpace(formData.name)) {
+    if ( !validateNameWithoutSpace(formData.name)) {
       setError('Please enter your first name and last name together without space (e.g., John Doe).');
       return;
     }
     // Validate Email
-    if (!formData.email || !validateEmail(formData.email)) {
+    if (!validateEmail(formData.email)) {
       setError('Please enter a valid email address.');
       return;
     }
 
     // Validate Mobile
-    if (!formData.mobile || !validateMobile(formData.mobile)) {
+    if ( !validateMobile(formData.mobile)) {
       setError('Please enter a valid 10-digit mobile number.');
       return;
     }
 
     // Validate Passwords
-    if (!formData.password || !formData.confirmPassword) {
+    if ( !formData.confirmPassword) {
       setError('Please fill both password fields.');
       return;
     }
