@@ -4,7 +4,7 @@ const multer = require('multer');
 // Define storage configuration for multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = '/var/www/Drnkly/images/uploads';
+    const uploadPath = 'images/uploads/';
     console.log("Saving image to:", uploadPath);
     cb(null, uploadPath);
   },
