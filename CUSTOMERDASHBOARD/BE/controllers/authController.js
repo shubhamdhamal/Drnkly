@@ -2,11 +2,8 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken'); // Import jsonwebtoken
 
-const path = require('path');
-const fs = require('fs');
-
-// Secret key for JWT signing
-const JWT_SECRET = 'your_jwt_secret_key'; // Ideally, store this in an environment variable
+// Secret key for JWT signing (read from environment variables)
+const JWT_SECRET = process.env.JWT_SECRET;
 
 exports.signup = async (req, res) => {
   try {
@@ -38,7 +35,6 @@ exports.signup = async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    
     // Create user object
     const user = new User({
       name,
@@ -61,9 +57,11 @@ exports.signup = async (req, res) => {
     res.status(201).json({ message: 'User created successfully!', token });
 
   } catch (error) {
+    console.error(error); // Log the error
     res.status(500).json({ message: 'Server error.', error: error.message });
   }
 };
+
 
 exports.login = async (req, res) => {
   const { mobile, password } = req.body;
