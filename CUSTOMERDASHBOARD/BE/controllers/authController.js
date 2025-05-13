@@ -17,13 +17,12 @@ exports.signup = async (req, res) => {
       password, 
       state, 
       city, 
-      dob, 
-      aadhaar, 
+      dob,  
       selfDeclaration 
     } = req.body;
 
     // Validate input fields
-    if (!name || (!email && !mobile) || !password || !state || !city || !dob || !aadhaar || !selfDeclaration) {
+    if (!name || (!email && !mobile) || !password || !state || !city || !dob || !selfDeclaration) {
       return res.status(400).json({ message: 'Please provide all necessary fields.' });
     }
 
@@ -39,9 +38,7 @@ exports.signup = async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create a new user with uploaded file
-    const idProof = req.file ? path.join('/uploads/idproofs', req.file.filename) : null;
-
+    
     // Create user object
     const user = new User({
       name,
@@ -50,9 +47,7 @@ exports.signup = async (req, res) => {
       password: hashedPassword,
       state,
       city,
-      dob,
-      aadhaar,
-      idProof,  // Path to uploaded ID proof
+      dob,  
       selfDeclaration
     });
 

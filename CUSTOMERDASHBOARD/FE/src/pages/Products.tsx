@@ -340,7 +340,17 @@ function Products() {
             <img
               src={product.image}
               alt={product.name}
-              style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px' }}
+              style={{ 
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    objectFit: 'contain',
+    borderRadius: '8px',
+    backgroundColor: '#f5f5f5'
+  }}
+
             />
             <h3 style={{ margin: '10px 0', fontSize: '16px' }}>{product.name}</h3>
             <p style={{ color: '#666', margin: '5px 0' }}>{product.brand}</p>
