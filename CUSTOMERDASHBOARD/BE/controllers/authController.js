@@ -18,10 +18,6 @@ exports.signup = async (req, res) => {
       selfDeclaration 
     } = req.body;
 
-    // Validate input fields
-    // if (!name || (!email && !mobile) || !password || !state || !city || !dob || !selfDeclaration) {
-    //   return res.status(400).json({ message: 'Please provide all necessary fields.' });
-    // }
 
     // Check if user already exists by email or mobile
     let userExists = await User.findOne({
