@@ -1,24 +1,6 @@
 const Product = require('../models/product');
 const path = require('path');
-const multer = require('multer');
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = '/var/www/Drnkly/images/uploads';
-    console.log("📁 Saving image to:", uploadPath);
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const filename = Date.now() + ext;
-    console.log("📝 Generated filename:", filename);
-    cb(null, filename);
-  }
-});
-
-const upload = multer({ storage }).single('image');
-
-
+const fs = require('fs');
 
 
 // Function to categorize liquor based on alcohol content
@@ -30,8 +12,20 @@ const categorizeLiquor = (alcoholContent) => {
   }
 };
 
+// ✅ Add Product API with full debug logs
 exports.addProduct = async (req, res) => {
   try {
+    console.log("📩 Incoming Add Product API request...");
+
+    // ✅ Log request headers
+    console.log("📑 Headers:", req.headers);
+
+    // ✅ Log body
+    console.log("📦 Body:", req.body);
+
+    // ✅ Log file
+    console.log("📁 Uploaded File Info:", req.file);
+
     const {
       name,
       brand,
@@ -43,8 +37,21 @@ exports.addProduct = async (req, res) => {
       description,
     } = req.body;
 
-    console.log("📥 Request Body:", req.body);
-    console.log("📸 Uploaded File Info:", req.file);
+    // ✅ Validate mandatory fields
+    const missingFields = [];
+    if (!name) missingFields.push('name');
+    if (!brand) missingFields.push('brand');
+    if (!category) missingFields.push('category');
+    if (!alcoholContent) missingFields.push('alcoholContent');
+    if (!price) missingFields.push('price');
+    if (!stock) missingFields.push('stock');
+    if (!volume) missingFields.push('volume');
+    if (!description) missingFields.push('description');
+
+    if (missingFields.length > 0) {
+      console.error("⚠️ Missing required fields:", missingFields);
+      return res.status(400).json({ error: `Missing required fields: ${missingFields.join(', ')}` });
+    }
 
     // ❌ If no file received
     if (!req.file) {
@@ -59,9 +66,9 @@ exports.addProduct = async (req, res) => {
 
     // ✅ Confirm file actually exists
     if (fs.existsSync(localPath)) {
-      console.log("✅ File saved to disk at:", localPath);
+      console.log("✅ File exists on disk:", localPath);
     } else {
-      console.error("❌ File not saved to disk:", localPath);
+      console.error("❌ File not found on disk:", localPath);
     }
 
     const liquorType = categorizeLiquor(Number(alcoholContent));
@@ -75,24 +82,24 @@ exports.addProduct = async (req, res) => {
       stock,
       volume,
       description,
-      image: publicUrl, // ✅ Correct URL stored for frontend
+      image: publicUrl, // ✅ Correct full URL
       liquorType,
       vendorId: req.vendorId,
       inStock: stock > 0,
     });
 
-    await newProduct.save();
+    const saved = await newProduct.save();
 
-    console.log("✅ Product successfully saved to DB:", newProduct);
+    console.log("✅ Product saved to MongoDB:", saved);
 
     res.status(201).json({
       message: 'Product added successfully',
-      product: newProduct,
+      product: saved,
     });
 
   } catch (error) {
-    console.error("🔥 Error adding product:", error);
-    res.status(500).json({ error: 'Failed to add product' });
+    console.error("🔥 Uncaught Error in addProduct:", error);
+    res.status(500).json({ error: 'Failed to add product', details: error.message });
   }
 };
 
