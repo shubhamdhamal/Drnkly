@@ -335,7 +335,7 @@ function Products() {
         display: 'grid', 
         gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', 
         gap: '20px',
-        alignItems: 'start' // This ensures all cards start from the same line
+        alignItems: 'stretch' // Changed to stretch to make all boxes same height
       }}>
         {filterProducts().map((product) => (
           <div
@@ -345,38 +345,42 @@ function Products() {
               borderRadius: '12px', 
               padding: '10px', 
               textAlign: 'center',
-              height: 'auto', // Ensures consistent card height
               display: 'flex',
-              flexDirection: 'column'
+              flexDirection: 'column',
+              height: '100%', // Take full height
+              justifyContent: 'space-between' // This will push the button to bottom
             }}
           >
-            <div style={{ 
-              width: '100%',
-              height: '200px', // Fixed height instead of paddingTop
-              position: 'relative',
-              borderRadius: '8px',
-              overflow: 'hidden',
-              marginBottom: '10px'
-            }}>
-              <img
-                src={product.image}
-                alt={product.name}
-                style={{ 
-                  position: 'absolute',
-                  top: '0',
-                  left: '0',
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'contain', // This will maintain aspect ratio
-                  borderRadius: '8px',
-                  backgroundColor: '#f5f5f5'
-                }}
-              />
+            <div> {/* Content wrapper */}
+              <div style={{ 
+                width: '100%',
+                height: '200px',
+                position: 'relative',
+                borderRadius: '8px',
+                overflow: 'hidden',
+                marginBottom: '10px'
+              }}>
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  style={{ 
+                    position: 'absolute',
+                    top: '0',
+                    left: '0',
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    borderRadius: '8px',
+                    backgroundColor: '#f5f5f5'
+                  }}
+                />
+              </div>
+              <h3 style={{ margin: '10px 0', fontSize: '16px' }}>{product.name}</h3>
+              <p style={{ color: '#666', margin: '5px 0' }}>{product.brand}</p>
+              <p style={{ color: '#666', margin: '5px 0' }}>{product.volume} ml</p>
+              <p style={{ color: '#666', margin: '5px 0' }}>₹{product.price}</p>
             </div>
-            <h3 style={{ margin: '10px 0', fontSize: '16px' }}>{product.name}</h3>
-            <p style={{ color: '#666', margin: '5px 0' }}>{product.brand}</p>
-            <p style={{ color: '#666', margin: '5px 0' }}>{product.volume} ml</p>
-            <p style={{ color: '#666', margin: '5px 0' }}>₹{product.price}</p>
+            
             <button
               onClick={(e) => handleAddToCart(e, product)}
               style={{
@@ -386,7 +390,7 @@ function Products() {
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                marginTop: '10px',
+                marginTop: 'auto', // This pushes button to bottom
                 cursor: 'pointer'
               }}
             >
