@@ -19,9 +19,7 @@ exports.signup = async (req, res) => {
       selfDeclaration 
     } = req.body;
 
-    // Remove the previous 'All fields are required' validation
-    // Instead of checking all fields, you can either validate individual fields or skip this validation completely
-
+   
     // Validate email and mobile format (basic validation)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const mobileRegex = /^\d{10}$/;

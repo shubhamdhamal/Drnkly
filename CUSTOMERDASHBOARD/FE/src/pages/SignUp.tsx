@@ -55,6 +55,9 @@ function SignUp() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+      console.log('Form Data:', formData);
+      console.log('Extra Data:', extraData);
+
     // Check if the user agreed to the terms and conditions
     if (!agreed) {
       setError('Please agree to the terms and conditions');
