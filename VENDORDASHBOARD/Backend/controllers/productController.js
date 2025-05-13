@@ -60,16 +60,11 @@ exports.addProduct = async (req, res) => {
     }
 
     // ✅ Compose full image URL
-    const imageFilename = req.file.filename;
-    const publicUrl = `https://image.peghouse.in/uploads/${imageFilename}`;
-    const localPath = `/var/www/Drnkly/images/uploads/${imageFilename}`;
+const imageFilename = req.file.filename;
+const publicUrl = `https://image.peghouse.in/uploads/${imageFilename}`;
+    console.log("📸 Image URL:", publicUrl);
 
-    // ✅ Confirm file actually exists
-    if (fs.existsSync(localPath)) {
-      console.log("✅ File exists on disk:", localPath);
-    } else {
-      console.error("❌ File not found on disk:", localPath);
-    }
+
 
     const liquorType = categorizeLiquor(Number(alcoholContent));
 

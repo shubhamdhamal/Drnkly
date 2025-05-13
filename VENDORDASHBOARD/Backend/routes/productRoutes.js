@@ -11,10 +11,20 @@ router.post(
   upload.single('image'),
   (req, res, next) => {
     console.log("📸 Multer processed file:", req.file);
+
+    if (!req.file) {
+      console.error("❌ Multer failed to save the image.");
+    } else {
+      console.log("📁 File Path:", req.file.path);
+      console.log("📁 Destination:", req.file.destination);
+      console.log("📁 Filename:", req.file.filename);
+    }
+
     next();
   },
   productController.addProduct
 );
+
 
 // ✅ Other routes (no multer needed)
 router.put('/:id', authenticateVendor, productController.updateProduct);
