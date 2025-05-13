@@ -43,7 +43,7 @@ exports.addProduct = async (req, res) => {
 
     // ✅ Log all fields for debugging
     console.log("📥 Request Body:", req.body);
-
+    console.log("📸 Uploaded File:", req.file);
     // ✅ Check uploaded file
     if (!req.file) {
       console.error("❌ Image upload failed or missing.");
