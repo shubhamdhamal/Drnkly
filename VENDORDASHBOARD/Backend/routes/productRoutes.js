@@ -5,35 +5,46 @@ const { authenticateVendor } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 
-// ✅ Correct multer storage config to save images with correct names
+// ✅ Correct multer storage config
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadPath = '/var/www/Drnkly/images/uploads';
-    console.log("Saving image to:", uploadPath);
+    console.log("📁 Saving image to:", uploadPath);
     cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
-    cb(null, Date.now() + ext);
+    const uniqueName = Date.now() + ext;
+    console.log("📸 File saved as:", uniqueName);
+    cb(null, uniqueName);
   }
 });
 
-
 const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
+  limits: { fileSize: 5 * 1024 * 1024 }, // Max 5MB
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) {
-      cb(null, true); // Accept image files only
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
     } else {
-      cb(new Error("Only images are allowed!"), false);
-    }
-  },
+      cb(new Error('❌ Only image files are allowed!'), false);
+    }
+  }
 });
 
+// ✅ Route for adding product
+router.post(
+  '/add',
+  authenticateVendor,
+  upload.single('image'),
+  (req, res, next) => {
+    console.log("🔄 Multer processed file:", req.file);
+    next();
+  },
+  productController.addProduct
+);
 
-// ✅ Add Product (with image)
-router.post('/add', authenticateVendor, upload.single('image'), productController.addProduct);
+
 
 // ✅ Update Product
 router.put('/:id', authenticateVendor, productController.updateProduct);

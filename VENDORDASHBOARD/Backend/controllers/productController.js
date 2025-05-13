@@ -31,27 +31,34 @@ const categorizeLiquor = (alcoholContent) => {
 exports.addProduct = async (req, res) => {
   try {
     const {
-      name, brand, category,
-      alcoholContent, price, stock, volume, description
+      name,
+      brand,
+      category,
+      alcoholContent,
+      price,
+      stock,
+      volume,
+      description,
     } = req.body;
 
-    // Check the liquor type based on alcohol content
-    const liquorType = categorizeLiquor(alcoholContent);
+    // ✅ Log all fields for debugging
+    console.log("📥 Request Body:", req.body);
 
+    // ✅ Check uploaded file
     if (!req.file) {
-  console.error("❌ No file uploaded or image processing failed.");
-  return res.status(400).json({ error: "Image upload failed or no file provided" });
-}
+      console.error("❌ Image upload failed or missing.");
+      return res.status(400).json({ error: "Image upload failed or no file provided" });
+    }
 
-// Get the absolute file path
-const localPath = `/var/www/Drnkly/images/uploads/${req.file.filename}`;
-console.log("✅ Image stored at:", localPath);
+    // ✅ File path setup
+    const imageFilename = req.file.filename;
+    const localPath = `/var/www/Drnkly/images/uploads/${imageFilename}`;
+    const publicUrl = `https://image.peghouse.in/uploads/${imageFilename}`;
 
-// Define the URL where the image should be accessible
-const image = `https://image.peghouse.in/uploads/${req.file.filename}`;
-console.log("🌍 Image should be accessible at:", image);
+    console.log("✅ Saved image at:", localPath);
+    console.log("🌍 Image accessible at:", publicUrl);
 
-
+    const liquorType = categorizeLiquor(Number(alcoholContent));
 
     const newProduct = new Product({
       name,
@@ -62,21 +69,23 @@ console.log("🌍 Image should be accessible at:", image);
       stock,
       volume,
       description,
-      image,
-      liquorType, // Add liquor type based on the categorization
+      image: publicUrl,
+      liquorType,
       vendorId: req.vendorId,
-      inStock: stock > 0, // Set inStock based on stock availability
+      inStock: stock > 0,
     });
 
     await newProduct.save();
 
+    console.log("🎉 Product saved:", newProduct);
+
     res.status(201).json({
       message: 'Product added successfully',
-      product: newProduct
+      product: newProduct,
     });
 
-  } catch (err) {
-    console.error('Error adding product:', err);
+  } catch (error) {
+    console.error("🔥 Error in addProduct:", error);
     res.status(500).json({ error: 'Failed to add product' });
   }
 };
