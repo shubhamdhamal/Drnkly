@@ -131,11 +131,7 @@ function SignUp() {
     // ✅ If all validations passed, Prepare the data for submission
     const finalData = new FormData();
     Object.entries(formData).forEach(([key, val]) => finalData.append(key, val));
-    Object.entries(extraData).forEach(([key, val]) =>
-      key === 'idProof'
-        ? val && finalData.append(key, val as Blob)
-        : finalData.append(key, String(val))
-    );
+    
   
     try {
       // Submit the form data to the backend
