@@ -1,21 +1,23 @@
 const Product = require('../models/product');
 const path = require('path');
 const multer = require('multer');
-// Define storage configuration for multer
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadPath = '/var/www/Drnkly/images/uploads';
-    console.log("Saving image to:", uploadPath);
+    console.log("📁 Saving image to:", uploadPath);
     cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
-    cb(null, Date.now() + ext);
+    const filename = Date.now() + ext;
+    console.log("📝 Generated filename:", filename);
+    cb(null, filename);
   }
 });
 
-
 const upload = multer({ storage }).single('image');
+
 
 
 
@@ -41,22 +43,26 @@ exports.addProduct = async (req, res) => {
       description,
     } = req.body;
 
-    // ✅ Log all fields for debugging
     console.log("📥 Request Body:", req.body);
-    console.log("📸 Uploaded File:", req.file);
-    // ✅ Check uploaded file
+    console.log("📸 Uploaded File Info:", req.file);
+
+    // ❌ If no file received
     if (!req.file) {
-      console.error("❌ Image upload failed or missing.");
+      console.error("❌ No image file received in request.");
       return res.status(400).json({ error: "Image upload failed or no file provided" });
     }
 
-    // ✅ File path setup
+    // ✅ Compose full image URL
     const imageFilename = req.file.filename;
-    const localPath = `/var/www/Drnkly/images/uploads/${imageFilename}`;
     const publicUrl = `https://image.peghouse.in/uploads/${imageFilename}`;
+    const localPath = `/var/www/Drnkly/images/uploads/${imageFilename}`;
 
-    console.log("✅ Saved image at:", localPath);
-    console.log("🌍 Image accessible at:", publicUrl);
+    // ✅ Confirm file actually exists
+    if (fs.existsSync(localPath)) {
+      console.log("✅ File saved to disk at:", localPath);
+    } else {
+      console.error("❌ File not saved to disk:", localPath);
+    }
 
     const liquorType = categorizeLiquor(Number(alcoholContent));
 
@@ -69,7 +75,7 @@ exports.addProduct = async (req, res) => {
       stock,
       volume,
       description,
-      image: publicUrl,
+      image: publicUrl, // ✅ Correct URL stored for frontend
       liquorType,
       vendorId: req.vendorId,
       inStock: stock > 0,
@@ -77,7 +83,7 @@ exports.addProduct = async (req, res) => {
 
     await newProduct.save();
 
-    console.log("🎉 Product saved:", newProduct);
+    console.log("✅ Product successfully saved to DB:", newProduct);
 
     res.status(201).json({
       message: 'Product added successfully',
@@ -85,7 +91,7 @@ exports.addProduct = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("🔥 Error in addProduct:", error);
+    console.error("🔥 Error adding product:", error);
     res.status(500).json({ error: 'Failed to add product' });
   }
 };
