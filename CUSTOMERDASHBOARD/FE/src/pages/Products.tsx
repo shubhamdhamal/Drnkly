@@ -134,23 +134,39 @@ function Products() {
      
       {/* Header */}
       <div className="flex justify-between items-center px-2 py-1">
-  <div
-    className="cursor-pointer"
-    onClick={() => navigate('/dashboard')}
-  >
-    <img
-      src="/finallogo.png"
-      alt="Drnkly Logo"
-      className="h-20 md:h-24 lg:h-26 object-contain"
-    />
-  </div>
-  <ShoppingCart
-    onClick={() => navigate('/cart')}
-    className="cursor-pointer"
-  />
-</div>
-
-
+        <div
+          className="cursor-pointer"
+          onClick={() => navigate('/dashboard')}
+        >
+          <img
+            src="/finallogo.png"
+            alt="Drnkly Logo"
+            className="h-20 md:h-24 lg:h-26 object-contain"
+          />
+        </div>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate('/login')}
+            style={{
+              padding: '8px 16px',
+              background: '#cd6839',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            Login
+          </button>
+          <ShoppingCart
+            onClick={() => navigate('/cart')}
+            className="cursor-pointer"
+          />
+        </div>
+      </div>
 
       {/* Search Bar */}
       <div className="mt-4 relative">
