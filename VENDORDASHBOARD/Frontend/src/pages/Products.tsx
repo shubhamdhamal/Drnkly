@@ -83,19 +83,19 @@ const handleAddProduct = async (e: React.FormEvent) => {
     const response = await axios.post('https://vendor.peghouse.in/api/products/add', formData, {
       headers: {
         'Authorization': `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data', // Important to set this header
+        // ❌ REMOVE manual Content-Type!
+        // Let Axios set it with proper boundary.
       },
     });
 
-    // Add the newly created product to the state
     setProducts((prevProducts) => [...prevProducts, response.data.product]);
-
-    setShowAddProduct(false); // Close the modal
-    form.reset(); // Reset the form fields
+    setShowAddProduct(false);
+    form.reset();
   } catch (error) {
     console.error('Error adding product:', error);
   }
 };
+
 
 
   const handleEditProduct = async (e: React.FormEvent) => {
