@@ -11,118 +11,109 @@ function SignUp() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
-const [formData, setFormData] = useState({
-  name: '',
-  email: '',
-  mobile: '',
-  password: '',
-  confirmPassword: '',
-  state: '',
-  city: '',
-  dob: '',
-  selfDeclaration: false,
-});
 
-
+  // Combining formData and extraData into one state object
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    mobile: '',
+    password: '',
+    confirmPassword: '',
+    state: '',
+    city: '',
+    dob: '',
+    selfDeclaration: false,
+  });
 
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState('');
-  
-  const [errorMessage, setErrorMessage] = useState('');
 
-  const allowedAlcoholStates: Record<string, string[]> = {
+  const allowedAlcoholStates = {
     'Maharashtra': ['Mumbai', 'Pune', 'Nagpur'],
-
   };
 
-   // Name validation for first and last name
-const validateNameWithoutSpace = (name: string) => {
-  const nameParts = name.trim().split(' ');
-  if (nameParts.length !== 2) return false;
-  const nameRegex = /^[A-Za-z]{2,}$/;
-  return nameRegex.test(nameParts[0]) && nameRegex.test(nameParts[1]);
-};
-
-const validateMobile = (mobile: string) => {
-  return /^\d{10}$/.test(mobile);
-};
-
-const validateEmail = (email: string) => {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-};
-
-  
-
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  
-  // Log data to check if all fields are populated
-  const requestData = {
-    ...formData,
+  // Name validation for first and last name
+  const validateNameWithoutSpace = (name) => {
+    const nameParts = name.trim().split(' ');
+    if (nameParts.length !== 2) return false;
+    const nameRegex = /^[A-Za-z]{2,}$/;
+    return nameRegex.test(nameParts[0]) && nameRegex.test(nameParts[1]);
   };
-  
-  console.log('Data to be sent:', requestData);  // Log the data to check
 
-  // Check if the user agreed to the terms and conditions
-  if (!agreed) {
-    setError('Please agree to the terms and conditions');
-    return;
-  }
+  // Mobile number validation
+  const validateMobile = (mobile) => {
+    return /^\d{10}$/.test(mobile);
+  };
 
-  // Validate Name (First name and Last name together in one field)
-  if (!formData.name || !validateNameWithoutSpace(formData.name)) {
-    setError('Please enter your first name and last name together without space (e.g., John Doe).');
-    return;
-  }
-  // Validate Email
-  if (!formData.email || !validateEmail(formData.email)) {
-    setError('Please enter a valid email address.');
-    return;
-  }
+  // Email validation
+  const validateEmail = (email) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
 
-  // Validate Mobile
-  if (!formData.mobile || !validateMobile(formData.mobile)) {
-    setError('Please enter a valid 10-digit mobile number.');
-    return;
-  }
+  // Submit handler
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  // Validate Passwords
-  if (!formData.password || !formData.confirmPassword) {
-    setError('Please fill both password fields.');
-    return;
-  }
+    // Log data to check if all fields are populated
+    const requestData = { ...formData };
+    console.log('Data to be sent:', requestData); // Log the data to check
 
-  if (formData.password.length < 6) {
-    setError('Password should be at least 6 characters long.');
-    return;
-  }
+    // Check if the user agreed to the terms and conditions
+    if (!agreed) {
+      setError('Please agree to the terms and conditions');
+      return;
+    }
 
-  if (formData.password !== formData.confirmPassword) {
-    setError('Passwords do not match.');
-    return;
-  }
+    // Validate Name (First name and Last name together in one field)
+    if (!formData.name || !validateNameWithoutSpace(formData.name)) {
+      setError('Please enter your first name and last name together without space (e.g., John Doe).');
+      return;
+    }
 
-  try {
-    // Send the data to the backend as JSON
-    const res = await axios.post('https://peghouse.in/api/auth/signup', requestData, {
-      headers: { 'Content-Type': 'application/json' },
-    });
+    // Validate Email
+    if (!formData.email || !validateEmail(formData.email)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
 
-    console.log(res.data);
+    // Validate Mobile
+    if (!formData.mobile || !validateMobile(formData.mobile)) {
+      setError('Please enter a valid 10-digit mobile number.');
+      return;
+    }
 
-    // After successful submission
-    setIsSubmitted(true);
-    setShowInfo(true);
-    setTimeout(() => navigate('/login'), 4000);
-  } catch (err: any) {
-    setError(err.response?.data?.message || 'Something went wrong!');
-  }
-};
+    // Validate Passwords
+    if (!formData.password || !formData.confirmPassword) {
+      setError('Please fill both password fields.');
+      return;
+    }
 
+    if (formData.password.length < 6) {
+      setError('Password should be at least 6 characters long.');
+      return;
+    }
 
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
 
-  
+    try {
+      // Send the data to the backend as JSON
+      const res = await axios.post('https://peghouse.in/api/auth/signup', requestData, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      console.log(res.data);
+
+      // After successful submission
+      setIsSubmitted(true);
+      setShowInfo(true);
+      setTimeout(() => navigate('/login'), 4000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Something went wrong!');
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">
@@ -141,146 +132,140 @@ const handleSubmit = async (e: React.FormEvent) => {
           </div>
         )}
 
-<form onSubmit={handleSubmit} className="space-y-4">
-  {step === 1 && (
-    <>
-      <div>
-        <label>State</label>
-        <select
-          className="w-full border px-3 py-2 rounded"
-          value={formData.state}
-          onChange={(e) =>
-            setFormData({ ...formData, state: e.target.value, city: '' })
-          }
-        >
-          <option value="">-- Select State --</option>
-          {Object.keys(allowedAlcoholStates).map((state) => (
-            <option key={state} value={state}>
-              {state}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label>City</label>
-        <select
-          className="w-full border px-3 py-2 rounded"
-          value={formData.city}
-          onChange={(e) =>
-            setFormData({ ...formData, city: e.target.value })
-          }
-          disabled={!formData.state}
-        >
-          <option value="">-- Select City --</option>
-          {formData.state &&
-            allowedAlcoholStates[formData.state].map((city) => (
-              <option key={city} value={city}>
-                {city}
-              </option>
-            ))}
-        </select>
-      </div>
-    </>
-  )}
-  {step === 2 && (
-    <div>
-      <label>DOB</label>
-      <input
-        type="date"
-        className="w-full border px-3 py-2 rounded"
-        value={formData.dob}
-        onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
-      />
-    </div>
-  )}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Step 1: State and City */}
+          {step === 1 && (
+            <>
+              <div>
+                <label>State</label>
+                <select
+                  className="w-full border px-3 py-2 rounded"
+                  value={formData.state}
+                  onChange={(e) => setFormData({ ...formData, state: e.target.value, city: '' })}
+                >
+                  <option value="">-- Select State --</option>
+                  {Object.keys(allowedAlcoholStates).map((state) => (
+                    <option key={state} value={state}>{state}</option>
+                  ))}
+                </select>
+              </div>
 
-  {step === 3 && (
-    <div className="mt-2">
-      <label className="flex items-center space-x-2">
-        <input
-          type="checkbox"
-          checked={formData.selfDeclaration}
-          onChange={() =>
-            setFormData({
-              ...formData,
-              selfDeclaration: !formData.selfDeclaration,
-            })
-          }
-        />
-        <span>I declare the above information is correct</span>
-      </label>
-    </div>
-  )}
+              <div>
+                <label>City</label>
+                <select
+                  className="w-full border px-3 py-2 rounded"
+                  value={formData.city}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  disabled={!formData.state}
+                >
+                  <option value="">-- Select City --</option>
+                  {formData.state &&
+                    allowedAlcoholStates[formData.state].map((city) => (
+                      <option key={city} value={city}>{city}</option>
+                    ))}
+                </select>
+              </div>
+            </>
+          )}
 
-  {step === 4 && (
-    <>
-      <div>
-        <label>Name</label>
-        <input
-          type="text"
-          className="w-full border px-3 py-2 rounded"
-          placeholder="First Name and Last Name"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-        />
-      </div>
+          {/* Step 2: Date of Birth */}
+          {step === 2 && (
+            <div>
+              <label>DOB</label>
+              <input
+                type="date"
+                className="w-full border px-3 py-2 rounded"
+                value={formData.dob}
+                onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
+              />
+            </div>
+          )}
 
-      <div>
-        <label>Email</label>
-        <input
-          type="email"
-          className="w-full border px-3 py-2 rounded"
-          placeholder="Email"
-          value={formData.email}
-          onChange={(e) =>
-            setFormData({ ...formData, email: e.target.value })
-          }
-        />
-      </div>
+          {/* Step 3: Self Declaration */}
+          {step === 3 && (
+            <div className="mt-2">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={formData.selfDeclaration}
+                  onChange={() => setFormData({ ...formData, selfDeclaration: !formData.selfDeclaration })}
+                />
+                <span>I declare the above information is correct</span>
+              </label>
+            </div>
+          )}
 
-      <div>
-        <label>Mobile</label>
-        <input
-          type="tel"
-          className="w-full border px-3 py-2 rounded"
-          placeholder="Mobile Number"
-          value={formData.mobile}
-          onChange={(e) => {
-            const value = e.target.value;
-            if (/^\d{0,10}$/.test(value)) {
-              setFormData({ ...formData, mobile: value });
-            }
-          }}
-        />
-      </div>
+          {/* Step 4: Personal Details (Name, Email, Mobile, Password) */}
+          {step === 4 && (
+            <>
+              <div>
+                <label>Name</label>
+                <input
+                  type="text"
+                  className="w-full border px-3 py-2 rounded"
+                  placeholder="First Name and Last Name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                />
+              </div>
 
-      <div className="relative">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Password
-        </label>
-        <input
-          type={showPassword ? 'text' : 'password'}
-          className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
-          placeholder="Enter your password"
-          value={formData.password}
-          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-        />
-      </div>
+              <div>
+                <label>Email</label>
+                <input
+                  type="email"
+                  className="w-full border px-3 py-2 rounded"
+                  placeholder="Email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                />
+              </div>
 
-      <div className="relative">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Confirm Password
-        </label>
-        <input
-          type={showConfirmPassword ? 'text' : 'password'}
-          className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
-          placeholder="Confirm your password"
-          value={formData.confirmPassword}
-          onChange={(e) =>
-            setFormData({ ...formData, confirmPassword: e.target.value })
-          }
-        />
-      </div>
+              <div>
+                <label>Mobile</label>
+                <input
+                  type="tel"
+                  className="w-full border px-3 py-2 rounded"
+                  placeholder="Mobile Number"
+                  value={formData.mobile}
+                  onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
+                />
+              </div>
+
+              <div className="relative">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200"
+                  placeholder="Enter your password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-10 transform -translate-y-1/2 text-gray-500"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+
+              <div className="relative">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200"
+                  placeholder="Confirm your password"
+                  value={formData.confirmPassword}
+                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-4 top-10 transform -translate-y-1/2 text-gray-500"
+                >
+                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
 
     {/* Terms Modal Trigger */}
     <div className="mt-2 flex items-center space-x-2">
