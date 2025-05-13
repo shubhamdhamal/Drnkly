@@ -39,9 +39,18 @@ exports.addProduct = async (req, res) => {
     const liquorType = categorizeLiquor(alcoholContent);
 
     if (!req.file) {
+  console.error("❌ No file uploaded or image processing failed.");
   return res.status(400).json({ error: "Image upload failed or no file provided" });
 }
+
+// Get the absolute file path
+const localPath = `/var/www/Drnkly/images/uploads/${req.file.filename}`;
+console.log("✅ Image stored at:", localPath);
+
+// Define the URL where the image should be accessible
 const image = `https://image.peghouse.in/uploads/${req.file.filename}`;
+console.log("🌍 Image should be accessible at:", image);
+
 
 
     const newProduct = new Product({
