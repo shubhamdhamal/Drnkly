@@ -109,16 +109,14 @@ function SignUp() {
   
     // ✅ If all validations passed, Prepare the data for submission
     const finalData = new FormData();
-    Object.entries(formData).forEach(([key, val]) => finalData.append(key, val));
     Object.entries(extraData).forEach(([key, val]) =>
-      key === 'idProof'
-        ? val && finalData.append(key, val as Blob)
-        : finalData.append(key, String(val))
-    );
+  finalData.append(key, String(val))
+);
+
   
     try {
       // Submit the form data to the backend
-      const res = await axios.post('https://peghouse.in/api/auth/signup', finalData, {
+      const res = await axios.post('http://localhost:5000/api/auth/signup', finalData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
   

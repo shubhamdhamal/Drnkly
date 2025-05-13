@@ -331,29 +331,43 @@ function Products() {
       </div>
 
       {/* Product Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '20px' }}>
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', 
+        gap: '20px',
+        alignItems: 'start' // This ensures all cards start from the same line
+      }}>
         {filterProducts().map((product) => (
           <div
             key={product._id}
-            style={{ background: 'white', borderRadius: '12px', padding: '10px', textAlign: 'center' }}
+            style={{ 
+              background: 'white', 
+              borderRadius: '12px', 
+              padding: '10px', 
+              textAlign: 'center',
+              height: 'auto', // Ensures consistent card height
+              display: 'flex',
+              flexDirection: 'column'
+            }}
           >
             <div style={{ 
               width: '100%',
-              paddingTop: '100%', // Creates a square aspect ratio
+              height: '200px', // Fixed height instead of paddingTop
               position: 'relative',
               borderRadius: '8px',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              marginBottom: '10px'
             }}>
               <img
                 src={product.image}
                 alt={product.name}
                 style={{ 
                   position: 'absolute',
-                  top: 0,
-                  left: 0,
+                  top: '0',
+                  left: '0',
                   width: '100%',
                   height: '100%',
-                  objectFit: 'contain',
+                  objectFit: 'contain', // This will maintain aspect ratio
                   borderRadius: '8px',
                   backgroundColor: '#f5f5f5'
                 }}
