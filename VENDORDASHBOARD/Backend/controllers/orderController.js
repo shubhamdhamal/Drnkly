@@ -82,7 +82,7 @@ router.get('/orders', authenticateVendor, async (req, res) => {
 
 
 // ✅ Update order item status (Accept / Reject) by Vendor
-router.put('/api/vendor/:orderId/status', authenticateVendor, async (req, res) => {
+router.put('orders/:orderId/status', authenticateVendor, async (req, res) => {
   console.log('🔥 PUT /orders/:orderId/status HIT');
   const { orderId } = req.params;
   const { productId, status } = req.body;
