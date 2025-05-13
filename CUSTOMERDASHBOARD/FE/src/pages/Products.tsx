@@ -344,26 +344,24 @@ function Products() {
               borderRadius: '8px',
               overflow: 'hidden'
             }}>
-
-            <img
-              src={product.image}
-              alt={product.name}
-              style={{ 
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: '100%',
-    objectFit: 'contain',
-    borderRadius: '8px',
-    backgroundColor: '#f5f5f5'
-  }}
-
-            />
+              <img
+                src={product.image}
+                alt={product.name}
+                style={{ 
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  borderRadius: '8px',
+                  backgroundColor: '#f5f5f5'
+                }}
+              />
+            </div>
             <h3 style={{ margin: '10px 0', fontSize: '16px' }}>{product.name}</h3>
             <p style={{ color: '#666', margin: '5px 0' }}>{product.brand}</p>
             <p style={{ color: '#666', margin: '5px 0' }}>{product.volume} ml</p>
-            
             <p style={{ color: '#666', margin: '5px 0' }}>₹{product.price}</p>
             <button
               onClick={(e) => handleAddToCart(e, product)}
