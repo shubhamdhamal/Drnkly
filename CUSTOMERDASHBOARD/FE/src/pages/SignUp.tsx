@@ -109,8 +109,9 @@ function SignUp() {
   
     // ✅ If all validations passed, Prepare the data for submission
     const finalData = new FormData();
-    Object.entries(formData).forEach(([key, val]) => finalData.append(key, val));
-    
+    Object.entries(extraData).forEach(([key, val]) =>
+  finalData.append(key, String(val))  // Only append fields that are required
+);
   
     try {
       // Submit the form data to the backend
@@ -189,46 +190,44 @@ function SignUp() {
             </>
           )}
 
-          {step === 2 && (
-            <>
-              <div>
-                <label>DOB</label>
-                <input
-                  type="date"
-                  className="w-full border px-3 py-2 rounded"
-                  value={extraData.dob}
-                  onChange={(e) => {
-                    const dob = e.target.value;
-                    const today = new Date();
-                    const birthDate = new Date(dob);
-                    let age = today.getFullYear() - birthDate.getFullYear();
-                    const m = today.getMonth() - birthDate.getMonth();
-                    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-                      age--;
-                    }
+  {step === 2 && (
+  <>
+    <div>
+      <label>DOB</label>
+      <input
+        type="date"
+        className="w-full border px-3 py-2 rounded"
+        value={extraData.dob}
+        onChange={(e) => {
+          const dob = e.target.value;
+          const today = new Date();
+          const birthDate = new Date(dob);
+          let age = today.getFullYear() - birthDate.getFullYear();
+          const m = today.getMonth() - birthDate.getMonth();
+          if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+          }
 
-                    if (age >= 25) {
-                      setExtraData(prev => ({
-                        ...prev,
-                        dob: dob
-                      }));
-                    } else {
-                      alert('Your age is less than 25. You are not allowed to register.');
-                      setExtraData(prev => ({
-                        ...prev,
-                        dob: '',
-                        selfDeclaration: false
-                      }));
-                    }
-                  }}
-                />
-              </div>
-              <div>
-            
-            {errorMessage && <p className="text-red-500">{errorMessage}</p>} {/* Display error message */}
-          </div>
-            </>
-          )}
+          if (age >= 25) {
+            setExtraData(prev => ({
+              ...prev,
+              dob: dob
+            }));
+          } else {
+            alert('Your age is less than 25. You are not allowed to register.');
+            setExtraData(prev => ({
+              ...prev,
+              dob: '',
+              selfDeclaration: false
+            }));
+          }
+        }}
+      />
+    </div>
+  </>
+)}
+
+
 
           {step === 3 && (
             <>
