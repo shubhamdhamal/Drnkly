@@ -321,21 +321,30 @@ function Checkout() {
           <span className="text-gray-900 font-medium">₹{(item.price * item.quantity).toFixed(2)}</span>
         </div>
 
-        {/* Service Fee (35%) */}
-        <div className="flex justify-between mb-4">
-          <span className="text-gray-600">Service Fee (35%)</span>
-          <span className="text-gray-900 font-medium">₹{((item.price * item.quantity) * 0.35).toFixed(2)}</span>
-        </div>
+        {/* Service Fee (35%) only for Drinks */}
+        {item.category === "Drinks" && (
+          <div className="flex justify-between mb-4">
+            <span className="text-gray-600">Service Fee (35%)</span>
+            <span className="text-gray-900 font-medium">₹{((item.price * item.quantity) * 0.35).toFixed(2)}</span>
+          </div>
+        )}
 
-        {/* Total (Item + Service Fee) */}
+        {/* Total (Item + Service Fee if Drinks) */}
         <div className="flex justify-between mb-6">
           <span className="text-gray-600">Total (Item + Service Fee)</span>
-          <span className="text-gray-900 font-medium">₹{((item.price * item.quantity) * 1.35).toFixed(2)}</span>
+          <span className="text-gray-900 font-medium">
+            ₹{(
+              item.category === "Drinks" 
+              ? (item.price * item.quantity) * 1.35 
+              : item.price * item.quantity
+            ).toFixed(2)}
+          </span>
         </div>
       </div>
     </div>
   ))}
 </div>
+
 
           <div className="border-t mt-4 pt-4 space-y-2">
             <div className="flex justify-between text-gray-600">
