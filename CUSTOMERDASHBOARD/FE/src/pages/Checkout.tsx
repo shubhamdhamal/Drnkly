@@ -299,60 +299,29 @@ function Checkout() {
         {/* Order Summary */}
         <div className="bg-white rounded-lg p-6 mb-6">
           <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
-<div className="space-y-4">
-  {items.map((item, index) => (
-    <div key={index} className="flex items-center justify-between">
-      <div className="flex items-center">
-        <img 
-          src={item.image} 
-          alt={item.name}
-          className="w-16 h-16 object-cover rounded-lg mr-4"
-        />
-        <div>
-          <h3 className="font-medium">{item.name}</h3>
-          <p className="text-gray-600">Quantity: {item.quantity}</p>
-        </div>
-      </div>
-      
-      {/* Item Price */}
-      <div className="flex flex-col">
-        <div className="flex justify-between mb-4">
-          <span className="text-gray-600">Item Price</span>
-          <span className="text-gray-900 font-medium">₹{(item.price * item.quantity).toFixed(2)}</span>
-        </div>
-
-        {/* Service Fee (35%) only for Drinks */}
-        {item.category === "Drinks" && (
-          <div className="flex justify-between mb-4">
-            <span className="text-gray-600">Service Fee (35%)</span>
-            <span className="text-gray-900 font-medium">₹{((item.price * item.quantity) * 0.35).toFixed(2)}</span>
+          <div className="space-y-4">
+            {items.map((item, index) => (
+              <div key={index} className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <img 
+                    src={item.image} 
+                    alt={item.name}
+                    className="w-16 h-16 object-cover rounded-lg mr-4"
+                  />
+                  <div>
+                    <h3 className="font-medium">{item.name}</h3>
+                    <p className="text-gray-600">Quantity: {item.quantity}</p>
+                  </div>
+                </div>
+                <p className="font-medium">₹{(item.price * item.quantity).toFixed(2)}</p>
+              </div>
+            ))}
           </div>
-        )}
-
-        {/* Total (Item + Service Fee if Drinks) */}
-        <div className="flex justify-between mb-6">
-          <span className="text-gray-600">Total (Item + Service Fee)</span>
-          <span className="text-gray-900 font-medium">
-            ₹{(
-              item.category === "Drinks" 
-              ? (item.price * item.quantity) * 1.35 
-              : item.price * item.quantity
-            ).toFixed(2)}
-          </span>
-        </div>
-      </div>
-    </div>
-  ))}
-</div>
-
-
 
           <div className="border-t mt-4 pt-4 space-y-2">
             <div className="flex justify-between text-gray-600">
-               <span>Subtotal</span>
-    <span>₹{
-      items.reduce((total, item) => total + (item.price * item.quantity * 1.35), 0).toFixed(2)
-    }</span>
+              <span>Subtotal</span>
+              <span>₹{orderTotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-gray-600">
               <span>Delivery Fee</span>
@@ -363,12 +332,12 @@ function Checkout() {
               <span>₹{platform.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-gray-600">
-              <span>GST (18%)</span> 
-              <span>₹{((orderTotal) * 0.18).toFixed(2)}</span>
+              <span>GST (5%)</span>
+              <span>₹{((orderTotal) * 0.05).toFixed(2)}</span>
             </div>
             <div className="flex justify-between font-semibold text-lg pt-2">
               <span>Total</span>
-              <span>₹{(orderTotal + 100 + 12 + (orderTotal) * 0.18).toFixed(2)}</span>
+              <span>₹{(orderTotal + 100 + 12 + (orderTotal) * 0.05).toFixed(2)}</span>
             </div>
           </div>
         </div>

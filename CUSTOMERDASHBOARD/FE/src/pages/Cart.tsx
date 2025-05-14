@@ -176,14 +176,14 @@ const Cart = () => {
       <span className="text-gray-900 font-medium">₹12.00</span>
     </div>
     <div className="flex justify-between mb-6">
-    <span className="text-gray-600">GST (18%)</span>
-    <span className="text-gray-900 font-medium">₹{((total) * 0.18).toFixed(2)}</span>
+    <span className="text-gray-600">GST (5%)</span>
+    <span className="text-gray-900 font-medium">₹{((total) * 0.05).toFixed(2)}</span>
   </div>
 
     {/* Final Total (Subtotal + Shipping) */}
     <div className="flex justify-between mb-6 text-lg font-semibold">
       <span>Total</span>
-      <span>₹{(total + 100 + 12 + (total) * 0.18).toFixed(2)}</span>
+      <span>₹{(total + 100 + 12 + (total) * 0.05).toFixed(2)}</span>
     </div>
 
     {/* Checkout Button */}
