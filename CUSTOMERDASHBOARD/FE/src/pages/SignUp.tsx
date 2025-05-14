@@ -36,27 +36,27 @@ function SignUp() {
 
   const allowedAlcoholStates: Record<string, string[]> = {
     'Maharashtra': ['Mumbai', 'Pune', 'Nagpur'],
-    'Goa': ['Panaji', 'Margao'],
-    'Karnataka': ['Bengaluru', 'Mysuru', 'Mangalore'],
-    'Kerala': ['Thiruvananthapuram', 'Kochi', 'Kozhikode'],
-    'Tamil Nadu': ['Chennai', 'Coimbatore', 'Madurai'],
-    'Telangana': ['Hyderabad', 'Warangal'],
-    'Andhra Pradesh': ['Visakhapatnam', 'Vijayawada', 'Guntur'],
-    'West Bengal': ['Kolkata', 'Howrah', 'Durgapur'],
-    'Delhi': ['New Delhi', 'Dwarka', 'Rohini'],
-    'Punjab': ['Ludhiana', 'Amritsar', 'Jalandhar'],
-    'Haryana': ['Gurgaon', 'Faridabad', 'Panipat'],
-    'Rajasthan': ['Jaipur', 'Udaipur', 'Jodhpur'],
-    'Uttar Pradesh': ['Lucknow', 'Kanpur', 'Varanasi'],
-    'Madhya Pradesh': ['Bhopal', 'Indore', 'Gwalior'],
-    'Odisha': ['Bhubaneswar', 'Cuttack', 'Puri'],
-    'Himachal Pradesh': ['Shimla', 'Manali', 'Dharamshala'],
-    'Assam': ['Guwahati', 'Dibrugarh', 'Silchar'],
-    'Chhattisgarh': ['Raipur', 'Bilaspur', 'Durg'],
-    'Jharkhand': ['Ranchi', 'Jamshedpur', 'Dhanbad'],
-    'Uttarakhand': ['Dehradun', 'Haridwar', 'Nainital'],
-    'Jammu & Kashmir': ['Srinagar', 'Jammu'],
-    'Ladakh': ['Leh', 'Kargil'],
+    // 'Goa': ['Panaji', 'Margao'],
+    // 'Karnataka': ['Bengaluru', 'Mysuru', 'Mangalore'],
+    // 'Kerala': ['Thiruvananthapuram', 'Kochi', 'Kozhikode'],
+    // 'Tamil Nadu': ['Chennai', 'Coimbatore', 'Madurai'],
+    // 'Telangana': ['Hyderabad', 'Warangal'],
+    // 'Andhra Pradesh': ['Visakhapatnam', 'Vijayawada', 'Guntur'],
+    // 'West Bengal': ['Kolkata', 'Howrah', 'Durgapur'],
+    // 'Delhi': ['New Delhi', 'Dwarka', 'Rohini'],
+    // 'Punjab': ['Ludhiana', 'Amritsar', 'Jalandhar'],
+    // 'Haryana': ['Gurgaon', 'Faridabad', 'Panipat'],
+    // 'Rajasthan': ['Jaipur', 'Udaipur', 'Jodhpur'],
+    // 'Uttar Pradesh': ['Lucknow', 'Kanpur', 'Varanasi'],
+    // 'Madhya Pradesh': ['Bhopal', 'Indore', 'Gwalior'],
+    // 'Odisha': ['Bhubaneswar', 'Cuttack', 'Puri'],
+    // 'Himachal Pradesh': ['Shimla', 'Manali', 'Dharamshala'],
+    // 'Assam': ['Guwahati', 'Dibrugarh', 'Silchar'],
+    // 'Chhattisgarh': ['Raipur', 'Bilaspur', 'Durg'],
+    // 'Jharkhand': ['Ranchi', 'Jamshedpur', 'Dhanbad'],
+    // 'Uttarakhand': ['Dehradun', 'Haridwar', 'Nainital'],
+    // 'Jammu & Kashmir': ['Srinagar', 'Jammu'],
+    // 'Ladakh': ['Leh', 'Kargil'],
   };
    // Aadhaar number validation
    const handleAadhaarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -271,18 +271,16 @@ function SignUp() {
                 />
               </div>
               <div>
-            <label>Aadhaar Number</label>
-            <input
-              type="text"
-              className="w-full border px-3 py-2 rounded"
-              placeholder="Enter Aadhaar"
-              value={extraData.aadhaar}
-              onChange={handleAadhaarChange}
-              maxLength={12}
-              onBlur={handleAadhaarBlur}
-            />
-            {errorMessage && <p className="text-red-500">{errorMessage}</p>} {/* Display error message */}
-          </div>
+                <label>Interest</label>
+                <input
+                  type="text"
+                  className="w-full border px-3 py-2 rounded"
+                  placeholder="Enter Interest (e.g., Wine, Beer)"
+                  value={extraData.aadhaar}
+                  onChange={(e) => setExtraData({ ...extraData, aadhaar: e.target.value })}
+                />
+              </div>
+
             </>
           )}
 

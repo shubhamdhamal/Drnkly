@@ -11,7 +11,6 @@ const Payment = () => {
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [previewURL, setPreviewURL] = useState<string | null>(null);
   const [qrUrl, setQrUrl] = useState<string>('');
-  const [paymentMethod, setPaymentMethod] = useState<'qr' | 'cod'>('qr');
 
   const orderTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -52,43 +51,30 @@ const Payment = () => {
     const orderId = localStorage.getItem('latestOrderId');
     if (!orderId) return alert('No order ID found. Please place an order first.');
 
-    if (paymentMethod === 'qr' && !screenshot) {
-      return alert('Please upload a screenshot to verify payment.');
-    }
+    if (!screenshot) return alert('Please upload a screenshot to verify payment.');
 
     try {
-      if (paymentMethod === 'qr') {
-        const formData = new FormData();
-        formData.append('screenshot', screenshot!);
-        formData.append('paymentMethod', 'qr');
+      const formData = new FormData();
+      formData.append('screenshot', screenshot);
 
-        const res = await axios.put(
-          `https://peghouse.in/api/orders/${orderId}/pay`,
-          formData,
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data'
-            }
+      const res = await axios.put(
+        `https://peghouse.in/api/orders/${orderId}/pay`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
           }
-        );
+        }
+      );
 
-        if (res.data.message === 'Payment successful') {
-          navigate('/order-success');
-        }
+      if (res.data.message === 'Payment successful') {
+        navigate('/order-success');
       } else {
-        // Handle COD
-        const res = await axios.put(
-          `https://peghouse.in/api/orders/${orderId}/pay`,
-          { paymentMethod: 'cod' }
-        );
-        
-        if (res.data.message === 'Order placed successfully') {
-          navigate('/order-success');
-        }
+        alert('Payment failed. Please try again.');
       }
     } catch (err) {
       console.error('Payment error:', err);
-      alert('Something went wrong while processing payment.');
+      alert('Something went wrong while submitting payment.');
     }
   };
 
@@ -103,73 +89,42 @@ const Payment = () => {
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-6">
-        {/* Payment Method Selection */}
+        QR Section
+        <div className="mb-6 text-center">
+  <h2 className="text-lg font-semibold mb-2">Scan QR to Pay</h2>
+  <img
+    src={`https://peghouse.in/uploads/qr.png`} // ✅ Assuming vendor server runs on port 5001
+    alt="Admin QR Code"
+    className="mx-auto w-48 h-48 object-contain border border-gray-200 rounded-lg shadow"
+  />
+  <p className="text-sm text-gray-500 mt-2">Use any UPI app to scan & pay</p>
+</div>
+
+
+        {/* Screenshot Upload */}
         <div className="bg-white rounded-xl p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">Select Payment Method</h2>
-          <div className="space-y-3">
-            <label className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
-              <input
-                type="radio"
-                name="paymentMethod"
-                checked={paymentMethod === 'qr'}
-                onChange={() => setPaymentMethod('qr')}
-                className="h-4 w-4 text-[#cd6839]"
-              />
-              <span className="ml-3">Pay via QR Code</span>
-            </label>
-            
-            <label className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
-              <input
-                type="radio"
-                name="paymentMethod"
-                checked={paymentMethod === 'cod'}
-                onChange={() => setPaymentMethod('cod')}
-                className="h-4 w-4 text-[#cd6839]"
-              />
-              <span className="ml-3">Cash on Delivery</span>
-            </label>
-          </div>
+          <h2 className="text-lg font-semibold mb-4">Upload Payment Screenshot</h2>
+          <h6 className=" mb-4"><i>Screenshot should include transaction ID and payment status.</i></h6>
+          
+          <label className="block cursor-pointer text-blue-600 font-medium mb-2">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleScreenshotChange}
+              className="hidden"
+            />
+            <span className="flex items-center gap-2">
+              <ImagePlus size={18} /> Choose Image
+            </span>
+          </label>
+          {previewURL && (
+            <img
+              src={previewURL}
+              alt="Payment Proof"
+              className="w-full h-64 object-cover rounded-md border mt-2"
+            />
+          )}
         </div>
-
-        {/* QR Section - Only show if QR payment selected */}
-        {paymentMethod === 'qr' && (
-          <>
-            <div className="mb-6 text-center">
-              <h2 className="text-lg font-semibold mb-2">Scan QR to Pay</h2>
-              <img
-                src={`https://peghouse.in/uploads/qr.png`}
-                alt="Admin QR Code"
-                className="mx-auto w-48 h-48 object-contain border border-gray-200 rounded-lg shadow"
-              />
-              <p className="text-sm text-gray-500 mt-2">Use any UPI app to scan & pay</p>
-            </div>
-
-            {/* Screenshot Upload */}
-            <div className="bg-white rounded-xl p-6 mb-6">
-              <h2 className="text-lg font-semibold mb-4">Upload Payment Screenshot</h2>
-              <h6 className="mb-4"><i>Screenshot should include transaction ID and payment status.</i></h6>
-              
-              <label className="block cursor-pointer text-blue-600 font-medium mb-2">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleScreenshotChange}
-                  className="hidden"
-                />
-                <span className="flex items-center gap-2">
-                  <ImagePlus size={18} /> Choose Image
-                </span>
-              </label>
-              {previewURL && (
-                <img
-                  src={previewURL}
-                  alt="Payment Proof"
-                  className="w-full h-64 object-cover rounded-md border mt-2"
-                />
-              )}
-            </div>
-          </>
-        )}
 
         {/* Order Summary */}
         <div className="bg-white rounded-xl p-6 mb-6">
@@ -189,23 +144,23 @@ const Payment = () => {
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">GST (5%)</span>
-              <span className="font-semibold">₹{gstAmount.toFixed(2)}</span>
+              <span className="font-semibold">₹{((orderTotal) * 0.05).toFixed(2)}</span>
             </div>
             <div className="pt-4 border-t">
               <div className="flex justify-between items-center">
                 <span className="text-xl font-semibold">Total</span>
-                <span className="text-xl font-semibold">₹{total.toFixed(2)}</span>
+                <span className="text-xl font-semibold">₹{(orderTotal + 100 + 12 + (orderTotal) * 0.05).toFixed(2)}</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Submit Button */}
+        {/* Pay Now Button */}
         <button
           onClick={handlePaymentSubmit}
-          className="w-full bg-[#cd6839] text-white py-4 rounded-xl font-semibold text-lg hover:bg-[#b55a31] transition-colors"
+          className="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold text-lg hover:bg-blue-700 transition-colors"
         >
-          {paymentMethod === 'cod' ? 'Place Order' : 'Submit Payment'}
+          Submit Payment
         </button>
       </div>
     </div>
