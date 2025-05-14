@@ -24,7 +24,7 @@ function SignUp() {
     state: '',
     city: '',
     dob: '',
-    Interest: '',
+    aadhaar: '',
     idProof: null as File | null,
     selfDeclaration: false,
   });
@@ -58,7 +58,14 @@ function SignUp() {
     'Jammu & Kashmir': ['Srinagar', 'Jammu'],
     'Ladakh': ['Leh', 'Kargil'],
   };
-   
+   // Aadhaar number validation
+   const handleAadhaarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (/^\d{0,12}$/.test(value)) {
+      setExtraData({ ...extraData, aadhaar: value });
+      setErrorMessage('');
+    }
+  };
    // Name validation for first and last name
    const validateNameWithoutSpace = (name: string) => {
     const nameParts = name.trim().split(' ');
@@ -85,73 +92,87 @@ function SignUp() {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
   
+  const handleAadhaarBlur = () => {
+    if (extraData.aadhaar.length !== 12) {
+      setErrorMessage('Aadhaar number should be exactly 12 digits.');
+    } else {
+      setErrorMessage('');
+    }
+  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
   
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+    // Check if the user agreed to the terms and conditions
+    if (!agreed) {
+      setError('Please agree to the terms and conditions');
+      return;
+    }
   
-  // Check if the user agreed to the terms and conditions
-  if (!agreed) {
-    setError('Please agree to the terms and conditions');
-    return;
-  }
+    // Validate Aadhaar
+    if (!extraData.aadhaar || extraData.aadhaar.length !== 12) {
+      setError('Please enter a valid 12-digit Aadhaar number');
+      return;
+    }
   
-  // Validate Interest
-  if (!extraData.Interest) {
-    setError('Please enter your interest (e.g., Wine, Beer, etc.)');
-    return;
-  }
   
-  // Validate other fields
-  if (!formData.name || !validateNameWithoutSpace(formData.name)) {
-    setError('Please enter your first name and last name together without space (e.g., John Doe).');
-    return;
-  }
-  if (!formData.email || !validateEmail(formData.email)) {
-    setError('Please enter a valid email address.');
-    return;
-  }
-  if (!formData.mobile || !validateMobile(formData.mobile)) {
-    setError('Please enter a valid 10-digit mobile number.');
-    return;
-  }
-  if (!formData.password || !formData.confirmPassword) {
-    setError('Please fill both password fields.');
-    return;
-  }
-  if (formData.password.length < 6) {
-    setError('Password should be at least 6 characters long.');
-    return;
-  }
-  if (formData.password !== formData.confirmPassword) {
-    setError('Passwords do not match.');
-    return;
-  }
+    // Validate Name (First name and Last name together in one field)
+    if (!formData.name || !validateNameWithoutSpace(formData.name)) {
+      setError('Please enter your first name and last name together without space (e.g., John Doe).');
+      return;
+    }
+    // Validate Email
+    if (!formData.email || !validateEmail(formData.email)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
   
-  // ✅ Prepare the data for submission
-  const finalData = new FormData();
-  Object.entries(formData).forEach(([key, val]) => finalData.append(key, val));
-  Object.entries(extraData).forEach(([key, val]) =>
-    key === 'idProof'
-      ? val && finalData.append(key, val as Blob)
-      : finalData.append(key, String(val))
-  );
+    // Validate Mobile
+    if (!formData.mobile || !validateMobile(formData.mobile)) {
+      setError('Please enter a valid 10-digit mobile number.');
+      return;
+    }
   
-  try {
-    const res = await axios.post('https://peghouse.in/api/auth/signup', finalData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-
-    console.log(res.data);
-
-    // After successful submission
-    setIsSubmitted(true);
-    setShowInfo(true);
-    setTimeout(() => navigate('/login'), 4000);
-  } catch (err: any) {
-    setError(err.response?.data?.message || 'Something went wrong!');
-  }
-};
-
+    // Validate Passwords
+    if (!formData.password || !formData.confirmPassword) {
+      setError('Please fill both password fields.');
+      return;
+    }
+  
+    if (formData.password.length < 6) {
+      setError('Password should be at least 6 characters long.');
+      return;
+    }
+  
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+  
+    // ✅ If all validations passed, Prepare the data for submission
+    const finalData = new FormData();
+    Object.entries(formData).forEach(([key, val]) => finalData.append(key, val));
+    Object.entries(extraData).forEach(([key, val]) =>
+      key === 'idProof'
+        ? val && finalData.append(key, val as Blob)
+        : finalData.append(key, String(val))
+    );
+  
+    try {
+      // Submit the form data to the backend
+      const res = await axios.post('http://localhost:5000/api/auth/signup', finalData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+  
+      console.log(res.data);
+  
+      // After successful submission
+      setIsSubmitted(true);
+      setShowInfo(true);
+      setTimeout(() => navigate('/login'), 4000);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Something went wrong!');
+    }
+  };
   
 
   return (
@@ -241,7 +262,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                       setExtraData(prev => ({
                         ...prev,
                         dob: '',
-                        Interest: '',
+                        aadhaar: '',
                         idProof: null,
                         selfDeclaration: false
                       }));
@@ -250,20 +271,16 @@ const handleSubmit = async (e: React.FormEvent) => {
                 />
               </div>
               <div>
-            <label>Interest</label>
-           <input
-  type="text"
-  className="w-full border px-3 py-2 rounded"
-  placeholder="e.g., Wine, Beer, etc."
-  value={extraData.Interest}
-  onChange={(e) => {
-    setExtraData({
-      ...extraData,
-      Interest: e.target.value,
-    });
-  }}
-/>
-
+            <label>Aadhaar Number</label>
+            <input
+              type="text"
+              className="w-full border px-3 py-2 rounded"
+              placeholder="Enter Aadhaar"
+              value={extraData.aadhaar}
+              onChange={handleAadhaarChange}
+              maxLength={12}
+              onBlur={handleAadhaarBlur}
+            />
             {errorMessage && <p className="text-red-500">{errorMessage}</p>} {/* Display error message */}
           </div>
             </>
@@ -272,7 +289,7 @@ const handleSubmit = async (e: React.FormEvent) => {
           {step === 3 && (
             <>
               <div>
-                <label>ID Proof (Optional)</label>
+                <label>ID Proof (Upload)</label>
                 <input
                   type="file"
                   className="w-full"
@@ -456,14 +473,14 @@ const handleSubmit = async (e: React.FormEvent) => {
                }
              }
              if (step === 2) {
-               if (!extraData.dob ) {
-                 setError('Please enter valid Date of Birth.');
+               if (!extraData.dob || extraData.aadhaar.length !== 12) {
+                 setError('Please enter valid Date of Birth and 12-digit Aadhaar number.');
                  return;
                }
              }
              if (step === 3) {
-               if (!extraData.selfDeclaration) {
-                 setError('Please declare the information.');
+               if (!extraData.idProof || !extraData.selfDeclaration) {
+                 setError('Please upload ID proof and declare the information.');
                  return;
                }
              }
@@ -488,7 +505,7 @@ const handleSubmit = async (e: React.FormEvent) => {
           </div>
         </form>
 
-{/* ✅ Info Modal */}
+        {/* ✅ Info Modal */}
         {showInfo && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-80 text-center shadow-xl">
@@ -512,38 +529,37 @@ const handleSubmit = async (e: React.FormEvent) => {
             <div className="bg-white rounded-lg shadow-lg p-6 max-w-lg w-full text-left overflow-y-auto max-h-[90vh]">
               <h2 className="text-lg font-bold mb-2 text-center">Terms & Conditions (English)</h2>
               <p className="text-sm text-gray-700 mb-4">
-              1. Age Verification & Legal Drinking Age:The customer must confirm they are 21 years or older (Hard Liquor Prohibited) or 25 years or older (for All liquor) as per Maharashtra excise rules.Age verification via government ID (Aadhaar, PAN, Driving License, Passport) is mandatory before delivery.  </p>
+              1. Age Verification & Legal Drinking Age:The customer must confirm they are 21 years or older (Hard Liquor Prohibited) or 25 years or older (for All liquor) as per Maharashtra excise rules.Age verification via government ID (Aadhaar, PAN, Driving License, Passport) is mandatory before delivery.</p>
               <p className="text-sm text-gray-700 mb-4">
-              2. Prohibition of Sale to Intoxicated Persons:Liquor will not be delivered to anyone who appears intoxicated at the time of delivery.            </p>
+              2. Prohibition of Sale to Intoxicated Persons:Liquor will not be delivered to anyone who appears intoxicated at the time of delivery.</p>
               <p className="text-sm text-gray-700 mb-4">
-              3. Prohibition of Sale in Dry Areas:Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone.            </p>
+              3. Prohibition of Sale in Dry Areas:Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone. </p>
+              <p className="text-sm text-gray-700 mb-4">
+              4. Restricted Timings for Sale & Delivery:Liquor delivery is allowed only during permitted hours (typically 11 AM to 11 PM in most areas, subject to local regulations).</p>
+<p className="text-sm text-gray-700 mb-4">              
+5. Quantity Restrictions:Customers cannot purchase beyond the permissible limit (e.g., 3 liters of IMFL or 9 liters of beer per person per transaction). Bulk purchases may require additional permits.
+ </p>
+  <p className="text-sm text-gray-700 mb-4">
+              6. No Resale or Supply to Minors:The customer must agree not to resell liquor and not to supply it to minors (under 21/25).</p>
+     <p className="text-sm text-gray-700 mb-4">
+              3. Prohibition of Sale in Dry Areas:Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone. </p>
+              <p className="text-sm text-gray-700 mb-4">
+              3. Prohibition of Sale in Dry Areas:Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone. </p>
+              <p className="text-sm text-gray-700 mb-4">
+              3. Prohibition of Sale in Dry Areas:Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone. </p>
+              <p className="text-sm text-gray-700 mb-4">
+              3. Prohibition of Sale in Dry Areas:Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone. </p>
+              <p className="text-sm text-gray-700 mb-4">
+              3. Prohibition of Sale in Dry Areas:Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone. </p>
+              <p className="text-sm text-gray-700 mb-4">
+              3. Prohibition of Sale in Dry Areas:Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone. </p>
+              <p className="text-sm text-gray-700 mb-4">
+              3. Prohibition of Sale in Dry Areas:Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone. </p>
             
-              <p className="text-sm text-gray-700 mb-4">
-              4. Restricted Timings for Sale & Delivery:Liquor delivery is allowed only during permitted hours (typically 11 AM to 11 PM in most areas, subject to local regulations).          </p>
-              <p className="text-sm text-gray-700 mb-4">
-              5. Quantity Restrictions:Customers cannot purchase beyond the permissible limit (e.g., 3 liters of IMFL or 9 liters of beer per person per transaction). Bulk purchases may require additional permits.          </p>
-              <p className="text-sm text-gray-700 mb-4">
-              6. No Resale or Supply to Minors:The customer must agree not to resell liquor and not to supply it to minors (under 21/25).         </p>
-              <p className="text-sm text-gray-700 mb-4">
-              7. Valid ID Proof Required at Delivery:The delivery agent will verify the customer’s original ID at the time of delivery. If ID is not provided, the order will be cancelled. </p> 
-              <p className="text-sm text-gray-700 mb-4">
-              8. No Returns or Refunds for Sealed Liquor Bottles:Once liquor is sold, returns or refunds are not permitted unless the product is damaged/spoiled (as per excise rules).
-              </p>
-             <p className="text-sm text-gray-700 mb-4">
-             9. Compliance with Local Municipal & Police Regulations:The customer must ensure that liquor consumption at their location complies with local laws (e.g., no consumption in public places).</p>
-             <p className="text-sm text-gray-700 mb-4">
-             10. Liability Disclaimer:The business is not responsible for misuse, overconsumption, or illegal resale by the customer.</p>
-<p className="text-sm text-gray-700 mb-4">
-11. Right to Refuse Service
-      The business reserves the right to cancel orders if:
-            The customer fails age verification.
-            The delivery location is in a dry area or restricted zone.
-            Suspicion of fraudulent activity.</p>
-<p className="text-sm text-gray-700 mb-4">
-             12. Data Privacy & Use of Customer Information:Customer ID and personal data will be stored as per excise department requirements and may be shared with authorities if required.
-</p>
-<p className="text-sm text-gray-700 mb-4">
-13. Mandatory Compliance with Maharashtra Excise Laws:The customer agrees that the sale is governed by the Maharashtra Prohibition Act, 1949, and any violation may lead to legal action.</p>
+
+
+
+
               <h3 className="text-sm text-gray-700 mb-4"><strong>Government Rules & Excise Acts:</strong></h3>
               <ul className="list-disc pl-5">
                 <li>✔ Maharashtra: Age 21</li>
@@ -554,7 +570,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                 <li>✔ Telangana: Excise Act applies</li>
               </ul>
               <p className="text-sm text-gray-700 mb-4">
-                🚭 तुमच्या कुटुंबासाठी मद्यपान आणि धूम्रपान सोडा – आरोग्य हाच खरा धन आहे ❤🍀
+                🚭 तुमच्या कुटुंबासाठी मद्यपान आणि धूम्रपान सोडा – आरोग्य हाच खरा धन आहे ❤️🍀
               </p>
               <div className="text-center">
               <button

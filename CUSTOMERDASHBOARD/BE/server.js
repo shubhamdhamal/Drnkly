@@ -10,12 +10,19 @@ connectDB(); // Call the DB connection
 
 const app = express();
 
+const allowedOrigins = ['https://peghouse.in', 'http://localhost:3000']; // Add other URLs for testing.
 app.use(cors({
-  origin: 'https://peghouse.in', // Replace with your frontend URL
-  credentials: true
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
 }));
 
-// app.use(cors());
+//app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', require('./routes/authRoutes'));
