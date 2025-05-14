@@ -8,13 +8,8 @@ const fs = require('fs');
 // Secret key for JWT signing
 const JWT_SECRET = 'your_jwt_secret_key'; // Ideally, store this in an environment variable
 
-// Backend - authController.js
-
 exports.signup = async (req, res) => {
   try {
-    // Log the entire request body
-    console.log("Received data:", req.body);
-
     const { 
       name, 
       email, 
@@ -23,11 +18,12 @@ exports.signup = async (req, res) => {
       state, 
       city, 
       dob, 
+      Interest, 
       selfDeclaration 
     } = req.body;
 
-    // Check if all necessary fields are provided
-    if (!name || (!email && !mobile) || !password || !state || !city || !dob || !selfDeclaration) {
+    // Validate input fields
+    if (!name || (!email && !mobile) || !password || !state || !city || !dob || !Interest || !selfDeclaration) {
       return res.status(400).json({ message: 'Please provide all necessary fields.' });
     }
 
@@ -43,6 +39,9 @@ exports.signup = async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Create a new user with uploaded file
+    const idProof = req.file ? path.join('/uploads/idproofs', req.file.filename) : null;
+
     // Create user object
     const user = new User({
       name,
@@ -52,6 +51,8 @@ exports.signup = async (req, res) => {
       state,
       city,
       dob,
+      Interest,
+      idProof,  // Path to uploaded ID proof
       selfDeclaration
     });
 
@@ -65,13 +66,9 @@ exports.signup = async (req, res) => {
     res.status(201).json({ message: 'User created successfully!', token });
 
   } catch (error) {
-    console.error("Error during signup:", error);  // Add detailed error logging
     res.status(500).json({ message: 'Server error.', error: error.message });
   }
 };
-
-
-
 
 exports.login = async (req, res) => {
   const { mobile, password } = req.body;
