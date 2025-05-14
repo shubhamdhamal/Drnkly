@@ -89,11 +89,11 @@ const Payment = () => {
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-6">
-        QR Section
+        {/* QR Section */}
         <div className="mb-6 text-center">
   <h2 className="text-lg font-semibold mb-2">Scan QR to Pay</h2>
   <img
-    src={`https://peghouse.in/uploads/qr.png`} // ✅ Assuming vendor server runs on port 5001
+    src="/qr.jpg"// ✅ Assuming vendor server runs on port 5001
     alt="Admin QR Code"
     className="mx-auto w-48 h-48 object-contain border border-gray-200 rounded-lg shadow"
   />

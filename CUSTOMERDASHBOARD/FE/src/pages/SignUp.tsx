@@ -36,36 +36,29 @@ function SignUp() {
 
   const allowedAlcoholStates: Record<string, string[]> = {
     'Maharashtra': ['Mumbai', 'Pune', 'Nagpur'],
-    // 'Goa': ['Panaji', 'Margao'],
-    // 'Karnataka': ['Bengaluru', 'Mysuru', 'Mangalore'],
-    // 'Kerala': ['Thiruvananthapuram', 'Kochi', 'Kozhikode'],
-    // 'Tamil Nadu': ['Chennai', 'Coimbatore', 'Madurai'],
-    // 'Telangana': ['Hyderabad', 'Warangal'],
-    // 'Andhra Pradesh': ['Visakhapatnam', 'Vijayawada', 'Guntur'],
-    // 'West Bengal': ['Kolkata', 'Howrah', 'Durgapur'],
-    // 'Delhi': ['New Delhi', 'Dwarka', 'Rohini'],
-    // 'Punjab': ['Ludhiana', 'Amritsar', 'Jalandhar'],
-    // 'Haryana': ['Gurgaon', 'Faridabad', 'Panipat'],
-    // 'Rajasthan': ['Jaipur', 'Udaipur', 'Jodhpur'],
-    // 'Uttar Pradesh': ['Lucknow', 'Kanpur', 'Varanasi'],
-    // 'Madhya Pradesh': ['Bhopal', 'Indore', 'Gwalior'],
-    // 'Odisha': ['Bhubaneswar', 'Cuttack', 'Puri'],
-    // 'Himachal Pradesh': ['Shimla', 'Manali', 'Dharamshala'],
-    // 'Assam': ['Guwahati', 'Dibrugarh', 'Silchar'],
-    // 'Chhattisgarh': ['Raipur', 'Bilaspur', 'Durg'],
-    // 'Jharkhand': ['Ranchi', 'Jamshedpur', 'Dhanbad'],
-    // 'Uttarakhand': ['Dehradun', 'Haridwar', 'Nainital'],
-    // 'Jammu & Kashmir': ['Srinagar', 'Jammu'],
-    // 'Ladakh': ['Leh', 'Kargil'],
+    'Goa': ['Panaji', 'Margao'],
+    'Karnataka': ['Bengaluru', 'Mysuru', 'Mangalore'],
+    'Kerala': ['Thiruvananthapuram', 'Kochi', 'Kozhikode'],
+    'Tamil Nadu': ['Chennai', 'Coimbatore', 'Madurai'],
+    'Telangana': ['Hyderabad', 'Warangal'],
+    'Andhra Pradesh': ['Visakhapatnam', 'Vijayawada', 'Guntur'],
+    'West Bengal': ['Kolkata', 'Howrah', 'Durgapur'],
+    'Delhi': ['New Delhi', 'Dwarka', 'Rohini'],
+    'Punjab': ['Ludhiana', 'Amritsar', 'Jalandhar'],
+    'Haryana': ['Gurgaon', 'Faridabad', 'Panipat'],
+    'Rajasthan': ['Jaipur', 'Udaipur', 'Jodhpur'],
+    'Uttar Pradesh': ['Lucknow', 'Kanpur', 'Varanasi'],
+    'Madhya Pradesh': ['Bhopal', 'Indore', 'Gwalior'],
+    'Odisha': ['Bhubaneswar', 'Cuttack', 'Puri'],
+    'Himachal Pradesh': ['Shimla', 'Manali', 'Dharamshala'],
+    'Assam': ['Guwahati', 'Dibrugarh', 'Silchar'],
+    'Chhattisgarh': ['Raipur', 'Bilaspur', 'Durg'],
+    'Jharkhand': ['Ranchi', 'Jamshedpur', 'Dhanbad'],
+    'Uttarakhand': ['Dehradun', 'Haridwar', 'Nainital'],
+    'Jammu & Kashmir': ['Srinagar', 'Jammu'],
+    'Ladakh': ['Leh', 'Kargil'],
   };
-   // Aadhaar number validation
-   const handleAadhaarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (/^\d{0,12}$/.test(value)) {
-      setExtraData({ ...extraData, aadhaar: value });
-      setErrorMessage('');
-    }
-  };
+
    // Name validation for first and last name
    const validateNameWithoutSpace = (name: string) => {
     const nameParts = name.trim().split(' ');
@@ -92,13 +85,7 @@ function SignUp() {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
   
-  const handleAadhaarBlur = () => {
-    if (extraData.aadhaar.length !== 12) {
-      setErrorMessage('Aadhaar number should be exactly 12 digits.');
-    } else {
-      setErrorMessage('');
-    }
-  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
   
@@ -108,11 +95,6 @@ function SignUp() {
       return;
     }
   
-    // Validate Aadhaar
-    if (!extraData.aadhaar || extraData.aadhaar.length !== 12) {
-      setError('Please enter a valid 12-digit Aadhaar number');
-      return;
-    }
   
   
     // Validate Name (First name and Last name together in one field)
@@ -271,16 +253,18 @@ function SignUp() {
                 />
               </div>
               <div>
-                <label>Interest</label>
-                <input
-                  type="text"
-                  className="w-full border px-3 py-2 rounded"
-                  placeholder="Enter Interest (e.g., Wine, Beer)"
-                  value={extraData.aadhaar}
-                  onChange={(e) => setExtraData({ ...extraData, aadhaar: e.target.value })}
-                />
-              </div>
-
+            <label>Interest</label>
+            <input
+              type="text"
+              className="w-full border px-3 py-2 rounded"
+              placeholder="Enter Aadhaar"
+              value={extraData.aadhaar}
+              onChange={handleAadhaarChange}
+              maxLength={30}
+              onBlur={handleAadhaarBlur}
+            />
+            {errorMessage && <p className="text-red-500">{errorMessage}</p>} {/* Display error message */}
+          </div>
             </>
           )}
 
