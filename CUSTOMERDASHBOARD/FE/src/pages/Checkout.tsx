@@ -346,6 +346,7 @@ function Checkout() {
 </div>
 
 
+
           <div className="border-t mt-4 pt-4 space-y-2">
             <div className="flex justify-between text-gray-600">
                <span>Subtotal</span>
