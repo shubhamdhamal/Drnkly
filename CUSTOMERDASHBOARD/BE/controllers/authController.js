@@ -1,15 +1,17 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken'); // Import jsonwebtoken
-
+const jwt = require('jsonwebtoken');
 const path = require('path');
 const fs = require('fs');
 
-// Secret key for JWT signing
-const JWT_SECRET = 'your_jwt_secret_key'; // Ideally, store this in an environment variable
+require('dotenv').config();
+
+const JWT_SECRET = process.env.JWT_SECRET;
 
 exports.signup = async (req, res) => {
   try {
+    console.log("Received data:", req.body); // Log the data
+
     const { 
       name, 
       email, 
@@ -21,9 +23,12 @@ exports.signup = async (req, res) => {
       Interest, 
       selfDeclaration 
     } = req.body;
+    
+    // Handle file upload for idProof
+    const idProof = req.file ? path.join('/uploads/idproofs', req.file.filename) : null;
 
-    // Validate input fields
-    if (!name || (!email && !mobile) || !password || !state || !city || !dob || !Interest || !selfDeclaration) {
+    // Validate required fields
+    if (!name || !email || !mobile || !password || !state || !city || !dob || !Interest || !selfDeclaration) {
       return res.status(400).json({ message: 'Please provide all necessary fields.' });
     }
 
@@ -39,9 +44,6 @@ exports.signup = async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create a new user with uploaded file
-    const idProof = req.file ? path.join('/uploads/idproofs', req.file.filename) : null;
-
     // Create user object
     const user = new User({
       name,
@@ -52,7 +54,7 @@ exports.signup = async (req, res) => {
       city,
       dob,
       Interest,
-      idProof,  // Path to uploaded ID proof
+      idProof, // Store the file path
       selfDeclaration
     });
 
@@ -66,9 +68,11 @@ exports.signup = async (req, res) => {
     res.status(201).json({ message: 'User created successfully!', token });
 
   } catch (error) {
+    console.error("Error during signup:", error);
     res.status(500).json({ message: 'Server error.', error: error.message });
   }
 };
+
 
 exports.login = async (req, res) => {
   const { mobile, password } = req.body;

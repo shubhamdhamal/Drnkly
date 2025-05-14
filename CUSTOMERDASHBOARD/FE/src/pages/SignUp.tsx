@@ -86,80 +86,72 @@ function SignUp() {
   };
   
   
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
   
-    // Check if the user agreed to the terms and conditions
-    if (!agreed) {
-      setError('Please agree to the terms and conditions');
-      return;
-    }
+  // Check if the user agreed to the terms and conditions
+  if (!agreed) {
+    setError('Please agree to the terms and conditions');
+    return;
+  }
   
-    // Validate 
-    if (!extraData.Interest) {
-      setError('Please enter your interest (e.g., Wine, Beer, etc.)');
-      return;
-    }
+  // Validate Interest
+  if (!extraData.Interest) {
+    setError('Please enter your interest (e.g., Wine, Beer, etc.)');
+    return;
+  }
   
+  // Validate other fields
+  if (!formData.name || !validateNameWithoutSpace(formData.name)) {
+    setError('Please enter your first name and last name together without space (e.g., John Doe).');
+    return;
+  }
+  if (!formData.email || !validateEmail(formData.email)) {
+    setError('Please enter a valid email address.');
+    return;
+  }
+  if (!formData.mobile || !validateMobile(formData.mobile)) {
+    setError('Please enter a valid 10-digit mobile number.');
+    return;
+  }
+  if (!formData.password || !formData.confirmPassword) {
+    setError('Please fill both password fields.');
+    return;
+  }
+  if (formData.password.length < 6) {
+    setError('Password should be at least 6 characters long.');
+    return;
+  }
+  if (formData.password !== formData.confirmPassword) {
+    setError('Passwords do not match.');
+    return;
+  }
   
-    // Validate Name (First name and Last name together in one field)
-    if (!formData.name || !validateNameWithoutSpace(formData.name)) {
-      setError('Please enter your first name and last name together without space (e.g., John Doe).');
-      return;
-    }
-    // Validate Email
-    if (!formData.email || !validateEmail(formData.email)) {
-      setError('Please enter a valid email address.');
-      return;
-    }
+  // ✅ Prepare the data for submission
+  const finalData = new FormData();
+  Object.entries(formData).forEach(([key, val]) => finalData.append(key, val));
+  Object.entries(extraData).forEach(([key, val]) =>
+    key === 'idProof'
+      ? val && finalData.append(key, val as Blob)
+      : finalData.append(key, String(val))
+  );
   
-    // Validate Mobile
-    if (!formData.mobile || !validateMobile(formData.mobile)) {
-      setError('Please enter a valid 10-digit mobile number.');
-      return;
-    }
-  
-    // Validate Passwords
-    if (!formData.password || !formData.confirmPassword) {
-      setError('Please fill both password fields.');
-      return;
-    }
-  
-    if (formData.password.length < 6) {
-      setError('Password should be at least 6 characters long.');
-      return;
-    }
-  
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match.');
-      return;
-    }
-  
-    // ✅ If all validations passed, Prepare the data for submission
-    const finalData = new FormData();
-    Object.entries(formData).forEach(([key, val]) => finalData.append(key, val));
-    Object.entries(extraData).forEach(([key, val]) =>
-      key === 'idProof'
-        ? val && finalData.append(key, val as Blob)
-        : finalData.append(key, String(val))
-    );
-  
-    try {
-      // Submit the form data to the backend
-      const res = await axios.post('https://peghouse.in/api/auth/signup', finalData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-  
-      console.log(res.data);
-  
-      // After successful submission
-      setIsSubmitted(true);
-      setShowInfo(true);
-      setTimeout(() => navigate('/login'), 4000);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Something went wrong!');
-    }
-  };
+  try {
+    const res = await axios.post('https://peghouse.in/api/auth/signup', finalData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+
+    console.log(res.data);
+
+    // After successful submission
+    setIsSubmitted(true);
+    setShowInfo(true);
+    setTimeout(() => navigate('/login'), 4000);
+  } catch (err: any) {
+    setError(err.response?.data?.message || 'Something went wrong!');
+  }
+};
+
   
 
   return (
