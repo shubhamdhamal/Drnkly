@@ -259,14 +259,19 @@ function SignUp() {
               </div>
               <div>
             <label>Interest</label>
-            <input
-              type="text"
-              className="w-full border px-3 py-2 rounded"
-              placeholder="e.g., Wine, Beer, etc."
-              value={extraData.Interest}
-              maxLength={50}
-              
-            />
+           <input
+  type="text"
+  className="w-full border px-3 py-2 rounded"
+  placeholder="e.g., Wine, Beer, etc."
+  value={extraData.Interest}
+  onChange={(e) => {
+    setExtraData({
+      ...extraData,
+      Interest: e.target.value,
+    });
+  }}
+/>
+
             {errorMessage && <p className="text-red-500">{errorMessage}</p>} {/* Display error message */}
           </div>
             </>
@@ -465,8 +470,8 @@ function SignUp() {
                }
              }
              if (step === 3) {
-               if (!extraData.idProof || !extraData.selfDeclaration) {
-                 setError('Please upload ID proof and declare the information.');
+               if (!extraData.selfDeclaration) {
+                 setError('Please declare the information.');
                  return;
                }
              }

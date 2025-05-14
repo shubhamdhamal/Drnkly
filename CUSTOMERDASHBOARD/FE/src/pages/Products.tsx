@@ -49,11 +49,12 @@ function Products() {
   const handleAddToCart = async (e: React.MouseEvent, product: any) => {
     e.stopPropagation();
   
-    const userId = localStorage.getItem('userId');
-    if (!userId) {
-      alert('Please log in first');
-      return;
-    }
+const userId = localStorage.getItem('userId');
+  if (!userId) {
+    alert('Please log in first');
+    navigate('/login'); // Navigate to login after alert
+    return;
+  }
   
     try {
       // Proceed to add the product to the cart
