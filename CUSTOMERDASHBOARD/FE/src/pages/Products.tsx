@@ -49,12 +49,12 @@ function Products() {
   const handleAddToCart = async (e: React.MouseEvent, product: any) => {
     e.stopPropagation();
   
-const userId = localStorage.getItem('userId');
-  if (!userId) {
-    alert('Please log in first');
-    navigate('/login'); // Navigate to login after alert
-    return;
-  }
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      // If user is not logged in, redirect to login page
+      navigate('/login');
+      return;
+    }
   
     try {
       // Proceed to add the product to the cart
@@ -87,10 +87,7 @@ const userId = localStorage.getItem('userId');
   const getBrands = () => {
     const filteredProducts = selectedCategory === 'all'
       ? products
-      : products.filter(product => 
-  product.category && product.category.toLowerCase() === selectedCategory.toLowerCase()
-);
-
+      : products.filter(product => product.category.toLowerCase() === selectedCategory.toLowerCase());
     
     const brands = new Set(filteredProducts.map(product => product.brand));
     return ['all', ...Array.from(brands)];
@@ -100,10 +97,9 @@ const userId = localStorage.getItem('userId');
     let filtered = [...products];
 
     if (selectedCategory !== 'all') {
-     filtered = filtered.filter(product =>
-  product.category && product.category.toLowerCase() === selectedCategory.toLowerCase()
-);
-
+      filtered = filtered.filter(product =>
+        product.category.toLowerCase() === selectedCategory.toLowerCase()
+      );
     }
 
     if (selectedBrand !== 'all') {
@@ -121,10 +117,9 @@ const userId = localStorage.getItem('userId');
     if (searchQuery.trim()) {
       const lowerQuery = searchQuery.toLowerCase();
       filtered = filtered.filter(product =>
-  (product.name && product.name.toLowerCase().includes(lowerQuery)) ||
-  (product.brand && product.brand.toLowerCase().includes(lowerQuery))
-);
-
+        product.name.toLowerCase().includes(lowerQuery) ||
+        product.brand.toLowerCase().includes(lowerQuery)
+      );
     }
 
     filtered.sort((a, b) =>
@@ -140,39 +135,23 @@ const userId = localStorage.getItem('userId');
      
       {/* Header */}
       <div className="flex justify-between items-center px-2 py-1">
-        <div
-          className="cursor-pointer"
-          onClick={() => navigate('/dashboard')}
-        >
-          <img
-            src="/finallogo.png"
-            alt="Drnkly Logo"
-            className="h-20 md:h-24 lg:h-26 object-contain"
-          />
-        </div>
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate('/login')}
-            style={{
-              padding: '8px 16px',
-              background: '#cd6839',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            Login
-          </button>
-          <ShoppingCart
-            onClick={() => navigate('/cart')}
-            className="cursor-pointer"
-          />
-        </div>
-      </div>
+  <div
+    className="cursor-pointer"
+    onClick={() => navigate('/dashboard')}
+  >
+    <img
+      src="/finallogo.png"
+      alt="Drnkly Logo"
+      className="h-20 md:h-24 lg:h-26 object-contain"
+    />
+  </div>
+  <ShoppingCart
+    onClick={() => navigate('/cart')}
+    className="cursor-pointer"
+  />
+</div>
+
+
 
       {/* Search Bar */}
       <div className="mt-4 relative">
@@ -382,9 +361,9 @@ const userId = localStorage.getItem('userId');
                 overflow: 'hidden',
                 marginBottom: '10px'
               }}>
-                <img
-                  src={product.image}
-                  alt={product.name}
+            <img
+              src={`https://peghouse.in/vendor${product.image}`}
+              alt={product.name}
                   style={{ 
                     position: 'absolute',
                     top: '0',
@@ -395,11 +374,11 @@ const userId = localStorage.getItem('userId');
                     borderRadius: '8px',
                     backgroundColor: '#f5f5f5'
                   }}
-                />
+            />
               </div>
-              <h3 style={{ margin: '10px 0', fontSize: '16px' }}>{product.name}</h3>
-              <p style={{ color: '#666', margin: '5px 0' }}>{product.brand}</p>
-              <p style={{ color: '#666', margin: '5px 0' }}>{product.volume} ml</p>
+            <h3 style={{ margin: '10px 0', fontSize: '16px' }}>{product.name}</h3>
+            <p style={{ color: '#666', margin: '5px 0' }}>{product.brand}</p>
+            <p style={{ color: '#666', margin: '5px 0' }}>{product.volume} ml</p>
               <p style={{ color: '#666', margin: '5px 0' }}>₹{product.price}</p>
             </div>
             
