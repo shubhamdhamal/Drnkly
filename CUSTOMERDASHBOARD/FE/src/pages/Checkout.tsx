@@ -196,6 +196,7 @@ setItems(populatedItems);
       const gstAmount = ((orderTotal+drinksFee) * gst) / 100;
       const totalAmount = orderTotal + deliveryCharges + platform + gstAmount+drinksFee;
       
+  
       // 🧾 Step 3: Place order
       const res = await axios.post('https://peghouse.in/api/orders', {
         userId,

@@ -26,27 +26,18 @@ useEffect(() => {
 
     try {
       const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
-      
-      const populatedItems = res.data.items.map((item: any) => {
-        const product = item.productId;
-        return {
-          ...item,
-          name: product?.name || item.name,
-          price: product?.price || item.price,
-          image: product?.image || item.image,
-          category: product?.category || 'N/A',  // ✅ this fixes the category
-          liquorType: product?.liquorType || '',
-        };
-      });
+      const populatedItems = res.data.items.map((item: any) => ({
+  ...item,
+  category: item.productId?.category || null
+}));
+setItems(populatedItems);
 
-      setItems(populatedItems);
 
       // Debug: Log each product's category
       console.log('Fetched Cart Items:');
-      populatedItems.forEach((item, i) => {
-        console.log(`Item ${i + 1}:`, item.category || 'No category found');
+      res.data.items.forEach((item: any, i: number) => {
+        console.log(`Item ${i + 1}:`, item.productId?.category || 'No category found');
       });
-
     } catch (error) {
       toast.error('Failed to load cart');
       console.error(error);
@@ -55,7 +46,6 @@ useEffect(() => {
 
   fetchCart();
 }, [userId]);
-
 
 
   // Update quantity in backend
