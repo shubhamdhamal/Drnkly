@@ -103,16 +103,21 @@ exports.getUserCart = async (req, res) => {
   try {
     const cart = await Cart.findOne({ userId }).populate({
       path: 'items.productId',
-      model: 'Product', // ✅ Ensure correct model name
+      model: 'Product',
       select: 'category liquorType name price image'
     });
 
     if (!cart) return res.status(404).json({ message: 'Cart not found' });
+
+    // Add this log to verify population
+    console.log("Cart items:", cart.items.map(i => i.productId));
+
     res.status(200).json(cart);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching cart', error: error.message });
   }
 };
+
 
 
 // Update quantity
