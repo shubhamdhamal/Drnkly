@@ -19,22 +19,21 @@ exports.placeOrder = async (req, res) => {
     res.status(500).json({ error: 'Failed to place order' });
   }
 };
+// Updated function to only check for the screenshotUploaded checkbox state
 exports.updatePaymentStatus = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const file = req.file;
+    const { screenshotUploaded } = req.body; // Accept checkbox value
 
-    if (!file) {
-      return res.status(400).json({ message: 'Payment proof is required' });
+    if (screenshotUploaded === undefined) {
+      return res.status(400).json({ message: 'Screenshot upload status is required' });
     }
 
-    const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${file.filename}`;
-    
+    // If the checkbox is checked, update the payment status as 'paid'
     const updated = await Order.findByIdAndUpdate(
       orderId,
       {
-        paymentStatus: 'paid',
-        paymentProof: fileUrl,
+        paymentStatus: screenshotUploaded ? 'paid' : 'pending', // Only set to 'paid' if checkbox is checked
       },
       { new: true }
     );
@@ -43,7 +42,7 @@ exports.updatePaymentStatus = async (req, res) => {
       return res.status(404).json({ message: 'Order not found' });
     }
 
-    res.status(200).json({ message: 'Payment successful', order: updated });
+    res.status(200).json({ message: 'Payment status updated successfully', order: updated });
   } catch (error) {
     console.error('Error updating payment status:', error);
     res.status(500).json({ message: 'Error updating payment status', error: error.message });
