@@ -25,6 +25,7 @@ const categories = [
     image: 'https://images.unsplash.com/photo-1516600164266-f3b8166ae679?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
   }
 ];
+
 const stores = [
   { id: 1, name: "PK Wines", rating: 4.8, image: "https://images.unsplash.com/photo-1597290282695-edc43d0e7129?w=600&h=400&fit=crop", address: "123 Main St", distance: "0.8 miles", openTime: "10:00 AM - 10:00 PM" },
   { id: 2, name: "Sunrise Family Garden Restaurant", rating: 4.5, image: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=600&h=400&fit=crop", address: "456 Oak Ave", distance: "1.2 miles", openTime: "11:00 AM - 9:00 PM" }
@@ -169,7 +170,7 @@ function Dashboard() {
           className="relative mb-8 rounded-2xl overflow-hidden shadow-md cursor-pointer group"
         >
           <img
-            src="https://report.livingliquidz.com/Content/wp-content/uploads/HomeBanner/Glenwalkbannerwebsite20242121177.jpg"
+            src="website.png"
             alt="The Glenwalk Banner"
             className="w-full h-auto object-cover transition-all duration-1000 ease-in-out scale-100 group-hover:scale-105"
           />
