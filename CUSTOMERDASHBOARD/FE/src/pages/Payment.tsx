@@ -34,48 +34,50 @@ const Payment = () => {
     fetchCart();
   }, []);
 
-  const handlePaymentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+ const handlePaymentSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    const orderId = localStorage.getItem('latestOrderId');
-    if (!orderId) return alert('No order ID found. Please place an order first.');
+  const orderId = localStorage.getItem('latestOrderId');
+  if (!orderId) return alert('No order ID found. Please place an order first.');
 
-    if (!isScreenshotUploaded) return alert('Please acknowledge that the payment screenshot has been uploaded.');
+  if (!isScreenshotUploaded) return alert('Please acknowledge that the payment screenshot has been uploaded.');
 
-    // Log the data being sent to the backend
-    console.log("Request data being sent:", {
-      screenshotUploaded: isScreenshotUploaded,
-      orderId
-    });
+  // Log the data being sent to the backend
+  console.log("Request data being sent:", {
+    screenshotUploaded: isScreenshotUploaded,
+    orderId
+  });
 
-    try {
-      // Send the checkbox state (screenshotUploaded) and dummy payment proof if needed
-      const res = await axios.put(
-        `https://peghouse.in/api/orders/${orderId}/pay`,
-        {
-          screenshotUploaded: isScreenshotUploaded, // Only send checkbox state
-          paymentProof: isScreenshotUploaded ? 'placeholder.jpg' : '', // Send a dummy payment proof
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json', // Ensure content-type is correct
-          }
+  try {
+    // Send the request to backend
+    const res = await axios.put(
+      `https://peghouse.in/api/orders/${orderId}/pay`,
+      {
+        screenshotUploaded: isScreenshotUploaded, // Only send checkbox state
+        paymentProof: isScreenshotUploaded ? 'placeholder.jpg' : '', // Send a dummy payment proof
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json', // Ensure content-type is correct
         }
-      );
-
-      // Log the response from the server
-      console.log("Response from server:", res.data);
-
-      if (res.data.message === 'Payment successful') {
-        navigate('/order-success');
-      } else {
-        alert('Payment failed. Please try again.');
       }
-    } catch (err) {
-      console.error('Payment error:', err.response ? err.response.data : err);
-      alert('Something went wrong while submitting payment.');
+    );
+
+    // Log the full response from the server
+    console.log("Response from server:", res.data);
+
+    if (res.data.message === 'Payment successful') {
+      navigate('/order-success');
+    } else {
+      alert('Payment failed. Please try again.');
     }
-  };
+  } catch (err) {
+    // Log the error response
+    console.error('Payment error:', err.response ? err.response.data : err);
+    alert('Something went wrong while submitting payment.');
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-gray-50">
