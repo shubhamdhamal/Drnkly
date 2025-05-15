@@ -96,22 +96,35 @@ exports.getUserCart = async (req, res) => {
   const { userId } = req.params;
 
   try {
-    const cart = await Cart.findOne({ userId }).populate({
-      path: 'items.productId',
-      model: 'Product',
-      select: 'category liquorType name price image'
-    });
-
-    // ✅ Log to check if `category` is being populated
-    console.log('Cart:', JSON.stringify(cart, null, 2));
+    const cart = await Cart.findOne({ userId });
 
     if (!cart) return res.status(404).json({ message: 'Cart not found' });
 
-    res.status(200).json(cart);
+    // 🛠 Manually fetch product details
+    const enrichedItems = await Promise.all(
+      cart.items.map(async (item) => {
+        const product = await Product.findById(item.productId).select('category liquorType name price image');
+
+        return {
+          ...item.toObject(),
+          productId: product || item.productId, // fallback to ID if product not found
+        };
+      })
+    );
+
+    const enrichedCart = {
+      ...cart.toObject(),
+      items: enrichedItems,
+    };
+
+    res.status(200).json(enrichedCart);
+
   } catch (error) {
+    console.error('Error fetching cart:', error);
     res.status(500).json({ message: 'Error fetching cart', error: error.message });
   }
 };
+
 
 
 
