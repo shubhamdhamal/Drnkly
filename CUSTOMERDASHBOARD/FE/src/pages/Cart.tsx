@@ -9,54 +9,46 @@ const Cart = () => {
   const navigate = useNavigate();
 
   interface CartItem {
-    productId: any;
+    category: any;
+    productId: any; 
     name: string;
     price: number | string;
     image: string;
     quantity: number | string;
-    category?: string | null;
   }
 
   const [items, setItems] = useState<CartItem[]>([]);
   const userId = localStorage.getItem('userId');
 
-  useEffect(() => {
-    const fetchCart = async () => {
-      if (!userId) return toast.error('User not logged in');
+useEffect(() => {
+  const fetchCart = async () => {
+    if (!userId) return toast.error('User not logged in');
 
-      try {
-        const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
+    try {
+      const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
+      const populatedItems = res.data.items.map((item: any) => ({
+  ...item,
+  category: item.productId?.category || null
+}));
+setItems(populatedItems);
 
-        // Normalize item structure and extract category safely
-        const populatedItems = res.data.items.map((item: any) => {
-          const product = item.productId;
-          const isPopulated = typeof product === 'object' && product !== null;
 
-          return {
-            ...item,
-            name: isPopulated ? product.name : item.name,
-            price: isPopulated ? product.price : item.price,
-            image: isPopulated ? product.image : item.image,
-            category: isPopulated ? product.category || null : null,
-          };
-        });
+      // Debug: Log each product's category
+      console.log('Fetched Cart Items:');
+      res.data.items.forEach((item: any, i: number) => {
+        console.log(`Item ${i + 1}:`, item.productId?.category || 'No category found');
+      });
+    } catch (error) {
+      toast.error('Failed to load cart');
+      console.error(error);
+    }
+  };
 
-        setItems(populatedItems);
+  fetchCart();
+}, [userId]);
 
-        // Debug logging
-        console.log('Fetched Cart Items:');
-        populatedItems.forEach((item: { category: any; }, i: number) => {
-          console.log(`Item ${i + 1}:`, item.category || 'No category found');
-        });
-      } catch (error) {
-        toast.error('Failed to load cart');
-        console.error('Error fetching cart:', error);
-      }
-    };
 
-    fetchCart();
-  }, [userId]);
-
+  // Update quantity in backend
   const updateQuantity = async (productId: string, quantity: number) => {
     if (quantity < 1) return;
 
@@ -66,70 +58,49 @@ const Cart = () => {
         productId,
         quantity,
       });
-
-      // Fix: also normalize items from backend again
-      const updatedItems = res.data.cart.items.map((item: any) => {
-        const product = item.productId;
-        const isPopulated = typeof product === 'object' && product !== null;
-
-        return {
-          ...item,
-          name: isPopulated ? product.name : item.name,
-          price: isPopulated ? product.price : item.price,
-          image: isPopulated ? product.image : item.image,
-          category: isPopulated ? product.category || null : null,
-        };
-      });
-
-      setItems(updatedItems);
+      setItems(res.data.cart.items);
       toast.success('Quantity updated');
     } catch (error) {
       toast.error('Failed to update quantity');
     }
   };
 
+  // Remove item from cart
   const removeFromCart = async (productId: string) => {
     try {
       const res = await axios.delete('https://peghouse.in/api/cart/remove', {
         data: { userId, productId },
       });
-
-      const updatedItems = res.data.cart.items.map((item: any) => {
-        const product = item.productId;
-        const isPopulated = typeof product === 'object' && product !== null;
-
-        return {
-          ...item,
-          name: isPopulated ? product.name : item.name,
-          price: isPopulated ? product.price : item.price,
-          image: isPopulated ? product.image : item.image,
-          category: isPopulated ? product.category || null : null,
-        };
-      });
-
-      setItems(updatedItems);
+      setItems(res.data.cart.items);
       toast.success('Item removed');
     } catch (error) {
       toast.error('Failed to remove item');
     }
   };
 
+  // Base total
   const total = items.reduce((sum, item) => {
-    const price = typeof item.price === 'string' ? parseFloat(item.price.replace(/[^\d.]/g, '')) : item.price;
-    const quantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-    return sum + (Number(price) || 0) * (Number(quantity) || 1);
+    const rawPrice = typeof item.price === 'string' ? item.price.replace(/[^\d.]/g, '') : item.price;
+    const rawQuantity = typeof item.quantity === 'string' ? item.quantity.replace(/[^\d.]/g, '') : item.quantity;
+    const price = isNaN(Number(rawPrice)) ? 0 : Number(rawPrice);
+    const quantity = isNaN(Number(rawQuantity)) ? 1 : Number(rawQuantity);
+    return sum + price * quantity;
   }, 0);
 
-  const drinksFee = items.reduce((sum, item) => {
-    const price = typeof item.price === 'string' ? parseFloat(item.price.replace(/[^\d.]/g, '')) : item.price;
-    const quantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
+  // Drinks Fee (35%)
+const drinksFee = items.reduce((sum, item) => {
+  const category = item?.category;
+  const price = typeof item.price === 'string' ? Number(item.price.replace(/[^\d.]/g, '')) : item.price;
+  const quantity = typeof item.quantity === 'string' ? Number(item.quantity.replace(/[^\d.]/g, '')) : item.quantity;
 
-    if (item.category === 'Drinks') {
-      return sum + (Number(price) || 0) * (Number(quantity) || 1) * 0.35;
-    }
+  if (category === 'Drinks') {
+    return sum + (Number(price) || 0) * (Number(quantity) || 1) * 0.35;
+  }
 
-    return sum;
-  }, 0);
+  return sum;
+}, 0);
+
+
 
   const shipping = 100;
   const platformFee = 12;
@@ -170,8 +141,8 @@ const Cart = () => {
                 </button>
               </div>
             ) : (
-              items.map((item, index) => (
-                <div key={index} className="flex items-center justify-between border-b pb-6">
+              items.map((item: any) => (
+                <div key={item.productId._id || item.productId} className="flex items-center justify-between border-b pb-6">
                   <div className="flex items-center space-x-4">
                     <img
                       src={item.image}
@@ -179,42 +150,32 @@ const Cart = () => {
                       className="w-24 h-24 object-cover rounded-md"
                     />
                     <div>
-                      <h3 className="text-lg font-medium text-gray-900">{item.name}</h3>
-                      <p className="text-sm text-gray-500 capitalize">
-                        Category: {item.category || 'N/A'}
-                      </p>
-                      <p className="text-lg font-semibold text-gray-900 mt-1">₹{item.price}</p>
+        <h3 className="text-lg font-medium text-gray-900">{item.name}</h3>
+        <p className="text-sm text-gray-500 capitalize">
+          Category: {item.category || 'N/A'}
+        </p>
+        <p className="text-lg font-semibold text-gray-900 mt-1">₹{item.price}</p>
 
-                      {item.category === 'Drinks' && (
-                        <p className="text-sm text-red-600 mt-1">
-                          + ₹{(Number(item.price) * Number(item.quantity) * 0.35).toFixed(2)} Service Fee (35%)
-                        </p>
-                      )}
-                    </div>
+        {item.category === 'Drinks' && (
+          <p className="text-sm text-red-600 mt-1">
+            + ₹{(Number(item.price) * Number(item.quantity) * 0.35).toFixed(2)} Service Fee (35%)
+          </p>
+        )}
+      </div>
                   </div>
 
                   <div className="flex items-center space-x-6">
                     <div className="flex items-center space-x-2">
                       <button
                         className="p-1 rounded-md hover:bg-gray-100"
-                        onClick={() =>
-                          updateQuantity(
-                            item.productId._id || item.productId,
-                            Number(item.quantity) - 1
-                          )
-                        }
+                        onClick={() => updateQuantity(item.productId._id || item.productId, Number(item.quantity) - 1)}
                       >
                         <Minus className="h-5 w-5 text-gray-600" />
                       </button>
                       <span className="text-lg font-medium w-8 text-center">{item.quantity}</span>
                       <button
                         className="p-1 rounded-md hover:bg-gray-100"
-                        onClick={() =>
-                          updateQuantity(
-                            item.productId._id || item.productId,
-                            Number(item.quantity) + 1
-                          )
-                        }
+                        onClick={() => updateQuantity(item.productId._id || item.productId, Number(item.quantity) + 1)}
                       >
                         <Plus className="h-5 w-5 text-gray-600" />
                       </button>
