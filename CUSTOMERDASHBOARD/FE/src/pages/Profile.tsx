@@ -714,6 +714,15 @@ const Profile = () => {
     }
   };
 
+  useEffect(() => {
+    // Check if user skipped login
+    const isSkipped = localStorage.getItem('isSkippedLogin');
+    if (isSkipped) {
+      navigate('/login'); // Redirect to login if user hasn't logged in
+      return;
+    }
+  }, [navigate]);
+
   return (
     <div className="min-h-screen bg-gray-100">
       <Header />

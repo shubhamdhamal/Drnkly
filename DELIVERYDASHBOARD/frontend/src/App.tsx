@@ -47,7 +47,9 @@ interface Rating {
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem('activeTab') || 'home';
+  });
   const [toast, setToast] = useState<string | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -98,6 +100,38 @@ function App() {
     'Ravet'
   ];
 
+  const [previousOrderCount, setPreviousOrderCount] = useState(0);
+
+  const playNotificationSound = () => {
+    const audio = new Audio('https://peghouse.in/notification.mp3'); // Replace with your actual notification sound URL
+    let playCount = 0;
+    
+    const playSound = () => {
+      if (playCount < 3) { // Play 3 times (30 seconds total, 10 seconds each)
+        audio.play();
+        playCount++;
+      } else {
+        clearInterval(interval);
+      }
+    };
+
+    const interval = setInterval(playSound, 10000); // Play every 10 seconds
+    playSound(); // Play immediately first time
+
+    // Cleanup interval after 30 seconds
+    setTimeout(() => {
+      clearInterval(interval);
+    }, 30000);
+  };
+
+  const stopNotificationSound = () => {
+    const audio = document.querySelector('audio');
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+  };
+
   const showToast = (message: string) => {
     setToast(message);
     setTimeout(() => setToast(null), 3000);
@@ -128,31 +162,73 @@ function App() {
       showToast('Error fetching profile');
     }
   };
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    localStorage.setItem('activeTab', tab);
+  };
+
+  useEffect(() => {
+    const checkAuthStatus = () => {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        setIsLoggedIn(true);
+        fetchUserProfile();
+        const lastTab = localStorage.getItem('activeTab');
+        if (lastTab) {
+          setActiveTab(lastTab);
+        }
+      } else {
+        setIsLoggedIn(false);
+        setShowLogin(true);
+      }
+    };
+
+    checkAuthStatus();
+  }, []);
+
   useEffect(() => {
     const fetchOrders = async () => {
       try {
         const token = localStorage.getItem('authToken');
         if (!token) return;
-  
+
         const res = await fetch('https://delivery.peghouse.in/api/orders/handedOver', {
           headers: {
             Authorization: `Bearer ${token}`
           }
         });
-  
+
         const data = await res.json();
-        console.log("Fetched Orders: ", data);  // Debugging line
         if (res.ok) {
-          setOrders(data);  // Save the fetched orders into the state
+          // Check if there are new orders
+          const newOrderCount = data.filter(order => 
+            order.items.some(item => item.handoverStatus === 'handedOver')
+          ).length;
+
+          if (previousOrderCount > 0 && newOrderCount > previousOrderCount) {
+            // New order received!
+            playNotificationSound();
+            showToast('New order received!');
+          }
+
+          setPreviousOrderCount(newOrderCount);
+          setOrders(data);
         }
       } catch (err) {
         console.error('Error fetching orders:', err);
       }
     };
-  
-    fetchOrders(); // Call the fetch function when the component mounts
-  }, []);
 
+    // Initial fetch
+    fetchOrders();
+
+    // Set up polling every 30 seconds to check for new orders
+    const interval = setInterval(fetchOrders, 30000);
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(interval);
+  }, []); // Empty dependency array for initial setup
 
   const handleOtpSubmit = () => {
     const order = orders.find(o => o.id === currentOrderId);
@@ -520,7 +596,7 @@ const handleItemAction = async (orderId: string, itemId: string, action: 'accept
     return (
       <div className="dashboard">
         <header className="header">
-          <div className="logo" onClick={() => setActiveTab('home')} style={{ cursor: 'pointer' }}>
+          <div className="logo" onClick={() => handleTabChange('home')} style={{ cursor: 'pointer' }}>
             <Package size={24} />
             DeliveryApp
           </div>
@@ -539,7 +615,14 @@ const handleItemAction = async (orderId: string, itemId: string, action: 'accept
                 <div className="notifications-panel">
                   <div className="notifications-header">
                     <h3>Notifications</h3>
-                    <X size={20} onClick={() => setShowNotifications(false)} style={{ cursor: 'pointer' }} />
+                    <X 
+                      size={20} 
+                      onClick={() => {
+                        setShowNotifications(false);
+                        stopNotificationSound(); // Stop sound when notifications are closed
+                      }} 
+                      style={{ cursor: 'pointer' }} 
+                    />
                   </div>
                   {notifications.map(notification => (
                     <div key={notification.id} className="notification-item">
@@ -553,7 +636,7 @@ const handleItemAction = async (orderId: string, itemId: string, action: 'accept
             <i
    className="fa fa-user" 
    style={{ cursor: 'pointer' }}
-   onClick={() => setActiveTab('profile')}
+   onClick={() => handleTabChange('profile')}
 />
 
           </div>
@@ -566,19 +649,19 @@ const handleItemAction = async (orderId: string, itemId: string, action: 'accept
               <p>Here's your delivery dashboard</p>
             </div>
             <div className="stats-grid">
-              <div className="stat-card" onClick={() => setActiveTab('orders')} style={{ cursor: 'pointer' }}>
+              <div className="stat-card" onClick={() => handleTabChange('orders')} style={{ cursor: 'pointer' }}>
                 <h3>Pending Orders</h3>
                 <h2>{orders.filter(o => o.status === 'pending').length}</h2>
               </div>
-              <div className="stat-card" onClick={() => setActiveTab('earnings')} style={{ cursor: 'pointer' }}>
+              <div className="stat-card" onClick={() => handleTabChange('earnings')} style={{ cursor: 'pointer' }}>
                 <h3>Today's Earnings</h3>
                 <h2>₹540</h2>
               </div>
-              <div className="stat-card" onClick={() => setActiveTab('ratings')} style={{ cursor: 'pointer' }}>
+              <div className="stat-card" onClick={() => handleTabChange('ratings')} style={{ cursor: 'pointer' }}>
                 <h3>Customer Rating</h3>
                 <h2>4.8</h2>
               </div>
-              <div className="stat-card" onClick={() => setActiveTab('orders')} style={{ cursor: 'pointer' }}>
+              <div className="stat-card" onClick={() => handleTabChange('orders')} style={{ cursor: 'pointer' }}>
                 <h3>Completed</h3>
                 <h2>{orders.filter(o => o.status === 'completed').length}</h2>
               </div>
@@ -591,7 +674,7 @@ const handleItemAction = async (orderId: string, itemId: string, action: 'accept
     <div className="order-tabs">
       <button 
         className={`tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
-        onClick={() => setActiveTab('orders')}
+        onClick={() => handleTabChange('orders')}
       >
         Pending Orders
       </button>
@@ -822,7 +905,7 @@ const handleItemAction = async (orderId: string, itemId: string, action: 'accept
                   Edit Profile
                 </button>
               )}
-              <button className="btn btn-decline" onClick={() => setIsLoggedIn(false)}>Logout</button>
+              <button className="btn btn-decline" onClick={handleLogout}>Logout</button>
             </div>
           </div>
         )}
@@ -831,7 +914,7 @@ const handleItemAction = async (orderId: string, itemId: string, action: 'accept
           <a
             href="#"
             className={`nav-item ${activeTab === 'home' ? 'active' : ''}`}
-            onClick={() => setActiveTab('home')}
+            onClick={() => handleTabChange('home')}
           >
             <Home size={20} />
             <span>Home</span>
@@ -839,7 +922,7 @@ const handleItemAction = async (orderId: string, itemId: string, action: 'accept
           <a
             href="#"
             className={`nav-item ${activeTab === 'orders' ? 'active' : ''}`}
-            onClick={() => setActiveTab('orders')}
+            onClick={() => handleTabChange('orders')}
           >
             <Package size={20} />
             <span>Orders</span>
@@ -847,7 +930,7 @@ const handleItemAction = async (orderId: string, itemId: string, action: 'accept
           <a
             href="#"
             className={`nav-item ${activeTab === 'earnings' ? 'active' : ''}`}
-            onClick={() => setActiveTab('earnings')}
+            onClick={() => handleTabChange('earnings')}
           >
             <IndianRupee size={20} />
             <span>Earnings</span>
@@ -855,7 +938,7 @@ const handleItemAction = async (orderId: string, itemId: string, action: 'accept
           <a
             href="#"
             className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
-            onClick={() => setActiveTab('profile')}
+            onClick={() => handleTabChange('profile')}
           >
             <User size={20} />
             <span>Profile</span>
@@ -889,6 +972,19 @@ const handleItemAction = async (orderId: string, itemId: string, action: 'accept
         </Modal>
       </div>
     );
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('activeTab');
+    setIsLoggedIn(false);
+    setShowLogin(true);
+    setUserProfile({
+      name: '',
+      email: '',
+      phone: '',
+      area: ''
+    });
   };
 
   return (
