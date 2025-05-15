@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ImagePlus } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import { CartItem } from '../context/CartContext';
 
@@ -8,7 +8,7 @@ const Payment = () => {
   const navigate = useNavigate();
   const [items, setItems] = useState<CartItem[]>([]);
   const [isScreenshotUploaded, setIsScreenshotUploaded] = useState(false); // To check if the screenshot is uploaded
-  const [qrUrl, setQrUrl] = useState<string>('');
+  const [screenshot, setScreenshot] = useState<File | null>(null); // To store the screenshot file
 
   const orderTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const deliveryCharges = 100.0;
@@ -34,6 +34,13 @@ const Payment = () => {
     fetchCart();
   }, []);
 
+  const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setScreenshot(file);
+    }
+  };
+
   const handlePaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -42,13 +49,18 @@ const Payment = () => {
 
     if (!isScreenshotUploaded) return alert('Please confirm that the payment screenshot has been uploaded.');
 
+    if (!screenshot) return alert('Please upload the payment screenshot.');
+
     try {
+      const formData = new FormData();
+      formData.append('screenshot', screenshot);
+
       const res = await axios.put(
         `https://peghouse.in/api/orders/${orderId}/pay`,
-        {},
+        formData,
         {
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'multipart/form-data', // Correct Content-Type for file upload
           }
         }
       );
@@ -59,8 +71,13 @@ const Payment = () => {
         alert('Payment failed. Please try again.');
       }
     } catch (err) {
-      console.error('Payment error:', err);
-      alert('Something went wrong while submitting payment.');
+      if (err.response) {
+        console.error('Payment error:', err.response.data);  // Log the full response from the server
+        alert(`Error: ${err.response.data.message || 'Something went wrong'}`);
+      } else {
+        console.error('Payment error:', err);
+        alert('Something went wrong while submitting payment.');
+      }
     }
   };
 
@@ -111,6 +128,17 @@ const Payment = () => {
             />
             <span className="text-sm text-gray-600">I have uploaded the payment screenshot</span>
           </label>
+          
+          {/* File upload for screenshot */}
+          <div className="mt-4">
+            <label className="block text-gray-700">Upload Screenshot (Optional):</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleScreenshotChange}
+              className="mt-2"
+            />
+          </div>
         </div>
 
         {/* Order Summary */}
