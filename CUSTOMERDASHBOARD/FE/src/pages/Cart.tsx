@@ -59,34 +59,62 @@ useEffect(() => {
 
 
   // Update quantity in backend
-  const updateQuantity = async (productId: string, quantity: number) => {
-    if (quantity < 1) return;
+const updateQuantity = async (productId: string, quantity: number) => {
+  if (quantity < 1) return;
 
-    try {
-      const res = await axios.put('https://peghouse.in/api/cart/update', {
-        userId,
-        productId,
-        quantity,
-      });
-      setItems(res.data.cart.items);
-      toast.success('Quantity updated');
-    } catch (error) {
-      toast.error('Failed to update quantity');
-    }
-  };
+  try {
+    const res = await axios.put('https://peghouse.in/api/cart/update', {
+      userId,
+      productId,
+      quantity,
+    });
+
+    const updatedItems = res.data.cart.items.map((item: any) => {
+      const product = item.productId;
+      return {
+        ...item,
+        name: product?.name || item.name,
+        price: product?.price || item.price,
+        image: product?.image || item.image,
+        category: product?.category || 'N/A',
+        liquorType: product?.liquorType || '',
+      };
+    });
+
+    setItems(updatedItems);
+    toast.success('Quantity updated');
+  } catch (error) {
+    toast.error('Failed to update quantity');
+  }
+};
+
 
   // Remove item from cart
-  const removeFromCart = async (productId: string) => {
-    try {
-      const res = await axios.delete('https://peghouse.in/api/cart/remove', {
-        data: { userId, productId },
-      });
-      setItems(res.data.cart.items);
-      toast.success('Item removed');
-    } catch (error) {
-      toast.error('Failed to remove item');
-    }
-  };
+const removeFromCart = async (productId: string) => {
+  try {
+    const res = await axios.delete('https://peghouse.in/api/cart/remove', {
+      data: { userId, productId },
+    });
+
+    const updatedItems = res.data.cart.items.map((item: any) => {
+      const product = item.productId;
+      return {
+        ...item,
+        name: product?.name || item.name,
+        price: product?.price || item.price,
+        image: product?.image || item.image,
+        category: product?.category || 'N/A',
+        liquorType: product?.liquorType || '',
+      };
+    });
+
+    setItems(updatedItems);
+    toast.success('Item removed');
+  } catch (error) {
+    toast.error('Failed to remove item');
+  }
+};
+
 
   // Base total
   const total = items.reduce((sum, item) => {
