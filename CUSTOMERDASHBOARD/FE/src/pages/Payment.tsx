@@ -112,7 +112,6 @@ const Payment = () => {
               accept="image/*"
               onChange={handleScreenshotChange}
               className="hidden"
-              
             />
             <span className="flex items-center gap-2">
               <ImagePlus size={18} /> Choose Image
@@ -126,8 +125,6 @@ const Payment = () => {
             />
           )}
         </div>
-        
-
 
         {/* Order Summary */}
         <div className="bg-white rounded-xl p-6 mb-6">
