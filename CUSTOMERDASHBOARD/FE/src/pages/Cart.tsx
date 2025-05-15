@@ -34,9 +34,9 @@ setItems(populatedItems);
 
 
       // Debug: Log each product's category
-      console.log('Fetched Cart Items:');
+      
       res.data.items.forEach((item: any, i: number) => {
-        console.log(`Item ${i + 1}:`, item.productId?.category || 'No category found');
+        console.log(item.productId?.category );
       });
     } catch (error) {
       toast.error('Failed to load cart');
