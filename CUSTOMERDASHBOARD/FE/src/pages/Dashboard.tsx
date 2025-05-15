@@ -36,10 +36,11 @@ function Dashboard() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [sparklePosition, setSparklePosition] = useState({ x: 0, y: 0 });
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userName, setUserName] = useState(''); // <-- ADD THIS
-  const [searchQuery, setSearchQuery] = useState(''); // Store the search query
-
-
+  const [isGuest, setIsGuest] = useState(false);
+  const [userName, setUserName] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -51,33 +52,31 @@ function Dashboard() {
     setIsLoggedIn(false);
     navigate('/login');
   };
+
   useEffect(() => {
-    const fetchUserName = async () => {
-      try {
-        const token = localStorage.getItem('authToken'); // ✅ correct token key
-        const userId = localStorage.getItem('userId');
-  
-        if (token && userId) {
-          setIsLoggedIn(true);
-  
+    // Check if user is guest or logged in
+    const isGuestUser = localStorage.getItem('isGuest') === 'true';
+    const token = localStorage.getItem('authToken');
+    const userId = localStorage.getItem('userId');
+
+    setIsGuest(isGuestUser);
+    setIsLoggedIn(!!token && !!userId && !isGuestUser);
+
+    // Only fetch user data if logged in
+    if (!isGuestUser && token && userId) {
+      const fetchUserName = async () => {
+        try {
           const response = await axios.get(`https://peghouse.in/api/users/${userId}`, {
-            headers: {
-              Authorization: `Bearer ${token}`, // ✅ SEND token properly
-            },
+            headers: { Authorization: `Bearer ${token}` }
           });
-  
-          const user = response.data;
-          setUserName(user.name);
+          setUserName(response.data.name);
+        } catch (error) {
+          console.error('Failed to fetch user info', error);
         }
-      } catch (error) {
-        console.error('Failed to fetch user info for sidebar', error);
-      }
-    };
-  
-    fetchUserName();
+      };
+      fetchUserName();
+    }
   }, []);
-  
-  
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -88,8 +87,24 @@ function Dashboard() {
     }, 2000);
     return () => clearInterval(interval);
   }, []);
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value); // Update the search query
+
+  const handleSearchChange = async (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    
+    if (query.trim()) {
+      setIsSearching(true);
+      try {
+        const response = await axios.get(`https://peghouse.in/api/products/search?query=${query}`);
+        setSearchResults(response.data);
+      } catch (error) {
+        console.error('Search error:', error);
+        setSearchResults([]);
+      }
+      setIsSearching(false);
+    } else {
+      setSearchResults([]);
+    }
   };
 
   const handleSearchSubmit = (e) => {
@@ -98,69 +113,52 @@ function Dashboard() {
       navigate(`/products?search=${searchQuery}`); // Redirect with search query
     }
   };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-white shadow-sm">
-  <div className="max-w-7xl mx-auto px-4 py-1">
-    <div className="flex items-center justify-between h-16">
-      <button
-        onClick={toggleMenu}
-        className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-      >
-        <Menu size={20} />
-      </button>
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center justify-between h-24">
+            <button
+              onClick={toggleMenu}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <Menu size={28} />
+            </button>
 
-      <div
-        className="cursor-pointer inline-block"
-        onClick={() => navigate('/dashboard')}
-      >
-        <img
-  src="/finallogo.png"
-  alt="Drnkly Logo"
-  className="mx-auto object-contain w-32 md:w-48 lg:w-64"
-/>
-
-      </div>
-
-      <div className="flex items-center space-x-3">
-        {isLoggedIn ? (
-          <button
-            onClick={handleLogout}
-            className="bg-red-500 text-white px-3 py-1 rounded-full hover:bg-red-600 transition-colors text-sm"
-          >
-            Logout
-          </button>
-        ) : (
-          <>
-          </>
-        )}
-        <button
-          onClick={() => navigate('/cart')}
-          className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-        >
-          <ShoppingCart size={20} />
-        </button>
-      </div>
-    </div>
-  
-
-
-
-
-           {/* Search Bar */}
-           <form onSubmit={handleSearchSubmit}>
-            <div className="mt-4 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-              <input
-                type="text"
-                placeholder="Search for drinks..."
-                value={searchQuery}
-                onChange={handleSearchChange} // Update search query on change
-                className="w-full pl-10 pr-4 py-3 bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
+            <div
+              className="cursor-pointer inline-block flex-1 flex justify-center px-4"
+              onClick={() => navigate('/dashboard')}
+            >
+              <img
+                src="/finallogo.png"
+                alt="Drnkly Logo"
+                className="mx-auto object-contain h-20 md:h-24 lg:h-28 hover:scale-105 transition-transform"
               />
             </div>
-          </form>
+
+            <div className="flex items-center space-x-6">
+              {/* Only show profile-related buttons if user is logged in */}
+              {!localStorage.getItem('isSkippedLogin') && (
+                <>
+                  <button 
+                    onClick={() => navigate('/profile')}
+                    className="flex flex-col items-center hover:text-red-600 transition-colors"
+                  >
+                    <User className="h-6 w-6" />
+                    <span className="text-xs mt-1">Profile</span>
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition-colors text-base"
+                  >
+                    Logout
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -185,7 +183,11 @@ function Dashboard() {
           <h2 className="text-xl font-semibold mb-4">Categories</h2>
           <div className="grid grid-cols-3 gap-4">
             {categories.map((category) => (
-              <div key={category.name} onClick={() => navigate('/products')} className="relative overflow-hidden rounded-xl cursor-pointer transform hover:scale-105 transition-transform">
+              <div 
+                key={category.name} 
+                onClick={() => navigate(`/products?category=${category.name.toLowerCase()}`)} 
+                className="relative overflow-hidden rounded-xl cursor-pointer transform hover:scale-105 transition-transform"
+              >
                 <img src={category.image} alt={category.name} className="w-full h-32 object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
                   <span className="text-white font-medium">{category.name}</span>
@@ -242,33 +244,52 @@ function Dashboard() {
               </button>
             </div>
 
-            <div className="flex items-center p-4 bg-gray-50 rounded-xl mb-6">
-              <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                <User size={24} className="text-gray-600" />
-              </div>
-              <div className="ml-4">
-              <h3 className="font-medium">{userName || 'Guest User'}</h3>
-                <p className="text-sm text-gray-600">View Profile</p>
-              </div>
-            </div>
+            {isLoggedIn ? (
+              <>
+                <div className="flex items-center p-4 bg-gray-50 rounded-xl mb-6">
+                  <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                    <User size={24} className="text-gray-600" />
+                  </div>
+                  <div className="ml-4">
+                    <h3 className="font-medium">{userName}</h3>
+                    <p className="text-sm text-gray-600">View Profile</p>
+                  </div>
+                </div>
 
-            <div className="space-y-4">
-              <button onClick={() => navigate('/profile')} className="flex items-center w-full p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                <User size={20} className="mr-3" /> My Profile
-              </button>
-              <button onClick={() => navigate('/order-history')} className="flex items-center w-full p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                <Settings size={20} className="mr-3" /> Order History
-              </button>
-              <button onClick={() => navigate('/issue-report')} className="flex items-center w-full p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                <Sparkles size={20} className="mr-3 text-yellow-500" /> Report Issue
-              </button>
-              <button onClick={() => navigate('/issue-tracking')} className="flex items-center w-full p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                <Sparkles size={20} className="mr-3 text-blue-500" /> Track Issue
-              </button>
-              <button onClick={handleLogout} className="flex items-center w-full p-3 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                <LogOut size={20} className="mr-3" /> Logout
-              </button>
-            </div>
+                <div className="space-y-4">
+                  <button onClick={() => navigate('/profile')} className="flex items-center w-full p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                    <User size={20} className="mr-3" /> My Profile
+                  </button>
+                  <button onClick={() => navigate('/order-history')} className="flex items-center w-full p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                    <Settings size={20} className="mr-3" /> Order History
+                  </button>
+                  <button onClick={() => navigate('/issue-report')} className="flex items-center w-full p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                    <Sparkles size={20} className="mr-3 text-yellow-500" /> Report Issue
+                  </button>
+                  <button onClick={() => navigate('/issue-tracking')} className="flex items-center w-full p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                    <Sparkles size={20} className="mr-3 text-blue-500" /> Track Issue
+                  </button>
+                  <button onClick={handleLogout} className="flex items-center w-full p-3 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                    <LogOut size={20} className="mr-3" /> Logout
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="space-y-4">
+                <button 
+                  onClick={() => navigate('/login')} 
+                  className="w-full bg-[#cd6839] text-white py-3 rounded-xl font-semibold hover:bg-[#b55a31] transition-colors"
+                >
+                  Login
+                </button>
+                <button 
+                  onClick={() => navigate('/signup')} 
+                  className="w-full border-2 border-[#cd6839] text-[#cd6839] py-3 rounded-xl font-semibold hover:bg-[#cd6839] hover:text-white transition-colors"
+                >
+                  Sign Up
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
