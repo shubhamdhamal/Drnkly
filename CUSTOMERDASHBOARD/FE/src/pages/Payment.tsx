@@ -101,30 +101,22 @@ const Payment = () => {
 </div>
 
 
-        {/* Screenshot Upload */}
-        <div className="bg-white rounded-xl p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">Upload Payment Screenshot</h2>
-          <h6 className=" mb-4"><i>Screenshot should include transaction ID and payment status.</i></h6>
-          
-          <label className="block cursor-pointer text-blue-600 font-medium mb-2">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleScreenshotChange}
-              className="hidden"
-            />
-            <span className="flex items-center gap-2">
-              <ImagePlus size={18} /> Choose Image
-            </span>
-          </label>
-          {previewURL && (
-            <img
-              src={previewURL}
-              alt="Payment Proof"
-              className="w-full h-64 object-cover rounded-md border mt-2"
-            />
-          )}
-        </div>
+       {/* Screenshot Upload */}
+<div className="bg-white rounded-xl p-6 mb-6">
+  <h2 className="text-lg font-semibold mb-4">Upload Payment Screenshot</h2>
+  <h6 className="mb-4"><i>Screenshot should include transaction ID and payment status.</i></h6>
+
+  <p className="mb-4">Please upload the payment screenshot to the following link:</p>
+  <a 
+    href="https://drive.google.com/drive/folders/1i09WZAT0qd57MV9KMecAI6Rdvcon7TUF?usp=sharing" 
+    target="_blank" 
+    rel="noopener noreferrer"
+    className="text-blue-600 underline"
+  >
+    Upload Payment Screenshot Here
+  </a>
+</div>
+
         
 
 
