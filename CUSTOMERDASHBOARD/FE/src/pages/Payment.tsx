@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ImagePlus } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import { CartItem } from '../context/CartContext';
 
@@ -8,7 +8,6 @@ const Payment = () => {
   const navigate = useNavigate();
   const [items, setItems] = useState<CartItem[]>([]);
   const [isScreenshotUploaded, setIsScreenshotUploaded] = useState(false);
-  const [qrUrl, setQrUrl] = useState<string>('');
 
   const orderTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -18,7 +17,7 @@ const Payment = () => {
   const gstAmount = (orderTotal * gst) / 100;
   const total = orderTotal + deliveryCharges + platform + gstAmount;
 
-  // 🔁 Fetch vendor QR
+  // 🔁 Fetch vendor cart items
   useEffect(() => {
     const fetchCart = async () => {
       const userId = localStorage.getItem('userId');
@@ -85,7 +84,7 @@ const Payment = () => {
         <div className="bg-white rounded-xl p-6 mb-6">
           <h2 className="text-lg font-semibold mb-4">Payment Screenshot</h2>
           <p className="mb-4 text-gray-600">
-            Please upload the payment screenshot or confirm that you have uploaded it here:
+            Please confirm that you have uploaded the payment screenshot here:
           </p>
           <a
             href="https://drive.google.com/drive/folders/1i09WZAT0qd57MV9KMecAI6Rdvcon7TUF?usp=sharing"
