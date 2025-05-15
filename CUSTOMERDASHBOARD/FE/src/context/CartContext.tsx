@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 // 🛒 Define structure of each item in the cart
 export interface CartItem {
+  productId: any;
   _id?: any;
   id: number;
   name: string;

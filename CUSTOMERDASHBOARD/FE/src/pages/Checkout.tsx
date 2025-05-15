@@ -360,7 +360,7 @@ setItems(populatedItems);
             </div>
             <div className="flex justify-between font-semibold text-lg pt-2">
               <span>Total</span>
-              <span>₹{(orderTotal + 100 + 12 + (orderTotal+drinksFee) * 0.18+drinksFee).toFixed(2)}</span>
+              <span>₹{(orderTotal + 100 + 12 + (orderTotal+drinksFee) * 0.18 + drinksFee).toFixed(2)}</span>
             </div>
           </div>
         </div>
