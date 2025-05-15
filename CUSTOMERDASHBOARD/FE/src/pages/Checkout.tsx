@@ -186,18 +186,24 @@ const drinksFee = items.reduce((sum, item) => {
       }
   
       // 🛒 Step 2: Format items
-      const formattedItems = cartItems.map((item: any) => ({
-        productId: item.productId?._id || item.productId || item._id,
-        name: item.name,
-        image: item.image,
-        price: item.price,
-        quantity: item.quantity
-      }));
+      const formattedItems = cartItems.map((item: any) => {
+  const product = item.productId;
+  return {
+    productId: product?._id || item.productId || item._id,
+    name: product?.name || item.name,
+    image: product?.image || item.image,
+    price: product?.price || item.price,
+    quantity: item.quantity,
+    category: product?.category || 'N/A', // ✅ Preserve category
+  };
+});
+
   
       const orderTotal = items.reduce((sum: number, item: CartItem) => sum + item.price * item.quantity, 0);
       // Calculate 35% fee on Drinks only
   const drinksFee = items.reduce((sum, item) => {
-    const isDrink = item.productId?.category === 'Drinks';
+    const isDrink = item.category === 'Drinks';
+
     if (isDrink) {
       return sum + item.price * item.quantity * 0.35;
     }

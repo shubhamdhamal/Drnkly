@@ -14,21 +14,35 @@ const Payment = () => {
   // 🔁 Fetch cart items
   useEffect(() => {
     const fetchCart = async () => {
-      const userId = localStorage.getItem('userId');
-      if (!userId) return;
+  const userId = localStorage.getItem('userId');
+  if (!userId) return;
 
-      try {
-        const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
-        setItems(res.data.items || []);
+  try {
+    const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
 
-        // Debug check
-        res.data.items.forEach((item: any, i: number) => {
-          console.log(`Item ${i + 1} Category:`, item.productId?.category);
-        });
-      } catch (err) {
-        console.error('Cart fetch error:', err);
-      }
-    };
+    const flattened = res.data.items.map((item: any) => {
+      const product = item.productId;
+      return {
+        ...item,
+        name: product?.name || item.name,
+        price: product?.price || item.price,
+        image: product?.image || item.image,
+        category: product?.category || 'N/A',
+        quantity: item.quantity,
+      };
+    });
+
+    setItems(flattened);
+
+    // ✅ Debug log
+    flattened.forEach((item, i) => {
+      console.log(`Item ${i + 1} category:`, item.category);
+    });
+  } catch (err) {
+    console.error('Cart fetch error:', err);
+  }
+};
+
 
     fetchCart();
   }, []);
@@ -38,12 +52,12 @@ const Payment = () => {
 
   // Calculate 35% fee on Drinks only
   const drinksFee = items.reduce((sum, item) => {
-    const isDrink = item.productId?.category === 'Drinks';
-    if (isDrink) {
-      return sum + item.price * item.quantity * 0.35;
-    }
-    return sum;
-  }, 0);
+  if (item.category === 'Drinks') {
+    return sum + item.price * item.quantity * 0.35;
+  }
+  return sum;
+}, 0);
+
 
   const deliveryCharges = 100.0;
   const platform = 12.0;
