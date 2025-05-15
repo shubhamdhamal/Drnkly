@@ -34,7 +34,7 @@ const Payment = () => {
     fetchCart();
   }, []);
 
- const handlePaymentSubmit = async (e: React.FormEvent) => {
+const handlePaymentSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
   const orderId = localStorage.getItem('latestOrderId');
@@ -69,6 +69,7 @@ const Payment = () => {
     if (res.data.message === 'Payment successful') {
       navigate('/order-success');
     } else {
+      console.error("Payment failed:", res.data);
       alert('Payment failed. Please try again.');
     }
   } catch (err) {
@@ -77,6 +78,7 @@ const Payment = () => {
     alert('Something went wrong while submitting payment.');
   }
 };
+
 
 
   return (
