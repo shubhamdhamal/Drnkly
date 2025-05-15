@@ -22,7 +22,9 @@ exports.placeOrder = async (req, res) => {
 exports.updatePaymentStatus = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const { screenshotUploaded } = req.body;  // Now only expecting checkbox state
+    const { screenshotUploaded } = req.body;  // Expecting checkbox value
+
+    console.log("Request body:", req.body); // Log the request body
 
     if (screenshotUploaded === undefined) {
       return res.status(400).json({ message: 'Screenshot upload status is required' });
@@ -47,6 +49,7 @@ exports.updatePaymentStatus = async (req, res) => {
     res.status(500).json({ message: 'Error updating payment status', error: error.message });
   }
 };
+
 
 
 
