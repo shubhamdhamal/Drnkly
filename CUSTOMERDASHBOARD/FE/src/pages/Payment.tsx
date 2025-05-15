@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ImagePlus } from 'lucide-react';
-//import { useCart } from '../context/CartContext';
 import axios from 'axios';
 import { CartItem } from '../context/CartContext';
 
 const Payment = () => {
   const navigate = useNavigate();
   const [items, setItems] = useState<CartItem[]>([]);
-  const [screenshot, setScreenshot] = useState<File | null>(null);
-  const [previewURL, setPreviewURL] = useState<string | null>(null);
+  const [isScreenshotUploaded, setIsScreenshotUploaded] = useState(false);
   const [qrUrl, setQrUrl] = useState<string>('');
 
   const orderTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -18,7 +16,7 @@ const Payment = () => {
   const platform = 12.0;
   const gst = 5.00;
   const gstAmount = (orderTotal * gst) / 100;
-  const total = orderTotal + deliveryCharges +platform + gstAmount;
+  const total = orderTotal + deliveryCharges + platform + gstAmount;
 
   // 🔁 Fetch vendor QR
   useEffect(() => {
@@ -37,34 +35,17 @@ const Payment = () => {
     fetchCart();
   }, []);
 
-  const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setScreenshot(file);
-      setPreviewURL(URL.createObjectURL(file));
-    }
-  };
-
   const handlePaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const orderId = localStorage.getItem('latestOrderId');
     if (!orderId) return alert('No order ID found. Please place an order first.');
 
-    if (!screenshot) return alert('Please upload a screenshot to verify payment.');
+    if (!isScreenshotUploaded) return alert('Please acknowledge that the payment screenshot has been uploaded.');
 
     try {
-      const formData = new FormData();
-      formData.append('screenshot', screenshot);
-
       const res = await axios.put(
-        `https://peghouse.in/api/orders/${orderId}/pay`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        }
+        `https://peghouse.in/api/orders/${orderId}/pay`
       );
 
       if (res.data.message === 'Payment successful') {
@@ -91,39 +72,43 @@ const Payment = () => {
       <div className="max-w-lg mx-auto px-4 py-6">
         {/* QR Section */}
         <div className="mb-6 text-center">
-  <h2 className="text-lg font-semibold mb-2">Scan QR to Pay</h2>
-  <img
-    src="/qr.jpg"// ✅ Assuming vendor server runs on port 5001
-    alt="Admin QR Code"
-    className="mx-auto w-48 h-48 object-contain border border-gray-200 rounded-lg shadow"
-  />
-  <p className="text-sm text-gray-500 mt-2">Use any UPI app to scan & pay</p>
-</div>
+          <h2 className="text-lg font-semibold mb-2">Scan QR to Pay</h2>
+          <img
+            src="/qr.jpg" // Assuming vendor server runs on port 5001
+            alt="Admin QR Code"
+            className="mx-auto w-48 h-48 object-contain border border-gray-200 rounded-lg shadow"
+          />
+          <p className="text-sm text-gray-500 mt-2">Use any UPI app to scan & pay</p>
+        </div>
 
-
-        {/* Screenshot Upload */}
+        {/* Screenshot Upload Link */}
         <div className="bg-white rounded-xl p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">Upload Payment Screenshot</h2>
-          <h6 className=" mb-4"><i>Screenshot should include transaction ID and payment status.</i></h6>
-          
-          <label className="block cursor-pointer text-blue-600 font-medium mb-2">
+          <h2 className="text-lg font-semibold mb-4">Payment Screenshot</h2>
+          <p className="mb-4 text-gray-600">
+            Please upload the payment screenshot or confirm that you have uploaded it here:
+          </p>
+          <a
+            href="https://drive.google.com/drive/folders/1i09WZAT0qd57MV9KMecAI6Rdvcon7TUF?usp=sharing"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 underline"
+          >
+            View Payment Screenshot Folder
+          </a>
+          <div className="mt-4">
             <input
-              type="file"
-              accept="image/*"
-              onChange={handleScreenshotChange}
-              className="hidden"
+              type="checkbox"
+              id="paymentScreenshotCheckbox"
+              checked={isScreenshotUploaded}
+              onChange={() => setIsScreenshotUploaded(!isScreenshotUploaded)}
             />
-            <span className="flex items-center gap-2">
-              <ImagePlus size={18} /> Choose Image
-            </span>
-          </label>
-          {previewURL && (
-            <img
-              src={previewURL}
-              alt="Payment Proof"
-              className="w-full h-64 object-cover rounded-md border mt-2"
-            />
-          )}
+            <label
+              htmlFor="paymentScreenshotCheckbox"
+              className="ml-2 text-gray-700"
+            >
+              I have uploaded the payment screenshot
+            </label>
+          </div>
         </div>
 
         {/* Order Summary */}
