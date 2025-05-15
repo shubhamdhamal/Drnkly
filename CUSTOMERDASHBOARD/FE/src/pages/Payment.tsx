@@ -22,7 +22,7 @@ const Payment = () => {
     const fetchCart = async () => {
       const userId = localStorage.getItem('userId');
       if (!userId) return;
-  
+
       try {
         const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
         setItems(res.data.items || []);
@@ -30,7 +30,7 @@ const Payment = () => {
         console.error("Cart fetch error:", err);
       }
     };
-  
+
     fetchCart();
   }, []);
 
@@ -43,16 +43,15 @@ const Payment = () => {
     if (!isScreenshotUploaded) return alert('Please acknowledge that the payment screenshot has been uploaded.');
 
     try {
-      // If the screenshot is not uploaded, send an empty value or default data for the screenshot field
-      const formData = new FormData();
-      formData.append('screenshot', isScreenshotUploaded ? 'placeholder.jpg' : ''); // Placeholder or empty value
-
+      // Send only the checkbox state to the backend
       const res = await axios.put(
         `https://peghouse.in/api/orders/${orderId}/pay`,
-        formData,
+        {
+          screenshotUploaded: isScreenshotUploaded, // Send checkbox state
+        },
         {
           headers: {
-            'Content-Type': 'multipart/form-data'
+            'Content-Type': 'application/json'
           }
         }
       );
