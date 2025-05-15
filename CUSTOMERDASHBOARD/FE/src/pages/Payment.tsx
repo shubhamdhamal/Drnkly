@@ -51,7 +51,7 @@ const Payment = () => {
     const orderId = localStorage.getItem('latestOrderId');
     if (!orderId) return alert('No order ID found. Please place an order first.');
 
-    if (!screenshot) return alert('Please upload a screenshot to verify payment.');
+
 
     try {
       const formData = new FormData();
