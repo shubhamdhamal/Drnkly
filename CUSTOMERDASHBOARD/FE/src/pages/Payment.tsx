@@ -66,7 +66,9 @@ const handlePaymentSubmit = async (e: React.FormEvent) => {
     // Log the full response from the server
     console.log("Response from server:", res.data);
 
-    if (res.data.message === 'Payment successful') {
+    // Check the response for success
+    if (res.data.message === 'Payment status updated successfully') {
+      // If payment status was successfully updated, consider the payment successful
       navigate('/order-success');
     } else {
       console.error("Payment failed:", res.data);
@@ -78,6 +80,7 @@ const handlePaymentSubmit = async (e: React.FormEvent) => {
     alert('Something went wrong while submitting payment.');
   }
 };
+
 
 
 
