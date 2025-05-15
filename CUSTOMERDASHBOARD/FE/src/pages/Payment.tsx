@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ImagePlus } from 'lucide-react';
-//import { useCart } from '../context/CartContext';
 import axios from 'axios';
 import { CartItem } from '../context/CartContext';
 
@@ -11,6 +10,7 @@ const Payment = () => {
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [previewURL, setPreviewURL] = useState<string | null>(null);
   const [qrUrl, setQrUrl] = useState<string>('');
+  const [isUploaded, setIsUploaded] = useState(false); // Track if the image is uploaded
 
   const orderTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -18,14 +18,14 @@ const Payment = () => {
   const platform = 12.0;
   const gst = 5.00;
   const gstAmount = (orderTotal * gst) / 100;
-  const total = orderTotal + deliveryCharges +platform + gstAmount;
+  const total = orderTotal + deliveryCharges + platform + gstAmount;
 
   // 🔁 Fetch vendor QR
   useEffect(() => {
     const fetchCart = async () => {
       const userId = localStorage.getItem('userId');
       if (!userId) return;
-  
+
       try {
         const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
         setItems(res.data.items || []);
@@ -33,7 +33,7 @@ const Payment = () => {
         console.error("Cart fetch error:", err);
       }
     };
-  
+
     fetchCart();
   }, []);
 
@@ -51,7 +51,9 @@ const Payment = () => {
     const orderId = localStorage.getItem('latestOrderId');
     if (!orderId) return alert('No order ID found. Please place an order first.');
 
-if (!screenshot) return alert('Please upload a screenshot to verify payment.');
+    if (!screenshot) return alert('Please upload a screenshot to verify payment.');
+
+    if (!isUploaded) return alert('Please upload the payment screenshot to the provided Google Drive folder first.');
 
     try {
       const formData = new FormData();
@@ -78,6 +80,10 @@ if (!screenshot) return alert('Please upload a screenshot to verify payment.');
     }
   };
 
+  const handleUploadConfirmation = () => {
+    setIsUploaded(true); // Mark as uploaded once the user confirms
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -91,33 +97,36 @@ if (!screenshot) return alert('Please upload a screenshot to verify payment.');
       <div className="max-w-lg mx-auto px-4 py-6">
         {/* QR Section */}
         <div className="mb-6 text-center">
-  <h2 className="text-lg font-semibold mb-2">Scan QR to Pay</h2>
-  <img
-    src="/qr.jpg"// ✅ Assuming vendor server runs on port 5001
-    alt="Admin QR Code"
-    className="mx-auto w-48 h-48 object-contain border border-gray-200 rounded-lg shadow"
-  />
-  <p className="text-sm text-gray-500 mt-2">Use any UPI app to scan & pay</p>
-</div>
+          <h2 className="text-lg font-semibold mb-2">Scan QR to Pay</h2>
+          <img
+            src="/qr.jpg"
+            alt="Admin QR Code"
+            className="mx-auto w-48 h-48 object-contain border border-gray-200 rounded-lg shadow"
+          />
+          <p className="text-sm text-gray-500 mt-2">Use any UPI app to scan & pay</p>
+        </div>
 
-
-  {/* Screenshot Upload */}
+        {/* Screenshot Upload */}
         <div className="bg-white rounded-xl p-6 mb-6">
           <h2 className="text-lg font-semibold mb-4">Upload Payment Screenshot</h2>
-          <h6 className=" mb-4"><i>Screenshot should include transaction ID and payment status.</i></h6>
-          
+          <h6 className="mb-4"><i>Screenshot should include transaction ID and payment status.</i></h6>
+
+          <a href="https://drive.google.com/drive/folders/1i09WZAT0qd57MV9KMecAI6Rdvcon7TUF?usp=sharing" target="_blank" rel="noopener noreferrer" className="text-blue-600 mb-4 block">
+            Upload to Google Drive here
+          </a>
+
           <label className="block cursor-pointer text-blue-600 font-medium mb-2">
             <input
               type="file"
               accept="image/*"
               onChange={handleScreenshotChange}
               className="hidden"
-              
             />
             <span className="flex items-center gap-2">
               <ImagePlus size={18} /> Choose Image
             </span>
           </label>
+
           {previewURL && (
             <img
               src={previewURL}
@@ -127,8 +136,18 @@ if (!screenshot) return alert('Please upload a screenshot to verify payment.');
           )}
         </div>
 
-        
-
+        {/* Upload Confirmation */}
+        <div className="mb-6">
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              checked={isUploaded}
+              onChange={handleUploadConfirmation}
+              className="mr-2"
+            />
+            <span>I have uploaded the screenshot to the Google Drive folder</span>
+          </label>
+        </div>
 
         {/* Order Summary */}
         <div className="bg-white rounded-xl p-6 mb-6">
@@ -162,7 +181,8 @@ if (!screenshot) return alert('Please upload a screenshot to verify payment.');
         {/* Pay Now Button */}
         <button
           onClick={handlePaymentSubmit}
-          className="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold text-lg hover:bg-blue-700 transition-colors"
+          className={`w-full ${isUploaded ? 'bg-blue-600' : 'bg-gray-400 cursor-not-allowed'} text-white py-4 rounded-xl font-semibold text-lg hover:bg-blue-700 transition-colors`}
+          disabled={!isUploaded}
         >
           Submit Payment
         </button>
