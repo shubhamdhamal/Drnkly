@@ -87,10 +87,7 @@ const userId = localStorage.getItem('userId');
   const getBrands = () => {
     const filteredProducts = selectedCategory === 'all'
       ? products
-      : products.filter(product => 
-  product.category && product.category.toLowerCase() === selectedCategory.toLowerCase()
-);
-
+      : products.filter(product => product.category.toLowerCase() === selectedCategory.toLowerCase());
     
     const brands = new Set(filteredProducts.map(product => product.brand));
     return ['all', ...Array.from(brands)];
@@ -100,10 +97,9 @@ const userId = localStorage.getItem('userId');
     let filtered = [...products];
 
     if (selectedCategory !== 'all') {
-     filtered = filtered.filter(product =>
-  product.category && product.category.toLowerCase() === selectedCategory.toLowerCase()
-);
-
+      filtered = filtered.filter(product =>
+        product.category.toLowerCase() === selectedCategory.toLowerCase()
+      );
     }
 
     if (selectedBrand !== 'all') {
@@ -121,10 +117,9 @@ const userId = localStorage.getItem('userId');
     if (searchQuery.trim()) {
       const lowerQuery = searchQuery.toLowerCase();
       filtered = filtered.filter(product =>
-  (product.name && product.name.toLowerCase().includes(lowerQuery)) ||
-  (product.brand && product.brand.toLowerCase().includes(lowerQuery))
-);
-
+        product.name.toLowerCase().includes(lowerQuery) ||
+        product.brand.toLowerCase().includes(lowerQuery)
+      );
     }
 
     filtered.sort((a, b) =>
