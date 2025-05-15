@@ -28,8 +28,13 @@ useEffect(() => {
       const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
       const populatedItems = res.data.items.map((item: any) => ({
   ...item,
-  category: item.productId?.category || null
+  name: item.productId?.name || item.name,
+  price: item.productId?.price || item.price,
+  image: item.productId?.image || item.image,
+  category: item.productId?.category || 'Unknown',
+  liquorType: item.productId?.liquorType || '',
 }));
+
 setItems(populatedItems);
 
 
