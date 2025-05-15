@@ -16,7 +16,7 @@ const Payment = () => {
       if (!userId) return;
 
       try {
-        const res = await axios.get(`http://localhost:5000/api/cart/${userId}`);
+        const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
         setItems(res.data.items || []);
 
         // Debug check
