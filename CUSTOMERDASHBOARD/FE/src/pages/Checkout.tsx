@@ -22,34 +22,47 @@ function Checkout() {
   const userId = localStorage.getItem('userId');
 
   // 🛒 Fetch Cart Items from Backend
-  useEffect(() => {
-    const fetchCart = async () => {
-      try {
-        const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
-        const populatedItems = res.data.items.map((item: any) => ({
-  ...item,
-  category: item.productId?.category || null
-}));
-setItems(populatedItems);
-      } catch (err) {
-        console.error('Error fetching cart:', err);
-      }
-    };
+useEffect(() => {
+  const fetchCart = async () => {
+    try {
+      const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
+      
+      const populatedItems = res.data.items.map((item: any) => {
+        const product = item.productId;
+        return {
+          ...item,
+          name: product?.name || item.name,
+          price: product?.price || item.price,
+          image: product?.image || item.image,
+          quantity: item.quantity,
+          category: product?.category || 'N/A', // ✅ preserve category
+        };
+      });
 
-    if (userId) fetchCart();
-  }, [userId, setItems]);
+      setItems(populatedItems);
+
+      // ✅ Debug: Confirm categories
+      console.log("Cart with Categories:", populatedItems.map(i => i.category));
+    } catch (err) {
+      console.error('Error fetching cart:', err);
+    }
+  };
+
+  if (userId) fetchCart();
+}, [userId, setItems]);
+
 
   const orderTotal = items && items.length
   ? items.reduce((sum, item) => sum + item.price * item.quantity, 0)
   : 0;
 
-  const drinksFee = items.reduce((sum, item) => {
-    const isDrink = item.productId?.category === 'Drinks';
-    if (isDrink) {
-      return sum + item.price * item.quantity * 0.35;
-    }
-    return sum;
-  }, 0);
+const drinksFee = items.reduce((sum, item) => {
+  if (item.category === 'Drinks') {
+    return sum + item.price * item.quantity * 0.35;
+  }
+  return sum;
+}, 0);
+
   const deliveryCharges = 100.00;
   const platform = 12.00;
   const gst = 18.00;
