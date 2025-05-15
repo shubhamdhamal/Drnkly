@@ -22,47 +22,34 @@ function Checkout() {
   const userId = localStorage.getItem('userId');
 
   // 🛒 Fetch Cart Items from Backend
-useEffect(() => {
-  const fetchCart = async () => {
-    try {
-      const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
-      
-      const populatedItems = res.data.items.map((item: any) => {
-        const product = item.productId;
-        return {
-          ...item,
-          name: product?.name || item.name,
-          price: product?.price || item.price,
-          image: product?.image || item.image,
-          quantity: item.quantity,
-          category: product?.category || 'N/A', // ✅ preserve category
-        };
-      });
+  useEffect(() => {
+    const fetchCart = async () => {
+      try {
+        const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
+        const populatedItems = res.data.items.map((item: any) => ({
+  ...item,
+  category: item.productId?.category || null
+}));
+setItems(populatedItems);
+      } catch (err) {
+        console.error('Error fetching cart:', err);
+      }
+    };
 
-      setItems(populatedItems);
-
-      // ✅ Debug: Confirm categories
-      console.log("Cart with Categories:", populatedItems.map(i => i.category));
-    } catch (err) {
-      console.error('Error fetching cart:', err);
-    }
-  };
-
-  if (userId) fetchCart();
-}, [userId, setItems]);
-
+    if (userId) fetchCart();
+  }, [userId, setItems]);
 
   const orderTotal = items && items.length
   ? items.reduce((sum, item) => sum + item.price * item.quantity, 0)
   : 0;
 
-const drinksFee = items.reduce((sum, item) => {
-  if (item.category === 'Drinks') {
-    return sum + item.price * item.quantity * 0.35;
-  }
-  return sum;
-}, 0);
-
+  const drinksFee = items.reduce((sum, item) => {
+    const isDrink = item.productId?.category === 'Drinks';
+    if (isDrink) {
+      return sum + item.price * item.quantity * 0.35;
+    }
+    return sum;
+  }, 0);
   const deliveryCharges = 100.00;
   const platform = 12.00;
   const gst = 18.00;
@@ -186,24 +173,18 @@ const drinksFee = items.reduce((sum, item) => {
       }
   
       // 🛒 Step 2: Format items
-      const formattedItems = cartItems.map((item: any) => {
-  const product = item.productId;
-  return {
-    productId: product?._id || item.productId || item._id,
-    name: product?.name || item.name,
-    image: product?.image || item.image,
-    price: product?.price || item.price,
-    quantity: item.quantity,
-    category: product?.category || 'N/A', // ✅ Preserve category
-  };
-});
-
+      const formattedItems = cartItems.map((item: any) => ({
+        productId: item.productId?._id || item.productId || item._id,
+        name: item.name,
+        image: item.image,
+        price: item.price,
+        quantity: item.quantity
+      }));
   
       const orderTotal = items.reduce((sum: number, item: CartItem) => sum + item.price * item.quantity, 0);
       // Calculate 35% fee on Drinks only
   const drinksFee = items.reduce((sum, item) => {
-    const isDrink = item.category === 'Drinks';
-
+    const isDrink = item.productId?.category === 'Drinks';
     if (isDrink) {
       return sum + item.price * item.quantity * 0.35;
     }
@@ -215,7 +196,6 @@ const drinksFee = items.reduce((sum, item) => {
       const gstAmount = ((orderTotal+drinksFee) * gst) / 100;
       const totalAmount = orderTotal + deliveryCharges + platform + gstAmount+drinksFee;
       
-  
       // 🧾 Step 3: Place order
       const res = await axios.post('https://peghouse.in/api/orders', {
         userId,
