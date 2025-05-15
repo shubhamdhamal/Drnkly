@@ -43,8 +43,18 @@ const Payment = () => {
     if (!isScreenshotUploaded) return alert('Please acknowledge that the payment screenshot has been uploaded.');
 
     try {
+      // If the screenshot is not uploaded, send an empty value or default data for the screenshot field
+      const formData = new FormData();
+      formData.append('screenshot', isScreenshotUploaded ? 'placeholder.jpg' : ''); // Placeholder or empty value
+
       const res = await axios.put(
-        `https://peghouse.in/api/orders/${orderId}/pay`
+        `https://peghouse.in/api/orders/${orderId}/pay`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
       );
 
       if (res.data.message === 'Payment successful') {
