@@ -6,23 +6,23 @@ import axios from 'axios';
 const categories = [
   {
     name: 'Drinks',
-    image: <img src="/finallogo.png" alt="Drinks" className="mx-auto object-contain w-32 md:w-48 lg:w-64" />,
+    image: 'https://plus.unsplash.com/premium_photo-1671244417901-6d0f50085167?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
   },
   {
     name: 'Snacks',
-    image: <img src="/finallogo.png" alt="Snacks" className="mx-auto object-contain w-32 md:w-48 lg:w-64" />,
+    image: 'https://plus.unsplash.com/premium_photo-1695558759748-5cad76d7d48e?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
   },
   {
     name: 'Soft Drinks',
-    image: <img src="/finallogo.png" alt="Soft Drinks" className="mx-auto object-contain w-32 md:w-48 lg:w-64" />,
+    image: 'https://images.unsplash.com/photo-1452725210141-07dda20225ec?q=80&w=2152&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
   },
   {
-    name: 'Cigarettes',
-    image: <img src="/finallogo.png" alt="Cigarettes" className="mx-auto object-contain w-32 md:w-48 lg:w-64" />,
+    name: 'Ciggarettes',
+    image: 'https://images.unsplash.com/photo-1702306455611-e3360e6ffeee?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
   },
   {
     name: 'Glasses & Plates',
-    image: <img src="/finallogo.png" alt="Glasses & Plates" className="mx-auto object-contain w-32 md:w-48 lg:w-64" />,
+    image: 'https://images.unsplash.com/photo-1516600164266-f3b8166ae679?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
   }
 ];
 const stores = [
