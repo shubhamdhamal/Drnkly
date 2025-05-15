@@ -19,21 +19,20 @@ exports.placeOrder = async (req, res) => {
     res.status(500).json({ error: 'Failed to place order' });
   }
 };
-// Updated function to only check for the screenshotUploaded checkbox state
 exports.updatePaymentStatus = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const { screenshotUploaded } = req.body; // Accept checkbox value
+    const { screenshotUploaded } = req.body;  // Now only expecting checkbox state
 
     if (screenshotUploaded === undefined) {
       return res.status(400).json({ message: 'Screenshot upload status is required' });
     }
 
-    // If the checkbox is checked, update the payment status as 'paid'
+    // If checkbox is checked (screenshotUploaded: true), mark as paid, else mark as pending
     const updated = await Order.findByIdAndUpdate(
       orderId,
       {
-        paymentStatus: screenshotUploaded ? 'paid' : 'pending', // Only set to 'paid' if checkbox is checked
+        paymentStatus: screenshotUploaded ? 'paid' : 'pending', // Set payment status based on checkbox
       },
       { new: true }
     );
