@@ -124,7 +124,7 @@ const Orders: React.FC = () => {
       order.items.some((item) => item.status === filterStatus.toLowerCase());
 
     return matchesSearch && matchesStatus;
-  });
+  }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   if (loading) return <p style={{ textAlign: 'center' }}>Loading orders...</p>;
   if (error) return <p style={{ textAlign: 'center', color: 'red' }}>{error}</p>;
@@ -163,7 +163,7 @@ const Orders: React.FC = () => {
         </div>
       </div>
 
-      {filteredOrders.map((order) => (
+      {filteredOrders.map((order, index) => (
         <div
           key={order.id}
           style={{
@@ -176,7 +176,9 @@ const Orders: React.FC = () => {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <div>
-              <h3 style={{ margin: '0 0 6px 0' }}>{order.orderNumber}</h3>
+              <h3 style={{ margin: '0 0 6px 0' }}>
+                #{index + 1} - {order.orderNumber}
+              </h3>
               <p style={{ color: '#666', fontSize: '14px' }}>{order.customerName}</p>
               <p style={{ marginTop: '4px', fontSize: '14px' }}>
                 <strong>Final Total:</strong> ₹{order.totalAmount.toFixed(2)}
