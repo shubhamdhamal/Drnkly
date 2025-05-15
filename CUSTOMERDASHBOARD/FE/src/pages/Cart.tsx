@@ -34,9 +34,9 @@ setItems(populatedItems);
 
 
       // Debug: Log each product's category
-      
+      console.log('Fetched Cart Items:');
       res.data.items.forEach((item: any, i: number) => {
-        console.log(item.productId?.category );
+        console.log(`Item ${i + 1}:`, item.productId?.category || 'No category found');
       });
     } catch (error) {
       toast.error('Failed to load cart');
@@ -150,9 +150,18 @@ const drinksFee = items.reduce((sum, item) => {
                       className="w-24 h-24 object-cover rounded-md"
                     />
                     <div>
-                      <h3 className="text-lg font-medium text-gray-900">{item.name}</h3>
-                      <p className="text-lg font-semibold text-gray-900 mt-1">₹{item.price}</p>
-                    </div>
+        <h3 className="text-lg font-medium text-gray-900">{item.name}</h3>
+        <p className="text-sm text-gray-500 capitalize">
+          Category: {item.category || 'N/A'}
+        </p>
+        <p className="text-lg font-semibold text-gray-900 mt-1">₹{item.price}</p>
+
+        {item.category === 'Drinks' && (
+          <p className="text-sm text-red-600 mt-1">
+            + ₹{(Number(item.price) * Number(item.quantity) * 0.35).toFixed(2)} Service Fee (35%)
+          </p>
+        )}
+      </div>
                   </div>
 
                   <div className="flex items-center space-x-6">

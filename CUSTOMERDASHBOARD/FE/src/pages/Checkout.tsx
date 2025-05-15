@@ -26,7 +26,11 @@ function Checkout() {
     const fetchCart = async () => {
       try {
         const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
-        setItems(res.data.items);
+        const populatedItems = res.data.items.map((item: any) => ({
+  ...item,
+  category: item.productId?.category || null
+}));
+setItems(populatedItems);
       } catch (err) {
         console.error('Error fetching cart:', err);
       }
@@ -39,11 +43,18 @@ function Checkout() {
   ? items.reduce((sum, item) => sum + item.price * item.quantity, 0)
   : 0;
 
+  const drinksFee = items.reduce((sum, item) => {
+    const isDrink = item.productId?.category === 'Drinks';
+    if (isDrink) {
+      return sum + item.price * item.quantity * 0.35;
+    }
+    return sum;
+  }, 0);
   const deliveryCharges = 100.00;
   const platform = 12.00;
   const gst = 18.00;
-  const gstAmount = (orderTotal * gst) / 100;
-  const total = orderTotal + deliveryCharges +platform + gstAmount;
+  const gstAmount = ((orderTotal+drinksFee) * gst) / 100;
+  const total = orderTotal + deliveryCharges +platform + gstAmount+drinksFee;
 
   // 🧾 Submit Order
   const handleSubmit = async (e: React.FormEvent) => {
@@ -171,11 +182,19 @@ function Checkout() {
       }));
   
       const orderTotal = items.reduce((sum: number, item: CartItem) => sum + item.price * item.quantity, 0);
+      // Calculate 35% fee on Drinks only
+  const drinksFee = items.reduce((sum, item) => {
+    const isDrink = item.productId?.category === 'Drinks';
+    if (isDrink) {
+      return sum + item.price * item.quantity * 0.35;
+    }
+    return sum;
+  }, 0);
       const deliveryCharges = 100;
       const platform = 12;
       const gst = 18;
-      const gstAmount = (orderTotal * gst) / 100;
-      const totalAmount = orderTotal + deliveryCharges + platform + gstAmount;
+      const gstAmount = ((orderTotal+drinksFee) * gst) / 100;
+      const totalAmount = orderTotal + deliveryCharges + platform + gstAmount+drinksFee;
       
   
       // 🧾 Step 3: Place order
@@ -324,6 +343,10 @@ function Checkout() {
               <span>₹{orderTotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-gray-600">
+    <span>Drinks Service Fee (35%)</span>
+    <span>₹{drinksFee.toFixed(2)}</span>
+  </div>
+            <div className="flex justify-between text-gray-600">
               <span>Delivery Fee</span>
               <span>₹{deliveryCharges.toFixed(2)}</span>
             </div>
@@ -333,11 +356,11 @@ function Checkout() {
             </div>
             <div className="flex justify-between text-gray-600">
               <span>GST (18%)</span>
-              <span>₹{((orderTotal) * 0.18).toFixed(2)}</span>
+              <span>₹{((orderTotal+drinksFee) * 0.18).toFixed(2)}</span>
             </div>
             <div className="flex justify-between font-semibold text-lg pt-2">
               <span>Total</span>
-              <span>₹{(orderTotal + 100 + 12 + (orderTotal) * 0.18).toFixed(2)}</span>
+              <span>₹{(orderTotal + 100 + 12 + (orderTotal+drinksFee) * 0.18+drinksFee).toFixed(2)}</span>
             </div>
           </div>
         </div>
