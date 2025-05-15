@@ -131,6 +131,13 @@ const Payment = () => {
               I have uploaded the payment screenshot
             </label>
           </div>
+
+          {/* Conditional message */}
+          {!isScreenshotUploaded && (
+            <p className="mt-2 text-red-500 text-sm">
+              Please check the checkbox to confirm you've uploaded the payment screenshot.
+            </p>
+          )}
         </div>
 
         {/* Order Summary */}
