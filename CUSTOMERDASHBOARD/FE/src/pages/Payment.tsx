@@ -49,12 +49,11 @@ const Payment = () => {
     });
 
     try {
-      // Send a placeholder or empty value for paymentProof, along with the checkbox state
+      // Only send the checkbox state (no paymentProof or dummy file)
       const res = await axios.put(
         `https://peghouse.in/api/orders/${orderId}/pay`,
         {
-          screenshotUploaded: isScreenshotUploaded,
-          paymentProof: isScreenshotUploaded ? 'placeholder.jpg' : '', // Send a dummy payment proof
+          screenshotUploaded: isScreenshotUploaded, // Only send checkbox state
         },
         {
           headers: {
