@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ImagePlus } from 'lucide-react';
+//import { useCart } from '../context/CartContext';
 import axios from 'axios';
 import { CartItem } from '../context/CartContext';
 
@@ -17,14 +18,14 @@ const Payment = () => {
   const platform = 12.0;
   const gst = 5.00;
   const gstAmount = (orderTotal * gst) / 100;
-  const total = orderTotal + deliveryCharges + platform + gstAmount;
+  const total = orderTotal + deliveryCharges +platform + gstAmount;
 
   // 🔁 Fetch vendor QR
   useEffect(() => {
     const fetchCart = async () => {
       const userId = localStorage.getItem('userId');
       if (!userId) return;
-
+  
       try {
         const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
         setItems(res.data.items || []);
@@ -32,7 +33,7 @@ const Payment = () => {
         console.error("Cart fetch error:", err);
       }
     };
-
+  
     fetchCart();
   }, []);
 
@@ -56,16 +57,12 @@ const Payment = () => {
       const formData = new FormData();
       formData.append('screenshot', screenshot);
 
-      // Assuming you manually upload the image to Google Drive first
-      // Replace with the actual file ID from Google Drive
-      const imageUrl = 'https://drive.google.com/uc?export=view&id=YOUR_IMAGE_ID'; // Update with actual ID
-
       const res = await axios.put(
         `https://peghouse.in/api/orders/${orderId}/pay`,
-        { screenshotUrl: imageUrl },  // Send the public image URL in your request
+        formData,
         {
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'multipart/form-data'
           }
         }
       );
@@ -94,19 +91,20 @@ const Payment = () => {
       <div className="max-w-lg mx-auto px-4 py-6">
         {/* QR Section */}
         <div className="mb-6 text-center">
-          <h2 className="text-lg font-semibold mb-2">Scan QR to Pay</h2>
-          <img
-            src="/qr.jpg" // Assuming vendor server runs on port 5001
-            alt="Admin QR Code"
-            className="mx-auto w-48 h-48 object-contain border border-gray-200 rounded-lg shadow"
-          />
-          <p className="text-sm text-gray-500 mt-2">Use any UPI app to scan & pay</p>
-        </div>
+  <h2 className="text-lg font-semibold mb-2">Scan QR to Pay</h2>
+  <img
+    src="/qr.jpg"// ✅ Assuming vendor server runs on port 5001
+    alt="Admin QR Code"
+    className="mx-auto w-48 h-48 object-contain border border-gray-200 rounded-lg shadow"
+  />
+  <p className="text-sm text-gray-500 mt-2">Use any UPI app to scan & pay</p>
+</div>
+
 
         {/* Screenshot Upload */}
         <div className="bg-white rounded-xl p-6 mb-6">
           <h2 className="text-lg font-semibold mb-4">Upload Payment Screenshot</h2>
-          <h6 className="mb-4"><i>Screenshot should include transaction ID and payment status.</i></h6>
+          <h6 className=" mb-4"><i>Screenshot should include transaction ID and payment status.</i></h6>
           
           <label className="block cursor-pointer text-blue-600 font-medium mb-2">
             <input
@@ -127,6 +125,8 @@ const Payment = () => {
             />
           )}
         </div>
+        
+
 
         {/* Order Summary */}
         <div className="bg-white rounded-xl p-6 mb-6">
