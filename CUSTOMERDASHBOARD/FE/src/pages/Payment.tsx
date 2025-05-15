@@ -51,7 +51,7 @@ const Payment = () => {
     const orderId = localStorage.getItem('latestOrderId');
     if (!orderId) return alert('No order ID found. Please place an order first.');
 
-    if (!screenshot) return alert('Please upload a screenshot to verify payment.');
+if (!screenshot) return alert('Please upload a screenshot to verify payment.');
 
     try {
       const formData = new FormData();
@@ -101,7 +101,7 @@ const Payment = () => {
 </div>
 
 
-        {/* Screenshot Upload */}
+  {/* Screenshot Upload */}
         <div className="bg-white rounded-xl p-6 mb-6">
           <h2 className="text-lg font-semibold mb-4">Upload Payment Screenshot</h2>
           <h6 className=" mb-4"><i>Screenshot should include transaction ID and payment status.</i></h6>
@@ -112,6 +112,7 @@ const Payment = () => {
               accept="image/*"
               onChange={handleScreenshotChange}
               className="hidden"
+              
             />
             <span className="flex items-center gap-2">
               <ImagePlus size={18} /> Choose Image
@@ -125,6 +126,7 @@ const Payment = () => {
             />
           )}
         </div>
+
         
 
 
