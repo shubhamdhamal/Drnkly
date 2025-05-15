@@ -25,7 +25,19 @@ const categories = [
     image: '/public/image5.avif', // Image stored in public/images folder
   }
 ];
+const categoryImages = categories.map((category) => (
+  <div key={category.name} className="category-item">
+    <img
+      src={category.image}
+      alt={category.name}
+      className="mx-auto object-contain w-32 md:w-48 lg:w-64"
+    />
+    <h3 className="text-center mt-2">{category.name}</h3>
+  </div>
+));
 
+// To render categoryImages in your component
+return <div className="category-container">{categoryImages}</div>;
 const stores = [
   { id: 1, name: "PK Wines", rating: 4.8, image: "https://images.unsplash.com/photo-1597290282695-edc43d0e7129?w=600&h=400&fit=crop", address: "123 Main St", distance: "0.8 miles", openTime: "10:00 AM - 10:00 PM" },
   { id: 2, name: "Sunrise Family Garden Restaurant", rating: 4.5, image: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=600&h=400&fit=crop", address: "456 Oak Ave", distance: "1.2 miles", openTime: "11:00 AM - 9:00 PM" }
