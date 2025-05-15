@@ -9,7 +9,8 @@ const Cart = () => {
   const navigate = useNavigate();
 
   interface CartItem {
-    productId: any; // changed to `any` to support object access
+    category: any;
+    productId: any; 
     name: string;
     price: number | string;
     image: string;
@@ -25,7 +26,12 @@ useEffect(() => {
 
     try {
       const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
-      setItems(res.data.items);
+      const populatedItems = res.data.items.map((item: any) => ({
+  ...item,
+  category: item.productId?.category || null
+}));
+setItems(populatedItems);
+
 
       // Debug: Log each product's category
       console.log('Fetched Cart Items:');
@@ -82,8 +88,8 @@ useEffect(() => {
   }, 0);
 
   // Drinks Fee (35%)
-  const drinksFee = items.reduce((sum, item) => {
-  const category = item?.productId?.category;
+const drinksFee = items.reduce((sum, item) => {
+  const category = item?.category;
   const price = typeof item.price === 'string' ? Number(item.price.replace(/[^\d.]/g, '')) : item.price;
   const quantity = typeof item.quantity === 'string' ? Number(item.quantity.replace(/[^\d.]/g, '')) : item.quantity;
 
@@ -93,6 +99,7 @@ useEffect(() => {
 
   return sum;
 }, 0);
+
 
 
   const shipping = 100;
@@ -184,7 +191,7 @@ useEffect(() => {
               </div>
 
               <div className="flex justify-between mb-4">
-                <span className="text-gray-600">Drinks Extra Fee (35%)</span>
+                <span className="text-gray-600">Service Fee (35%)</span>
                 <span className="text-gray-900 font-medium">₹{drinksFee.toFixed(2)}</span>
               </div>
 
