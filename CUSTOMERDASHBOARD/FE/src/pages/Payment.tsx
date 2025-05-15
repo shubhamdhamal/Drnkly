@@ -7,10 +7,7 @@ import { CartItem } from '../context/CartContext';
 const Payment = () => {
   const navigate = useNavigate();
   const [items, setItems] = useState<CartItem[]>([]);
-  const [screenshot, setScreenshot] = useState<File | null>(null);
-  const [previewURL, setPreviewURL] = useState<string | null>(null);
-  const [qrUrl, setQrUrl] = useState<string>('');
-  const [isCheckboxChecked, setIsCheckboxChecked] = useState<boolean>(false); // New state for checkbox
+  const [isCheckboxChecked, setIsCheckboxChecked] = useState<boolean>(false);
 
   const orderTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -20,7 +17,6 @@ const Payment = () => {
   const gstAmount = (orderTotal * gst) / 100;
   const total = orderTotal + deliveryCharges + platform + gstAmount;
 
-  // 🔁 Fetch vendor QR
   useEffect(() => {
     const fetchCart = async () => {
       const userId = localStorage.getItem('userId');
@@ -46,15 +42,12 @@ const Payment = () => {
     if (!isCheckboxChecked) return alert('Please confirm that you have uploaded the payment screenshot.');
 
     try {
-      const formData = new FormData();
-      formData.append('screenshot', screenshot!); // Assuming screenshot will be set
-
       const res = await axios.put(
         `https://peghouse.in/api/orders/${orderId}/pay`,
-        formData,
+        { /* payment data if needed */ },
         {
           headers: {
-            'Content-Type': 'multipart/form-data'
+            'Content-Type': 'application/json'
           }
         }
       );
@@ -89,7 +82,7 @@ const Payment = () => {
         <div className="mb-6 text-center">
           <h2 className="text-lg font-semibold mb-2">Scan QR to Pay</h2>
           <img
-            src="/qr.jpg" // ✅ Assuming vendor server runs on port 5001
+            src="/qr.jpg" // Assuming vendor server runs on port 5001
             alt="Admin QR Code"
             className="mx-auto w-48 h-48 object-contain border border-gray-200 rounded-lg shadow"
           />
