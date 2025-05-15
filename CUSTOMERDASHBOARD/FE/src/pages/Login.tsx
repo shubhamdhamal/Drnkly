@@ -151,7 +151,11 @@ function Login() {
   };
   const handleSkipLogin = () => {
     setIsSkipped(true);
-    navigate('/dashboard'); // Navigate directly to dashboard without login
+    // Clear any existing auth data and set skip flag
+    localStorage.clear();  // Clear any existing data
+    localStorage.setItem('isSkippedLogin', 'true');
+    localStorage.setItem('isGuest', 'true'); // Add this line to mark as guest user
+    navigate('/dashboard');
   };
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -340,7 +344,7 @@ function Login() {
               <p className="text-sm text-gray-700 mb-4">
               6. No Resale or Supply to Minors:The customer must agree not to resell liquor and not to supply it to minors (under 21/25).         </p>
               <p className="text-sm text-gray-700 mb-4">
-              7. Valid ID Proof Required at Delivery:The delivery agent will verify the customer’s original ID at the time of delivery. If ID is not provided, the order will be cancelled. </p> 
+              7. Valid ID Proof Required at Delivery:The delivery agent will verify the customer's original ID at the time of delivery. If ID is not provided, the order will be cancelled. </p> 
               <p className="text-sm text-gray-700 mb-4">
               8. No Returns or Refunds for Sealed Liquor Bottles:Once liquor is sold, returns or refunds are not permitted unless the product is damaged/spoiled (as per excise rules).
               </p>
@@ -378,7 +382,7 @@ function Login() {
             className="mt-1"
           />
           <label className="text-sm text-gray-700">
-            I confirm I’m of legal age and agree to all terms above.
+            I confirm I'm of legal age and agree to all terms above.
           </label>
         </div>
       </div>
