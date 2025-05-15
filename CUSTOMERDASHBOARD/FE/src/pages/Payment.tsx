@@ -43,15 +43,15 @@ const Payment = () => {
     if (!isScreenshotUploaded) return alert('Please acknowledge that the payment screenshot has been uploaded.');
 
     try {
-      // Send only the checkbox state to the backend
+      // Send only the checkbox state (no screenshot file)
       const res = await axios.put(
         `https://peghouse.in/api/orders/${orderId}/pay`,
         {
-          screenshotUploaded: isScreenshotUploaded, // Send checkbox state
+          screenshotUploaded: isScreenshotUploaded, // Sending only checkbox confirmation
         },
         {
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json' // Make sure to send the correct content type
           }
         }
       );
