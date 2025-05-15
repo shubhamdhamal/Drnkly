@@ -19,22 +19,28 @@ const Cart = () => {
   const [items, setItems] = useState<CartItem[]>([]);
   const userId = localStorage.getItem('userId');
 
-  // Fetch cart items
-  useEffect(() => {
-    const fetchCart = async () => {
-      if (!userId) return toast.error('User not logged in');
+useEffect(() => {
+  const fetchCart = async () => {
+    if (!userId) return toast.error('User not logged in');
 
-      try {
-        const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
-        setItems(res.data.items);
-      } catch (error) {
-        toast.error('Failed to load cart');
-        console.error(error);
-      }
-    };
+    try {
+      const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
+      setItems(res.data.items);
 
-    fetchCart();
-  }, [userId]);
+      // Debug: Log each product's category
+      console.log('Fetched Cart Items:');
+      res.data.items.forEach((item: any, i: number) => {
+        console.log(`Item ${i + 1}:`, item.productId?.category || 'No category found');
+      });
+    } catch (error) {
+      toast.error('Failed to load cart');
+      console.error(error);
+    }
+  };
+
+  fetchCart();
+}, [userId]);
+
 
   // Update quantity in backend
   const updateQuantity = async (productId: string, quantity: number) => {
@@ -77,15 +83,17 @@ const Cart = () => {
 
   // Drinks Fee (35%)
   const drinksFee = items.reduce((sum, item) => {
-    const price = typeof item.price === 'string' ? Number(item.price.replace(/[^\d.]/g, '')) : item.price;
-    const quantity = typeof item.quantity === 'string' ? Number(item.quantity.replace(/[^\d.]/g, '')) : item.quantity;
-    const isDrink = item.productId?.category === 'Drinks';
+  const category = item?.productId?.category;
+  const price = typeof item.price === 'string' ? Number(item.price.replace(/[^\d.]/g, '')) : item.price;
+  const quantity = typeof item.quantity === 'string' ? Number(item.quantity.replace(/[^\d.]/g, '')) : item.quantity;
 
-    if (isDrink) {
-      return sum + (Number(price) || 0) * (Number(quantity) || 1) * 0.35;
-    }
-    return sum;
-  }, 0);
+  if (category === 'Drinks') {
+    return sum + (Number(price) || 0) * (Number(quantity) || 1) * 0.35;
+  }
+
+  return sum;
+}, 0);
+
 
   const shipping = 100;
   const platformFee = 12;
