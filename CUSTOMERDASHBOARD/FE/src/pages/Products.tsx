@@ -33,7 +33,7 @@ function Products() {
     const fetchData = async () => {
       try {
         const [productRes, categoryRes] = await Promise.all([
-          axios.get('http://localhost:5000/api/products'),
+          axios.get('https://peghouse.in/api/products'),
           axios.get('https://peghouse.in/api/categories'),
         ]);
         setProducts(productRes.data);
