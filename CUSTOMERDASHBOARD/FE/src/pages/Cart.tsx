@@ -5,21 +5,18 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-
-
 const Cart = () => {
   const navigate = useNavigate();
+
   interface CartItem {
-    productId: string;
+    productId: any; // changed to `any` to support object access
     name: string;
     price: number | string;
     image: string;
     quantity: number | string;
   }
-  
-  const [items, setItems] = useState<CartItem[]>([]);
-  
 
+  const [items, setItems] = useState<CartItem[]>([]);
   const userId = localStorage.getItem('userId');
 
   // Fetch cart items
@@ -69,34 +66,48 @@ const Cart = () => {
     }
   };
 
+  // Base total
   const total = items.reduce((sum, item) => {
     const rawPrice = typeof item.price === 'string' ? item.price.replace(/[^\d.]/g, '') : item.price;
     const rawQuantity = typeof item.quantity === 'string' ? item.quantity.replace(/[^\d.]/g, '') : item.quantity;
-  
     const price = isNaN(Number(rawPrice)) ? 0 : Number(rawPrice);
     const quantity = isNaN(Number(rawQuantity)) ? 1 : Number(rawQuantity);
-  
     return sum + price * quantity;
   }, 0);
-  
-  
+
+  // Drinks Fee (35%)
+  const drinksFee = items.reduce((sum, item) => {
+    const price = typeof item.price === 'string' ? Number(item.price.replace(/[^\d.]/g, '')) : item.price;
+    const quantity = typeof item.quantity === 'string' ? Number(item.quantity.replace(/[^\d.]/g, '')) : item.quantity;
+    const isDrink = item.productId?.category === 'Drinks';
+
+    if (isDrink) {
+      return sum + (Number(price) || 0) * (Number(quantity) || 1) * 0.35;
+    }
+    return sum;
+  }, 0);
+
+  const shipping = 100;
+  const platformFee = 12;
+  const gst = (total + drinksFee) * 0.18;
+  const finalTotal = total + drinksFee + shipping + platformFee + gst;
 
   return (
     <div className="min-h-screen bg-gray-50">
-    <div className="max-w-7xl mx-auto px-1 py-1 sm:px-1 lg:px-1">
-      <div className="flex justify-center mb-2">
-        <div
-          className="cursor-pointer inline-block"
-          onClick={() => navigate('/dashboard')}
-        >
-          <img
-            src="/finallogo.png"
-            alt="Drnkly Logo"
-            className="h-21 md:h-28 lg:h-25 mx-auto object-contain"
-          />
+      <div className="max-w-7xl mx-auto px-1 py-1 sm:px-1 lg:px-1">
+        <div className="flex justify-center mb-2">
+          <div
+            className="cursor-pointer inline-block"
+            onClick={() => navigate('/dashboard')}
+          >
+            <img
+              src="/finallogo.png"
+              alt="Drnkly Logo"
+              className="h-21 md:h-28 lg:h-25 mx-auto object-contain"
+            />
+          </div>
         </div>
-      </div>
-  
+
         <div className="flex items-center mb-6">
           <ShoppingCart className="h-8 w-8 text-gray-900 mr-3" />
           <h1 className="text-2xl font-bold text-gray-900">Your Cart</h1>
@@ -116,7 +127,7 @@ const Cart = () => {
               </div>
             ) : (
               items.map((item: any) => (
-                <div key={item.productId} className="flex items-center justify-between border-b pb-6">
+                <div key={item.productId._id || item.productId} className="flex items-center justify-between border-b pb-6">
                   <div className="flex items-center space-x-4">
                     <img
                       src={item.image}
@@ -133,21 +144,21 @@ const Cart = () => {
                     <div className="flex items-center space-x-2">
                       <button
                         className="p-1 rounded-md hover:bg-gray-100"
-                        onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                        onClick={() => updateQuantity(item.productId._id || item.productId, Number(item.quantity) - 1)}
                       >
                         <Minus className="h-5 w-5 text-gray-600" />
                       </button>
                       <span className="text-lg font-medium w-8 text-center">{item.quantity}</span>
                       <button
                         className="p-1 rounded-md hover:bg-gray-100"
-                        onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                        onClick={() => updateQuantity(item.productId._id || item.productId, Number(item.quantity) + 1)}
                       >
                         <Plus className="h-5 w-5 text-gray-600" />
                       </button>
                     </div>
                     <button
                       className="text-red-500 hover:text-red-600"
-                      onClick={() => removeFromCart(item.productId)}
+                      onClick={() => removeFromCart(item.productId._id || item.productId)}
                     >
                       <Trash2 className="h-5 w-5" />
                     </button>
@@ -158,47 +169,47 @@ const Cart = () => {
           </div>
 
           {items.length > 0 && (
-  <div className="bg-gray-50 p-6 rounded-b-lg">
-    {/* Subtotal */}
-    <div className="flex justify-between mb-4">
-      <span className="text-gray-600">Subtotal</span>
-      <span className="text-gray-900 font-medium">₹{total.toFixed(2)}</span>
-    </div>
+            <div className="bg-gray-50 p-6 rounded-b-lg">
+              <div className="flex justify-between mb-4">
+                <span className="text-gray-600">Subtotal</span>
+                <span className="text-gray-900 font-medium">₹{total.toFixed(2)}</span>
+              </div>
 
-    {/* Shipping */}
-    <div className="flex justify-between mb-6">
-      <span className="text-gray-600">Shipping</span>
-      <span className="text-gray-900 font-medium">₹100.00</span>
-    </div>
-{/* PLATFORM FEE */}
-    <div className="flex justify-between mb-6">
-      <span className="text-gray-600">Platform Fee</span>
-      <span className="text-gray-900 font-medium">₹12.00</span>
-    </div>
-    <div className="flex justify-between mb-6">
-    <span className="text-gray-600">GST (5%)</span>
-    <span className="text-gray-900 font-medium">₹{((total) * 0.05).toFixed(2)}</span>
-  </div>
+              <div className="flex justify-between mb-4">
+                <span className="text-gray-600">Drinks Extra Fee (35%)</span>
+                <span className="text-gray-900 font-medium">₹{drinksFee.toFixed(2)}</span>
+              </div>
 
-    {/* Final Total (Subtotal + Shipping) */}
-    <div className="flex justify-between mb-6 text-lg font-semibold">
-      <span>Total</span>
-      <span>₹{(total + 100 + 12 + (total) * 0.05).toFixed(2)}</span>
-    </div>
+              <div className="flex justify-between mb-6">
+                <span className="text-gray-600">Shipping</span>
+                <span className="text-gray-900 font-medium">₹{shipping.toFixed(2)}</span>
+              </div>
 
-    {/* Checkout Button */}
-    <button
-      onClick={() => navigate('/checkout')}
-      className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition-colors"
-    >
-      Proceed to Checkout
-    </button>
-  </div>
-)}
+              <div className="flex justify-between mb-6">
+                <span className="text-gray-600">Platform Fee</span>
+                <span className="text-gray-900 font-medium">₹{platformFee.toFixed(2)}</span>
+              </div>
 
+              <div className="flex justify-between mb-6">
+                <span className="text-gray-600">GST (18%)</span>
+                <span className="text-gray-900 font-medium">₹{gst.toFixed(2)}</span>
+              </div>
+
+              <div className="flex justify-between mb-6 text-lg font-semibold">
+                <span>Total</span>
+                <span>₹{finalTotal.toFixed(2)}</span>
+              </div>
+
+              <button
+                onClick={() => navigate('/checkout')}
+                className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition-colors"
+              >
+                Proceed to Checkout
+              </button>
+            </div>
+          )}
         </div>
       </div>
-
     </div>
   );
 };

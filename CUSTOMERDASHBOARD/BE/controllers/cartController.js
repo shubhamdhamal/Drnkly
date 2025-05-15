@@ -101,7 +101,13 @@ exports.getUserCart = async (req, res) => {
   const { userId } = req.params;
 
   try {
-    const cart = await Cart.findOne({ userId });
+    //const cart = await Cart.findOne({ userId });
+    const cart = await Cart.findOne({ userId }).populate({
+  path: 'items.productId',
+  select: 'category liquorType name price image'
+});
+
+
     if (!cart) return res.status(404).json({ message: 'Cart not found' });
     res.status(200).json(cart);
   } catch (error) {

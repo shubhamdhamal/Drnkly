@@ -41,7 +41,7 @@ function Checkout() {
 
   const deliveryCharges = 100.00;
   const platform = 12.00;
-  const gst = 5.00;
+  const gst = 18.00;
   const gstAmount = (orderTotal * gst) / 100;
   const total = orderTotal + deliveryCharges +platform + gstAmount;
 
@@ -173,7 +173,7 @@ function Checkout() {
       const orderTotal = items.reduce((sum: number, item: CartItem) => sum + item.price * item.quantity, 0);
       const deliveryCharges = 100;
       const platform = 12;
-      const gst = 5;
+      const gst = 18;
       const gstAmount = (orderTotal * gst) / 100;
       const totalAmount = orderTotal + deliveryCharges + platform + gstAmount;
       
@@ -332,12 +332,12 @@ function Checkout() {
               <span>₹{platform.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-gray-600">
-              <span>GST (5%)</span>
-              <span>₹{((orderTotal) * 0.05).toFixed(2)}</span>
+              <span>GST (18%)</span>
+              <span>₹{((orderTotal) * 0.18).toFixed(2)}</span>
             </div>
             <div className="flex justify-between font-semibold text-lg pt-2">
               <span>Total</span>
-              <span>₹{(orderTotal + 100 + 12 + (orderTotal) * 0.05).toFixed(2)}</span>
+              <span>₹{(orderTotal + 100 + 12 + (orderTotal) * 0.18).toFixed(2)}</span>
             </div>
           </div>
         </div>
