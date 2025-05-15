@@ -42,19 +42,28 @@ const Payment = () => {
 
     if (!isScreenshotUploaded) return alert('Please acknowledge that the payment screenshot has been uploaded.');
 
+    // Log the data being sent to the backend
+    console.log("Request data being sent:", {
+      screenshotUploaded: isScreenshotUploaded,
+      orderId
+    });
+
     try {
       // Send only the checkbox state (no screenshot file)
       const res = await axios.put(
         `https://peghouse.in/api/orders/${orderId}/pay`,
         {
-          screenshotUploaded: isScreenshotUploaded, // Sending only checkbox confirmation
+          screenshotUploaded: isScreenshotUploaded, // Sending checkbox state
         },
         {
           headers: {
-            'Content-Type': 'application/json' // Make sure to send the correct content type
+            'Content-Type': 'application/json', // Ensure content-type is correct
           }
         }
       );
+
+      // Log the response from the server
+      console.log("Response from server:", res.data);
 
       if (res.data.message === 'Payment successful') {
         navigate('/order-success');
@@ -62,7 +71,7 @@ const Payment = () => {
         alert('Payment failed. Please try again.');
       }
     } catch (err) {
-      console.error('Payment error:', err);
+      console.error('Payment error:', err.response ? err.response.data : err);
       alert('Something went wrong while submitting payment.');
     }
   };
