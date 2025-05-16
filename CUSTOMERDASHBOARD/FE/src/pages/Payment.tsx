@@ -84,17 +84,6 @@ const Payment = () => {
     }
   };
 
-  // Handle checkbox toggling
-  const handleCheckboxChange = (type: 'screenshot' | 'cod') => {
-    if (type === 'screenshot') {
-      setIsScreenshotUploaded(true);
-      setIsCashOnDelivery(false);
-    } else {
-      setIsScreenshotUploaded(false);
-      setIsCashOnDelivery(true);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -117,24 +106,35 @@ const Payment = () => {
           <p className="text-sm text-gray-500 mt-2">Use any UPI app to scan & pay</p>
         </div>
 
-        {/* Transaction ID and Screenshot Upload Section */}
+        {/* Transaction ID Section */}
         <div className="bg-white rounded-xl p-6 mb-6 shadow-lg">
-          <h2 className="text-lg font-semibold mb-4">Enter Transaction ID or Upload Screenshot</h2>
+          <h2 className="text-lg font-semibold mb-4">Enter Transaction ID</h2>
           <input
             type="text"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4"
             placeholder="Transaction ID"
             value={transactionId}
             onChange={(e) => setTransactionId(e.target.value)}
-            disabled={isCashOnDelivery} // Disable if COD is selected
           />
+        </div>
+
+        {/* Screenshot Upload Link */}
+        <div className="bg-white rounded-xl p-6 mb-6 shadow-lg">
+          <h2 className="text-lg font-semibold mb-4">Payment Screenshot (OPTIONAL)</h2>
+          <a
+            href="https://drive.google.com/drive/folders/1i09WZAT0qd57MV9KMecAI6Rdvcon7TUF?usp=sharing"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 underline"
+          >
+            UPLOAD PAYMENT SCREENSHOT HERE
+          </a>
           <div className="mt-4">
             <input
               type="checkbox"
               id="paymentScreenshotCheckbox"
               checked={isScreenshotUploaded}
-              onChange={() => handleCheckboxChange('screenshot')}
-              disabled={isCashOnDelivery} // Disable if COD is selected
+              onChange={() => setIsScreenshotUploaded(!isScreenshotUploaded)}
             />
             <label
               htmlFor="paymentScreenshotCheckbox"
@@ -151,8 +151,7 @@ const Payment = () => {
             type="checkbox"
             id="cashOnDeliveryCheckbox"
             checked={isCashOnDelivery}
-            onChange={() => handleCheckboxChange('cod')}
-            disabled={isScreenshotUploaded} // Disable if screenshot or transaction is selected
+            onChange={() => setIsCashOnDelivery(!isCashOnDelivery)}
           />
           <label
             htmlFor="cashOnDeliveryCheckbox"
