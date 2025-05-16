@@ -22,19 +22,27 @@ exports.placeOrder = async (req, res) => {
 exports.updatePaymentStatus = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const { screenshotUploaded, transactionId } = req.body;  // Expecting checkbox value and transactionId
+    const { screenshotUploaded, transactionId, isCashOnDelivery } = req.body;  // Get all data from request
 
     console.log("Request body:", req.body); // Log the request body
 
-    if (screenshotUploaded === undefined) {
-      return res.status(400).json({ message: 'Screenshot upload status is required' });
+    if (screenshotUploaded === undefined && isCashOnDelivery === undefined) {
+      return res.status(400).json({ message: 'Payment status is required' });
     }
 
-    // If checkbox is checked (screenshotUploaded: true), mark as paid, else mark as pending
+    let paymentStatus = 'pending';
+    
+    if (isCashOnDelivery) {
+      paymentStatus = 'cash on delivery'; // Update payment status to COD
+    } else if (screenshotUploaded) {
+      paymentStatus = 'paid'; // Update payment status to paid
+    }
+
+    // Update order with appropriate payment status
     const updated = await Order.findByIdAndUpdate(
       orderId,
       {
-        paymentStatus: screenshotUploaded ? 'paid' : 'pending', // Set payment status based on checkbox
+        paymentStatus,
         transactionId: transactionId || null, // Store transaction ID if provided
       },
       { new: true }
@@ -50,6 +58,7 @@ exports.updatePaymentStatus = async (req, res) => {
     res.status(500).json({ message: 'Error updating payment status', error: error.message });
   }
 };
+
 
 
 
