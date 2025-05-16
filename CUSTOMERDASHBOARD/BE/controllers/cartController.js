@@ -116,6 +116,7 @@ exports.getUserCart = async (req, res) => {
 
 
 // Update quantity
+// Update quantity
 exports.updateQuantity = async (req, res) => {
   const { userId, productId, quantity } = req.body;
 
