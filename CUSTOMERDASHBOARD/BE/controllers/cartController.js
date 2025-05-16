@@ -91,41 +91,28 @@ exports.addToCart = async (req, res) => {
   }
 };
 
+
+
+
+
+
 // Get user's cart
 exports.getUserCart = async (req, res) => {
   const { userId } = req.params;
 
   try {
-    const cart = await Cart.findOne({ userId });
+    const cart = await Cart.findOne({ userId }).populate({
+      path: 'items.productId',
+      model: 'Product', // ✅ Ensure correct model name
+      select: 'category liquorType name price image'
+    });
 
     if (!cart) return res.status(404).json({ message: 'Cart not found' });
-
-    // 🛠 Manually fetch product details
-    const enrichedItems = await Promise.all(
-      cart.items.map(async (item) => {
-        const product = await Product.findById(item.productId).select('category liquorType name price image');
-
-        return {
-          ...item.toObject(),
-          productId: product || item.productId, // fallback to ID if product not found
-        };
-      })
-    );
-
-    const enrichedCart = {
-      ...cart.toObject(),
-      items: enrichedItems,
-    };
-
-    res.status(200).json(enrichedCart);
-
+    res.status(200).json(cart);
   } catch (error) {
-    console.error('Error fetching cart:', error);
     res.status(500).json({ message: 'Error fetching cart', error: error.message });
   }
 };
-
-
 
 
 // Update quantity
@@ -139,33 +126,38 @@ exports.updateQuantity = async (req, res) => {
     const itemToUpdate = cart.items.find(item => item.productId._id.toString() === productId);
     if (!itemToUpdate) return res.status(404).json({ message: 'Item not found in cart' });
 
-    const newLiquorType = itemToUpdate.productId.liquorType;
+    const product = itemToUpdate.productId;
     const currentQty = itemToUpdate.quantity;
-    const delta = quantity - currentQty;
 
-    if (delta === 0) return res.status(200).json({ message: 'No change', cart });
+    if (quantity === currentQty) {
+      return res.status(200).json({ message: 'No change', cart });
+    }
 
-    // Count Hard and Mild (excluding this item)
+    // ✅ Skip restrictions for non-Drinks category
+    if (product.category !== 'Drinks') {
+      itemToUpdate.quantity = quantity;
+      await cart.save();
+      return res.status(200).json({ message: '✅ Quantity updated (non-Drinks)', cart });
+    }
+
+    // 🔒 Apply restrictions only for Drinks
+    const newLiquorType = product.liquorType;
+
     let hardLiquorCount = 0;
     let mildLiquorCount = 0;
 
     cart.items.forEach(item => {
-      if (item.productId._id.toString() === productId) return; // skip current
+      if (item.productId._id.toString() === productId) return;
+      if (item.productId.category !== 'Drinks') return; // skip non-Drinks
       const type = item.productId.liquorType;
       if (type === 'Hard Liquor') hardLiquorCount += item.quantity;
       else if (type === 'Mild Liquor') mildLiquorCount += item.quantity;
     });
 
-    // Simulate new totals
-    const futureHard = newLiquorType === 'Hard Liquor'
-      ? hardLiquorCount + quantity
-      : hardLiquorCount;
+    const futureHard = newLiquorType === 'Hard Liquor' ? hardLiquorCount + quantity : hardLiquorCount;
+    const futureMild = newLiquorType === 'Mild Liquor' ? mildLiquorCount + quantity : mildLiquorCount;
 
-    const futureMild = newLiquorType === 'Mild Liquor'
-      ? mildLiquorCount + quantity
-      : mildLiquorCount;
-
-    // ✅ Enforce all restrictions
+    // 🔒 Restrictions
     if (futureHard > 2) {
       return res.status(400).json({ message: '❌ Max 2 Hard Liquors allowed.' });
     }
@@ -179,17 +171,17 @@ exports.updateQuantity = async (req, res) => {
       return res.status(400).json({ message: '❌ Max 12 Mild Liquors allowed.' });
     }
 
-    // ✅ Update quantity
+    // ✅ Passed all checks
     itemToUpdate.quantity = quantity;
     await cart.save();
-
-    return res.status(200).json({ message: '✅ Quantity updated', cart });
+    return res.status(200).json({ message: '✅ Quantity updated (Drinks)', cart });
 
   } catch (error) {
     console.error('Error updating quantity:', error);
     return res.status(500).json({ message: 'Error updating quantity', error: error.message });
   }
 };
+
 
 
 
