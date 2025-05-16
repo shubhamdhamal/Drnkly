@@ -54,6 +54,10 @@ const orderSchema = new mongoose.Schema({
   paymentProof: {
     type: String // 🔥 Screenshot image URL stored here
   },
+    transactionId: {
+    type: String, // Store the transaction ID here
+    default: null,
+  },
   createdAt: {
     type: Date,
     default: Date.now
