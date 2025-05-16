@@ -36,55 +36,56 @@ const Payment = () => {
   }, []);
 
   const handlePaymentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const orderId = localStorage.getItem('latestOrderId');
-    if (!orderId) return alert('No order ID found. Please place an order first.');
+  const orderId = localStorage.getItem('latestOrderId');
+  if (!orderId) return alert('No order ID found. Please place an order first.');
 
-    if (!isScreenshotUploaded && !transactionId) {
-      return alert('Please either upload the screenshot or provide the transaction ID.');
-    }
+  if (!isScreenshotUploaded && !transactionId) {
+    return alert('Please either upload the screenshot or provide the transaction ID.');
+  }
 
-    // Log the data being sent to the backend
-    console.log("Request data being sent:", {
-      screenshotUploaded: isScreenshotUploaded,
-      orderId,
-      transactionId
-    });
+  // Log the data being sent to the backend
+  console.log("Request data being sent:", {
+    screenshotUploaded: isScreenshotUploaded,
+    orderId,
+    transactionId
+  });
 
-    try {
-      // Send the request to backend
-      const res = await axios.put(
-        `https://peghouse.in/api/orders/${orderId}/pay`,
-        {
-          screenshotUploaded: isScreenshotUploaded, // Only send checkbox state
-          paymentProof: isScreenshotUploaded ? 'placeholder.jpg' : '', // Send a dummy payment proof
-          transactionId: transactionId || null, // Send transaction ID if available
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json', // Ensure content-type is correct
-          }
+  try {
+    // Send the request to backend
+    const res = await axios.put(
+      `https://peghouse.in/api/orders/${orderId}/pay`,
+      {
+        screenshotUploaded: isScreenshotUploaded, // Only send checkbox state
+        paymentProof: isScreenshotUploaded ? 'placeholder.jpg' : '', // Send a dummy payment proof
+        transactionId: transactionId || null, // Send transaction ID if available
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json', // Ensure content-type is correct
         }
-      );
-
-      // Log the full response from the server
-      console.log("Response from server:", res.data);
-
-      // Check the response for success
-      if (res.data.message === 'Payment status updated successfully') {
-        // If payment status was successfully updated, consider the payment successful
-        navigate('/order-success');
-      } else {
-        console.error("Payment failed:", res.data);
-        alert('Payment failed. Please try again.');
       }
-    } catch (err) {
-      // Log the error response
-      console.error('Payment error:', err.response ? err.response.data : err);
-      alert('Something went wrong while submitting payment.');
+    );
+
+    // Log the full response from the server
+    console.log("Response from server:", res.data);
+
+    // Check the response for success
+    if (res.data.message === 'Payment status updated successfully') {
+      // If payment status was successfully updated, consider the payment successful
+      navigate('/order-success');
+    } else {
+      console.error("Payment failed:", res.data);
+      alert('Payment failed. Please try again.');
     }
-  };
+  } catch (err) {
+    // Log the error response
+    console.error('Payment error:', err.response ? err.response.data : err);
+    alert('Something went wrong while submitting payment.');
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-gray-50">
