@@ -17,7 +17,7 @@ const categories = [
     image: 'https://images.unsplash.com/photo-1452725210141-07dda20225ec?q=80&w=2152&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
   },
   {
-    name: 'Cigarettes',
+    name: 'Cigarette',
     image: 'https://images.unsplash.com/photo-1702306455611-e3360e6ffeee?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
   },
   {
@@ -184,18 +184,25 @@ function Dashboard() {
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-4">Categories</h2>
           <div className="grid grid-cols-3 gap-4">
-            {categories.map((category) => (
-              <div 
-                key={category.name} 
-                onClick={() => navigate(`/products?category=${category.name.toLowerCase()}`)} 
-                className="relative overflow-hidden rounded-xl cursor-pointer transform hover:scale-105 transition-transform"
-              >
-                <img src={category.image} alt={category.name} className="w-full h-32 object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
-                  <span className="text-white font-medium">{category.name}</span>
+            {categories.map((category) => {
+              console.log('Rendering category:', category.name);
+              return (
+                <div 
+                  key={category.name} 
+                  onClick={() => {
+                    console.log('Clicked category:', category.name);
+                    // Pass the exact category name without any transformation
+                    navigate(`/products?category=${encodeURIComponent(category.name)}`);
+                  }}
+                  className="relative overflow-hidden rounded-xl cursor-pointer transform hover:scale-105 transition-transform"
+                >
+                  <img src={category.image} alt={category.name} className="w-full h-32 object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                    <span className="text-white font-medium">{category.name}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
