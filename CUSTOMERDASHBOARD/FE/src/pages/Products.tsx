@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Wine, Search, ShoppingCart, ChevronDown } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
-interface Category {
-  _id: string;
-  name: string;
-}
-
+function Products() {
+  const navigate = useNavigate();
+  const { addToCart } = useCart();
   interface Product {
     _id: string;
     name: string;
@@ -18,26 +16,11 @@ interface Category {
     volume: number;
     category: string;
     brand: string;
-  alcoholContent?: number; // Made optional since not all products have this
-}
-
-function Products() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { addToCart } = useCart();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  }
 
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([
-    { _id: '1', name: 'All' },
-    { _id: '2', name: 'Drinks' },
-    { _id: '3', name: 'Cigarette' },
-    { _id: '4', name: 'Soft Drinks' },
-    { _id: '5', name: 'Snacks' },
-    { _id: '6', name: 'Food' },
-    { _id: '7', name: 'Glasses & Plates' }
-  ]);
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [priceRange, setPriceRange] = useState<string>('all');
   const [selectedBrand, setSelectedBrand] = useState<string>('all');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -45,23 +28,16 @@ function Products() {
   const [showBrandFilter, setShowBrandFilter] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Read category from URL parameters
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const categoryParam = params.get('category');
-    if (categoryParam) {
-      console.log('Category from URL:', categoryParam);
-      setSelectedCategory(categoryParam);
-    }
-  }, [location]);
-
-  // Fetch products and categories on component mount
+  // ✅ Fetch products and categories on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const productRes = await axios.get('https://peghouse.in/api/products');
-        console.log('Fetched Products:', productRes.data);
+        const [productRes, categoryRes] = await Promise.all([
+          axios.get('https://peghouse.in/api/products'),
+          axios.get('https://peghouse.in/api/categories'),
+        ]);
         setProducts(productRes.data);
+        setCategories(categoryRes.data);
       } catch (err) {
         console.error('Error fetching data:', err);
       }
@@ -70,31 +46,18 @@ function Products() {
     fetchData();
   }, []);
 
-  // Add useEffect to check login status
-  useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    const userId = localStorage.getItem('userId');
-    setIsLoggedIn(!!token && !!userId);
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.clear();
-    localStorage.removeItem("locationGranted");
-    setIsLoggedIn(false);
-    navigate('/login');
-  };
-
-  const handleAddToCart = async (e: React.MouseEvent, product: Product) => {
+  const handleAddToCart = async (e: React.MouseEvent, product: any) => {
     e.stopPropagation();
   
 const userId = localStorage.getItem('userId');
   if (!userId) {
     alert('Please log in first');
-      navigate('/login');
-    return;
-  }
+    navigate('/login'); // Navigate to login after alert
+    return;
+  }
   
     try {
+      // Proceed to add the product to the cart
       const res = await axios.post('https://peghouse.in/api/cart/add', {
         userId,
         productId: product._id,
@@ -105,8 +68,9 @@ const userId = localStorage.getItem('userId');
         alcoholContent: product.alcoholContent
       });
   
-      alert(${product.name} added to cart!);
-    } catch (error: any) {
+      alert(`${product.name} added to cart!`);
+    } catch (error) {
+      // If the error is due to restrictions, show an alert
       alert(error.response?.data?.message || 'Failed to add to cart');
       console.error('Cart Error:', error);
     }
@@ -131,38 +95,11 @@ const userId = localStorage.getItem('userId');
 
   const filterProducts = () => {
     let filtered = [...products];
-    console.log('Initial products:', filtered);
-    console.log('Selected category:', selectedCategory);
 
-    if (selectedCategory !== 'All') {
-      filtered = filtered.filter(product => {
-        const productCategory = product.category;
-        const selected = selectedCategory;
-        
-        console.log(Comparing - Product: "${productCategory}" with Selected: "${selected}");
-        
-        // First try exact match
-        if (productCategory === selected) {
-          console.log('Exact match found!');
-          return true;
-        }
-        
-        // Then try case-insensitive match
-        if (productCategory.toLowerCase() === selected.toLowerCase()) {
-          console.log('Case-insensitive match found!');
-          return true;
-        }
-        
-        // Finally try with trimmed spaces
-        const trimmedProduct = productCategory.trim().toLowerCase();
-        const trimmedSelected = selected.trim().toLowerCase();
-        const trimMatch = trimmedProduct === trimmedSelected;
-        console.log(Trimmed match: ${trimMatch});
-        
-        return trimMatch;
-      });
-      
-      console.log('Filtered products:', filtered);
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(product =>
+        product.category.toLowerCase() === selectedCategory.toLowerCase()
+      );
     }
 
     if (selectedBrand !== 'all') {
@@ -192,19 +129,6 @@ const userId = localStorage.getItem('userId');
     return filtered;
   };
 
-  // Update URL when category changes
-  const handleCategoryChange = (category: string) => {
-    console.log('Changing category to:', category);
-    setSelectedCategory(category);
-    const params = new URLSearchParams(location.search);
-    if (category === 'all') {
-      params.delete('category');
-    } else {
-      params.set('category', category);
-    }
-    navigate({ search: params.toString() });
-  };
-
   return (
     <div className="container" style={{ padding: '20px' }}>
       {/* Top Navbar */}
@@ -222,24 +146,6 @@ const userId = localStorage.getItem('userId');
           />
         </div>
         <div className="flex items-center gap-4">
-          {isLoggedIn ? (
-            <button
-              onClick={handleLogout}
-              style={{
-                padding: '8px 16px',
-                background: '#cd6839',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              Logout
-            </button>
-          ) : (
           <button
             onClick={() => navigate('/login')}
             style={{
@@ -256,7 +162,6 @@ const userId = localStorage.getItem('userId');
           >
             Login
           </button>
-          )}
           <ShoppingCart
             onClick={() => navigate('/cart')}
             className="cursor-pointer"
@@ -278,25 +183,31 @@ const userId = localStorage.getItem('userId');
 
       {/* Categories from Backend */}
       <div style={{ display: 'flex', gap: '10px', margin: '20px 0', overflowX: 'auto' }}>
+        <button
+          style={{
+            padding: '8px 16px',
+            background: selectedCategory === 'all' ? '#cd6839' : '#f5f5f5',
+            color: selectedCategory === 'all' ? 'white' : 'black',
+            border: 'none',
+            borderRadius: '20px',
+            cursor: 'pointer'
+          }}
+          onClick={() => setSelectedCategory('all')}
+        >
+          All
+        </button>
         {categories.map((cat) => (
           <button
             key={cat._id}
             style={{
               padding: '8px 16px',
-              background: selectedCategory === cat.name ? '#cd6839' : '#f5f5f5',
-              color: selectedCategory === cat.name ? 'white' : 'black',
+              background: selectedCategory === cat.name.toLowerCase() ? '#cd6839' : '#f5f5f5',
+              color: selectedCategory === cat.name.toLowerCase() ? 'white' : 'black',
               border: 'none',
               borderRadius: '20px',
               cursor: 'pointer'
             }}
-            onClick={() => {
-              console.log('Category clicked:', cat.name);
-              if (cat.name === 'All') {
-                handleCategoryChange('All');
-              } else {
-                handleCategoryChange(cat.name);
-              }
-            }}
+            onClick={() => setSelectedCategory(cat.name.toLowerCase())}
           >
             {cat.name}
           </button>
