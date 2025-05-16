@@ -61,6 +61,10 @@ function Products() {
     }
     if (restaurantParam) {
       setSelectedRestaurant(restaurantParam);
+      // If it's PK Wines, show all products by default
+      if (restaurantParam === 'PK Wines' && categoryParam === 'All') {
+        setSelectedCategory('All');
+      }
     }
   }, [location]);
 
@@ -146,37 +150,47 @@ function Products() {
 
     // Filter by restaurant if selected
     if (selectedRestaurant) {
-      filtered = filtered.filter(product => product.restaurant === selectedRestaurant);
-    }
-
-    // Filter by category if not "All"
-    if (selectedCategory !== 'All') {
-      filtered = filtered.filter(product => {
-        const productCategory = product.category;
-        const selected = selectedCategory;
-        
-        console.log(`Comparing - Product: "${productCategory}" with Selected: "${selected}"`);
-        
-        // First try exact match
-        if (productCategory === selected) {
-          console.log('Exact match found!');
-          return true;
+      if (selectedRestaurant === 'PK Wines') {
+        // For PK Wines, apply only category filter if not "All"
+        if (selectedCategory !== 'All') {
+          filtered = filtered.filter(product => {
+            const productCategory = product.category;
+            const selected = selectedCategory;
+            
+            // First try exact match
+            if (productCategory === selected) return true;
+            
+            // Then try case-insensitive match
+            if (productCategory.toLowerCase() === selected.toLowerCase()) return true;
+            
+            // Finally try with trimmed spaces
+            const trimmedProduct = productCategory.trim().toLowerCase();
+            const trimmedSelected = selected.trim().toLowerCase();
+            return trimmedProduct === trimmedSelected;
+          });
         }
+      } else {
+        // For other restaurants, filter by restaurant and then category
+        filtered = filtered.filter(product => product.restaurant === selectedRestaurant);
         
-        // Then try case-insensitive match
-        if (productCategory.toLowerCase() === selected.toLowerCase()) {
-          console.log('Case-insensitive match found!');
-          return true;
+        if (selectedCategory !== 'All') {
+          filtered = filtered.filter(product => {
+            const productCategory = product.category;
+            const selected = selectedCategory;
+            
+            // First try exact match
+            if (productCategory === selected) return true;
+            
+            // Then try case-insensitive match
+            if (productCategory.toLowerCase() === selected.toLowerCase()) return true;
+            
+            // Finally try with trimmed spaces
+            const trimmedProduct = productCategory.trim().toLowerCase();
+            const trimmedSelected = selected.trim().toLowerCase();
+            return trimmedProduct === trimmedSelected;
+          });
         }
-        
-        // Finally try with trimmed spaces
-        const trimmedProduct = productCategory.trim().toLowerCase();
-        const trimmedSelected = selected.trim().toLowerCase();
-        const trimMatch = trimmedProduct === trimmedSelected;
-        console.log(`Trimmed match: ${trimMatch}`);
-        
-        return trimMatch;
-      });
+      }
     }
 
     if (selectedBrand !== 'all') {
