@@ -10,14 +10,6 @@ const Payment = () => {
   const [isScreenshotUploaded, setIsScreenshotUploaded] = useState(false);
   const [transactionId, setTransactionId] = useState<string>(''); // New state for transaction ID
 
-  const orderTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-
-  const deliveryCharges = 100.0;
-  const platform = 12.0;
-  const gst = 5.00;
-  const gstAmount = (orderTotal * gst) / 100;
-  const total = orderTotal + deliveryCharges + platform + gstAmount;
-
   // 🔁 Fetch vendor cart items
   useEffect(() => {
     const fetchCart = async () => {
@@ -27,13 +19,39 @@ const Payment = () => {
       try {
         const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
         setItems(res.data.items || []);
+
+        // Debug check
+        res.data.items.forEach((item: any, i: number) => {
+          console.log(`Item ${i + 1} Category:`, item.productId?.category);
+        });
       } catch (err) {
-        console.error("Cart fetch error:", err);
+        console.error('Cart fetch error:', err);
       }
     };
 
     fetchCart();
   }, []);
+
+
+
+  const orderTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+    // Calculate 35% fee on Drinks only
+  const drinksFee = items.reduce((sum, item) => {
+    const isDrink = item.productId?.category === 'Drinks';
+    if (isDrink) {
+      return sum + item.price * item.quantity * 0.35;
+    }
+    return sum;
+  }, 0);
+
+  const deliveryCharges = 100.0;
+  const platform = 12.0;
+  const gst = 18.0;
+  const gstAmount = (orderTotal + drinksFee) * gst / 100;
+  const total = orderTotal + drinksFee + deliveryCharges + platform + gstAmount;
+
+
 
   const handlePaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -161,12 +179,16 @@ const Payment = () => {
         </div>
 
         {/* Order Summary */}
-        <div className="bg-white rounded-xl p-6 mb-6 shadow-lg">
+        <div className="bg-white rounded-xl p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
           <div className="space-y-4">
             <div className="flex justify-between">
               <span className="text-gray-600">Order Total</span>
               <span className="font-semibold">₹{orderTotal.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Drinks Service Fee (35%)</span>
+              <span className="font-semibold">₹{drinksFee.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Delivery Charges</span>
@@ -177,13 +199,13 @@ const Payment = () => {
               <span className="font-semibold">₹{platform.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">GST (5%)</span>
-              <span className="font-semibold">₹{((orderTotal) * 0.05).toFixed(2)}</span>
+              <span className="text-gray-600">GST (18%)</span>
+              <span className="font-semibold">₹{gstAmount.toFixed(2)}</span>
             </div>
             <div className="pt-4 border-t">
               <div className="flex justify-between items-center">
                 <span className="text-xl font-semibold">Total</span>
-                <span className="text-xl font-semibold">₹{(orderTotal + 100 + 12 + (orderTotal) * 0.05).toFixed(2)}</span>
+                <span className="text-xl font-semibold">₹{total.toFixed(2)}</span>
               </div>
             </div>
           </div>
