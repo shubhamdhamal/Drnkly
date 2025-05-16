@@ -60,9 +60,9 @@ function Dashboard() {
         if (token && userId) {
           setIsLoggedIn(true);
   
-          const response = await axios.get(https://peghouse.in/api/users/${userId}, {
+          const response = await axios.get(`https://peghouse.in/api/users/${userId}`, {
             headers: {
-              Authorization: Bearer ${token}, // ✅ SEND token properly
+              Authorization: `Bearer ${token}`, // ✅ SEND token properly
             },
           });
   
@@ -95,7 +95,7 @@ function Dashboard() {
   const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(/products?search=${searchQuery}); // Redirect with search query
+      navigate(`/products?search=${searchQuery}`); // Redirect with search query
     }
   };
   return (
@@ -192,15 +192,15 @@ function Dashboard() {
                   onClick={() => {
                     console.log('Clicked category:', category.name);
                     // Pass the exact category name without any transformation
-                    navigate(/products?category=${encodeURIComponent(category.name)});
+                    navigate(`/products?category=${encodeURIComponent(category.name)}`);
                   }}
                   className="relative overflow-hidden rounded-xl cursor-pointer transform hover:scale-105 transition-transform"
                 >
-                <img src={category.image} alt={category.name} className="w-full h-32 object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
-                  <span className="text-white font-medium">{category.name}</span>
+                  <img src={category.image} alt={category.name} className="w-full h-32 object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                    <span className="text-white font-medium">{category.name}</span>
+                  </div>
                 </div>
-              </div>
               );
             })}
           </div>
@@ -211,13 +211,7 @@ function Dashboard() {
           <h2 className="text-xl font-semibold mb-4">Nearby Stores</h2>
           <div className="grid gap-6">
             {stores.map((store) => (
-              <div key={store.id} className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => {
-                if (store.name === "Sunrise Family Garden Restaurant") {
-                  navigate('/products?category=Food');
-                } else {
-                  navigate('/products');
-                }
-              }}>
+              <div key={store.id} className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/products')}>
                 <div className="sm:flex">
                   <div className="sm:w-48 h-48 sm:h-auto">
                     <img src={store.image} alt={store.name} className="w-full h-full object-cover" />
