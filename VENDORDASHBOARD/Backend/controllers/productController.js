@@ -5,7 +5,7 @@ const fs = require('fs');
 
 // Function to categorize liquor based on alcohol content
 const categorizeLiquor = (alcoholContent) => {
-  if (alcoholContent >= 40) {
+  if (alcoholContent >= 36) {
     return 'Hard Liquor';
   } else {
     return 'Mild Liquor';
