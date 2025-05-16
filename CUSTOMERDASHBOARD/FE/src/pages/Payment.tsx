@@ -9,6 +9,7 @@ const Payment = () => {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isScreenshotUploaded, setIsScreenshotUploaded] = useState(false);
   const [transactionId, setTransactionId] = useState<string>(''); // New state for transaction ID
+  const [isCashOnDelivery, setIsCashOnDelivery] = useState(false); // New state for cash on delivery
 
   // 🔁 Fetch vendor cart items
   useEffect(() => {
@@ -19,11 +20,6 @@ const Payment = () => {
       try {
         const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
         setItems(res.data.items || []);
-
-        // Debug check
-        res.data.items.forEach((item: any, i: number) => {
-          console.log(`Item ${i + 1} Category:`, item.productId?.category);
-        });
       } catch (err) {
         console.error('Cart fetch error:', err);
       }
@@ -32,11 +28,9 @@ const Payment = () => {
     fetchCart();
   }, []);
 
-
-
   const orderTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-    // Calculate 35% fee on Drinks only
+  // Calculate 35% fee on Drinks only
   const drinksFee = items.reduce((sum, item) => {
     const isDrink = item.productId?.category === 'Drinks';
     if (isDrink) {
@@ -51,54 +45,40 @@ const Payment = () => {
   const gstAmount = (orderTotal + drinksFee) * gst / 100;
   const total = orderTotal + drinksFee + deliveryCharges + platform + gstAmount;
 
-
-
   const handlePaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const orderId = localStorage.getItem('latestOrderId');
     if (!orderId) return alert('No order ID found. Please place an order first.');
 
-    if (!isScreenshotUploaded && !transactionId) {
-      return alert('Please either upload the screenshot or provide the transaction ID.');
+    if (!isScreenshotUploaded && !transactionId && !isCashOnDelivery) {
+      return alert('Please either upload the screenshot, provide the transaction ID, or select Cash on Delivery.');
     }
-
-    // Log the data being sent to the backend
-    console.log("Request data being sent:", {
-      screenshotUploaded: isScreenshotUploaded,
-      orderId,
-      transactionId
-    });
 
     try {
       // Send the request to backend
       const res = await axios.put(
         `https://peghouse.in/api/orders/${orderId}/pay`,
         {
-          screenshotUploaded: isScreenshotUploaded, // Only send checkbox state
+          screenshotUploaded: isScreenshotUploaded,
           paymentProof: isScreenshotUploaded ? 'placeholder.jpg' : '', // Send a dummy payment proof
-          transactionId: transactionId || null, // Send transaction ID if available
+          transactionId: transactionId || null,
+          isCashOnDelivery, // Send the cash on delivery status
         },
         {
           headers: {
-            'Content-Type': 'application/json', // Ensure content-type is correct
+            'Content-Type': 'application/json',
           }
         }
       );
 
-      // Log the full response from the server
-      console.log("Response from server:", res.data);
-
-      // Check the response for success
       if (res.data.message === 'Payment status updated successfully') {
-        // If payment status was successfully updated, consider the payment successful
         navigate('/order-success');
       } else {
         console.error("Payment failed:", res.data);
         alert('Payment failed. Please try again.');
       }
     } catch (err) {
-      // Log the error response
       console.error('Payment error:', err.response ? err.response.data : err);
       alert('Something went wrong while submitting payment.');
     }
@@ -129,9 +109,6 @@ const Payment = () => {
         {/* Transaction ID Section */}
         <div className="bg-white rounded-xl p-6 mb-6 shadow-lg">
           <h2 className="text-lg font-semibold mb-4">Enter Transaction ID</h2>
-          <p className="mb-4 text-gray-600">
-            Please enter your transaction ID here:
-          </p>
           <input
             type="text"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4"
@@ -144,9 +121,6 @@ const Payment = () => {
         {/* Screenshot Upload Link */}
         <div className="bg-white rounded-xl p-6 mb-6 shadow-lg">
           <h2 className="text-lg font-semibold mb-4">Payment Screenshot (OPTIONAL)</h2>
-          <p className="mb-4 text-gray-600">
-            Please confirm that you have uploaded the payment screenshot here:
-          </p>
           <a
             href="https://drive.google.com/drive/folders/1i09WZAT0qd57MV9KMecAI6Rdvcon7TUF?usp=sharing"
             target="_blank"
@@ -169,13 +143,22 @@ const Payment = () => {
               I have Entered the Transaction ID or Uploaded the Payment Screenshot
             </label>
           </div>
+        </div>
 
-          {/* Conditional message */}
-          {!isScreenshotUploaded && !transactionId && (
-            <p className="mt-2 text-red-500 text-sm">
-              Please check the checkbox to confirm you've entered the Transaction ID or Uploaded the payment screenshot.
-            </p>
-          )}
+        {/* Cash on Delivery Checkbox */}
+        <div className="bg-white rounded-xl p-6 mb-6 shadow-lg">
+          <input
+            type="checkbox"
+            id="cashOnDeliveryCheckbox"
+            checked={isCashOnDelivery}
+            onChange={() => setIsCashOnDelivery(!isCashOnDelivery)}
+          />
+          <label
+            htmlFor="cashOnDeliveryCheckbox"
+            className="ml-2 text-gray-700"
+          >
+            Cash on Delivery
+          </label>
         </div>
 
         {/* Order Summary */}
@@ -186,22 +169,7 @@ const Payment = () => {
               <span className="text-gray-600">Order Total</span>
               <span className="font-semibold">₹{orderTotal.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Drinks Service Fee (35%)</span>
-              <span className="font-semibold">₹{drinksFee.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Delivery Charges</span>
-              <span className="font-semibold">₹{deliveryCharges.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Platform Fee</span>
-              <span className="font-semibold">₹{platform.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">GST (18%)</span>
-              <span className="font-semibold">₹{gstAmount.toFixed(2)}</span>
-            </div>
+            {/* Other summary details */}
             <div className="pt-4 border-t">
               <div className="flex justify-between items-center">
                 <span className="text-xl font-semibold">Total</span>
@@ -215,7 +183,7 @@ const Payment = () => {
         <button
           onClick={handlePaymentSubmit}
           className="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold text-lg hover:bg-blue-700 transition-colors"
-          disabled={!isScreenshotUploaded && !transactionId}  // Disable button if neither checkbox nor transaction ID is provided
+          disabled={!isScreenshotUploaded && !transactionId && !isCashOnDelivery}
         >
           Submit Payment
         </button>
