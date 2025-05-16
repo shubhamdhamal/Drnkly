@@ -35,7 +35,7 @@ exports.updatePaymentStatus = async (req, res) => {
       orderId,
       {
         paymentStatus: screenshotUploaded ? 'paid' : 'pending', // Set payment status based on checkbox
-        transactionId: transactionId || null, // Save transaction ID if provided
+        transactionId: transactionId || null, // Store transaction ID if provided
       },
       { new: true }
     );
@@ -50,6 +50,7 @@ exports.updatePaymentStatus = async (req, res) => {
     res.status(500).json({ message: 'Error updating payment status', error: error.message });
   }
 };
+
 
 
 
