@@ -215,6 +215,8 @@ function Dashboard() {
                 onClick={() => {
                   if (store.name === "Sunrise Family Garden Restaurant") {
                     navigate('/products?category=Food&restaurant=' + encodeURIComponent(store.name));
+                  } else if (store.name === "PK Wines") {
+                    navigate('/products?category=All&restaurant=' + encodeURIComponent(store.name));
                   } else {
                     navigate('/products?restaurant=' + encodeURIComponent(store.name));
                   }
