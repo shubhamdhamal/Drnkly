@@ -125,7 +125,7 @@ const Payment = () => {
 
         {/* Screenshot Upload Link */}
         <div className="bg-white rounded-xl p-6 mb-6 shadow-lg">
-          <h2 className="text-lg font-semibold mb-4">Payment Screenshot</h2>
+          <h2 className="text-lg font-semibold mb-4">Payment Screenshot (OPTIONAL)</h2>
           <p className="mb-4 text-gray-600">
             Please confirm that you have uploaded the payment screenshot here:
           </p>
