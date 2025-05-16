@@ -36,68 +36,67 @@ const Payment = () => {
   }, []);
 
   const handlePaymentSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const orderId = localStorage.getItem('latestOrderId');
-  if (!orderId) return alert('No order ID found. Please place an order first.');
+    const orderId = localStorage.getItem('latestOrderId');
+    if (!orderId) return alert('No order ID found. Please place an order first.');
 
-  if (!isScreenshotUploaded && !transactionId) {
-    return alert('Please either upload the screenshot or provide the transaction ID.');
-  }
-
-  // Log the data being sent to the backend
-  console.log("Request data being sent:", {
-    screenshotUploaded: isScreenshotUploaded,
-    orderId,
-    transactionId
-  });
-
-  try {
-    // Send the request to backend
-    const res = await axios.put(
-      `https://peghouse.in/api/orders/${orderId}/pay`,
-      {
-        screenshotUploaded: isScreenshotUploaded, // Only send checkbox state
-        paymentProof: isScreenshotUploaded ? 'placeholder.jpg' : '', // Send a dummy payment proof
-        transactionId: transactionId || null, // Send transaction ID if available
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json', // Ensure content-type is correct
-        }
-      }
-    );
-
-    // Log the full response from the server
-    console.log("Response from server:", res.data);
-
-    // Check the response for success
-    if (res.data.message === 'Payment status updated successfully') {
-      // If payment status was successfully updated, consider the payment successful
-      navigate('/order-success');
-    } else {
-      console.error("Payment failed:", res.data);
-      alert('Payment failed. Please try again.');
+    if (!isScreenshotUploaded && !transactionId) {
+      return alert('Please either upload the screenshot or provide the transaction ID.');
     }
-  } catch (err) {
-    // Log the error response
-    console.error('Payment error:', err.response ? err.response.data : err);
-    alert('Something went wrong while submitting payment.');
-  }
-};
 
+    // Log the data being sent to the backend
+    console.log("Request data being sent:", {
+      screenshotUploaded: isScreenshotUploaded,
+      orderId,
+      transactionId
+    });
+
+    try {
+      // Send the request to backend
+      const res = await axios.put(
+        `https://peghouse.in/api/orders/${orderId}/pay`,
+        {
+          screenshotUploaded: isScreenshotUploaded, // Only send checkbox state
+          paymentProof: isScreenshotUploaded ? 'placeholder.jpg' : '', // Send a dummy payment proof
+          transactionId: transactionId || null, // Send transaction ID if available
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json', // Ensure content-type is correct
+          }
+        }
+      );
+
+      // Log the full response from the server
+      console.log("Response from server:", res.data);
+
+      // Check the response for success
+      if (res.data.message === 'Payment status updated successfully') {
+        // If payment status was successfully updated, consider the payment successful
+        navigate('/order-success');
+      } else {
+        console.error("Payment failed:", res.data);
+        alert('Payment failed. Please try again.');
+      }
+    } catch (err) {
+      // Log the error response
+      console.error('Payment error:', err.response ? err.response.data : err);
+      alert('Something went wrong while submitting payment.');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white px-4 py-4 flex items-center">
+      <div className="bg-white px-4 py-4 flex items-center shadow-md">
         <button onClick={() => navigate('/checkout')} className="p-2">
           <ArrowLeft size={24} />
         </button>
         <h1 className="text-2xl font-semibold text-center flex-1">Payment</h1>
       </div>
 
-      <div className="max-w-lg mx-auto px-4 py-6">
+      <div className="max-w-lg mx-auto px-4 py-6 md:px-8 md:py-10">
         {/* QR Section */}
         <div className="mb-6 text-center">
           <h2 className="text-lg font-semibold mb-2">Scan QR to Pay</h2>
@@ -110,7 +109,7 @@ const Payment = () => {
         </div>
 
         {/* Transaction ID Section */}
-        <div className="bg-white rounded-xl p-6 mb-6">
+        <div className="bg-white rounded-xl p-6 mb-6 shadow-lg">
           <h2 className="text-lg font-semibold mb-4">Enter Transaction ID</h2>
           <p className="mb-4 text-gray-600">
             If you don't have Google Access, please enter your transaction ID here:
@@ -125,7 +124,7 @@ const Payment = () => {
         </div>
 
         {/* Screenshot Upload Link */}
-        <div className="bg-white rounded-xl p-6 mb-6">
+        <div className="bg-white rounded-xl p-6 mb-6 shadow-lg">
           <h2 className="text-lg font-semibold mb-4">Payment Screenshot</h2>
           <p className="mb-4 text-gray-600">
             Please confirm that you have uploaded the payment screenshot here:
@@ -149,12 +148,12 @@ const Payment = () => {
               htmlFor="paymentScreenshotCheckbox"
               className="ml-2 text-gray-700"
             >
-              I have Entered the Transaction ID or Uploaded the Payment Screenshot 
+              I have Entered the Transaction ID or Uploaded the Payment Screenshot
             </label>
           </div>
 
           {/* Conditional message */}
-          {!isScreenshotUploaded && (
+          {!isScreenshotUploaded && !transactionId && (
             <p className="mt-2 text-red-500 text-sm">
               Please check the checkbox to confirm you've entered the Transaction ID or Uploaded the payment screenshot.
             </p>
@@ -162,7 +161,7 @@ const Payment = () => {
         </div>
 
         {/* Order Summary */}
-        <div className="bg-white rounded-xl p-6 mb-6">
+        <div className="bg-white rounded-xl p-6 mb-6 shadow-lg">
           <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
           <div className="space-y-4">
             <div className="flex justify-between">
