@@ -154,7 +154,7 @@ exports.updateProduct = async (req, res) => {
       return res.status(404).json({ error: 'Product not found' });
     }
 
-    res.status(200).json(updatedProduct); // Send updated product back to client
+    res.status(200).json({ product: updatedProduct });
   } catch (error) {
     console.error('Error updating product:', error);
     res.status(500).json({ error: 'Error updating product' });
