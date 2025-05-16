@@ -27,20 +27,7 @@ function Products() {
   const [showPriceFilter, setShowPriceFilter] = useState(false);
   const [showBrandFilter, setShowBrandFilter] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-// Update URL when category changes
-  useEffect(() => {
-    if (selectedCategory !== 'all') {
-      navigate(`/products?category=${selectedCategory}`, { replace: true });
-    } else {
-      navigate('/products', { replace: true });
-    }
-  }, [selectedCategory, navigate]);
 
-  // Add console logs to debug category filtering
-  useEffect(() => {
-    console.log('Category from URL:', categoryFromUrl);
-    console.log('Selected Category:', selectedCategory);
-  }, [categoryFromUrl, selectedCategory]);
   // ✅ Fetch products and categories on component mount
   useEffect(() => {
     const fetchData = async () => {
@@ -109,19 +96,11 @@ const userId = localStorage.getItem('userId');
   const filterProducts = () => {
     let filtered = [...products];
 
-if (selectedCategory !== 'all') {
-      filtered = filtered.filter(product => {
-        const productCategory = product.category?.toLowerCase() || '';
-        const selectedCat = selectedCategory.toLowerCase();
-        console.log('Comparing categories:', {
-          product: productCategory,
-          selected: selectedCat,
-          matches: productCategory === selectedCat
-        });
-        return productCategory === selectedCat;
-      });
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(product =>
+        product.category.toLowerCase() === selectedCategory.toLowerCase()
+      );
     }
-    console.log('After category filter:', filtered);
 
     if (selectedBrand !== 'all') {
       filtered = filtered.filter(product => product.brand === selectedBrand);
@@ -149,9 +128,7 @@ if (selectedCategory !== 'all') {
 
     return filtered;
   };
-// Add debug output for rendered products
-  const filteredProducts = filterProducts();
-  console.log('Final filtered products:', filteredProducts);
+
   return (
     <div className="container" style={{ padding: '20px' }}>
       {/* Top Navbar */}
@@ -369,12 +346,7 @@ if (selectedCategory !== 'all') {
           Sort: {sortOrder === 'asc' ? 'Low to High' : 'High to Low'}
         </button>
       </div>
-{/* Add debug info in UI */}
-      <div className="text-sm text-gray-500 mb-4">
-        <p>Current Category: {selectedCategory}</p>
-        <p>Total Products: {products.length}</p>
-        <p>Filtered Products: {filteredProducts.length}</p>
-      </div>
+
       {/* Product Grid */}
       <div style={{ 
         display: 'grid', 
