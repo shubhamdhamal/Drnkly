@@ -130,25 +130,29 @@ const Registration: React.FC = () => {
       return;
     }
   
-    if (step === 5 && verificationStatus === 'verified') {
-      // 🚀 Now submit the API finally
-      const registrationData = {
-        businessName,
-        businessEmail,
-        businessPhone,
-        password,
-        location,
-        productCategories: selectedCategories,
-      };
-  
-      try {
-        const res = await axios.post('https://vendor.peghouse.in/api/vendor/register', registrationData);
-        setVendorId(res.data.vendorId);
-        navigate('/login'); // move to login after successful registration
-      } catch (error: any) {
-        console.error('❌ Registration failed:', error.response?.data || error.message);
-      }
-    }
+    if (step === 5 && !vendorId) {
+  const registrationData = {
+    businessName,
+    businessEmail,
+    businessPhone,
+    password,
+    location,
+    productCategories: selectedCategories,
+  };
+
+  try {
+    const res = await axios.post('https://vendor.peghouse.in/api/vendor/register', registrationData);
+    setVendorId(res.data.vendorId);
+    setVerificationStatus('pending');
+    
+    navigate('/login');
+  } catch (error: any) {
+    console.error('❌ Registration failed:', error.response?.data || error.message);
+  }
+
+  return; // Prevent fallback setStep()
+}
+
   };
   
 
@@ -287,9 +291,10 @@ const Registration: React.FC = () => {
                 </Button>
               )}
               <div className="flex flex-col">
-                <Button type="submit" disabled={step === 5 && verificationStatus !== 'verified'}>
-                  {step === 5 ? 'Complete Registration' : 'Continue'}
-                </Button>
+                <Button type="submit">
+  {step === 5 && !vendorId ? 'Submit Registration' : step === 5 ? 'Waiting for Approval' : 'Continue'}
+</Button>
+
                 {step === 5 && verificationStatus !== 'verified' && (
                   <p className="text-sm text-red-600 mt-2">
                     Admin approval is required to proceed.
