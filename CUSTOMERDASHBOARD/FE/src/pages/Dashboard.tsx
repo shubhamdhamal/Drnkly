@@ -211,7 +211,14 @@ function Dashboard() {
           <h2 className="text-xl font-semibold mb-4">Nearby Stores</h2>
           <div className="grid gap-6">
             {stores.map((store) => (
-              <div key={store.id} className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/products')}>
+              <div key={store.id} className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
+                onClick={() => {
+                  if (store.name === "Sunrise Family Garden Restaurant") {
+                    navigate('/products?category=Food&restaurant=' + encodeURIComponent(store.name));
+                  } else {
+                    navigate('/products?restaurant=' + encodeURIComponent(store.name));
+                  }
+                }}>
                 <div className="sm:flex">
                   <div className="sm:w-48 h-48 sm:h-auto">
                     <img src={store.image} alt={store.name} className="w-full h-full object-cover" />
