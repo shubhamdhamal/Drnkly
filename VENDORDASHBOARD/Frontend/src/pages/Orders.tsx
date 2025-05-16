@@ -13,6 +13,7 @@ interface OrderItem {
 }
 
 interface Order {
+  transactionId: string | null;
   orderNumber: string;
   id: string;
   customerName: string;
@@ -56,6 +57,7 @@ const Orders: React.FC = () => {
           })),
           totalAmount: order.totalAmount || 0,
           paymentStatus: order.paymentStatus || 'pending',
+          transactionId: order.transactionId || '',   // Add this line to fetch transactionId
           paymentProof: order.paymentProof || '',
           createdAt: order.createdAt,
         }));
@@ -88,7 +90,7 @@ const Orders: React.FC = () => {
             Authorization: `Bearer ${token}`,
           },
         }
-      );      
+      );
 
       setOrders((prev) =>
         prev.map((order) =>
@@ -184,21 +186,17 @@ const Orders: React.FC = () => {
                 <strong>Final Total:</strong> ₹{order.totalAmount.toFixed(2)}
               </p>
 
-              {order.paymentProof && (
-                <div style={{ marginTop: '8px' }}>
-                  <strong>Payment Screenshot:</strong>
-                  <img
-                    src={order.paymentProof}
-                    alt="Payment Screenshot"
-                    style={{
-                      width: '140px',
-                      marginTop: '6px',
-                      borderRadius: '8px',
-                      border: '1px solid #ccc',
-                    }}
-                  />
-                </div>
+              {/* Display Transaction ID */}
+              {order.transactionId && (
+                <p style={{ marginTop: '4px', fontSize: '14px' }}>
+                  <strong>Transaction ID:</strong> {order.transactionId}
+                </p>
               )}
+
+              {/* Display Payment Status */}
+              <p style={{ marginTop: '4px', fontSize: '14px' }}>
+                <strong>Payment Status:</strong> {order.paymentStatus}
+              </p>
             </div>
           </div>
 
