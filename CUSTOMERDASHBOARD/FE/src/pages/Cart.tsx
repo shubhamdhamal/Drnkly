@@ -28,13 +28,8 @@ useEffect(() => {
       const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
       const populatedItems = res.data.items.map((item: any) => ({
   ...item,
-  name: item.productId?.name || item.name,
-  price: item.productId?.price || item.price,
-  image: item.productId?.image || item.image,
-  category: item.productId?.category || 'Unknown',
-  liquorType: item.productId?.liquorType || '',
+  category: item.productId?.category || null
 }));
-
 setItems(populatedItems);
 
 
@@ -54,21 +49,33 @@ setItems(populatedItems);
 
 
   // Update quantity in backend
-  const updateQuantity = async (productId: string, quantity: number) => {
-    if (quantity < 1) return;
+const updateQuantity = async (productId: string, quantity: number) => {
+  if (quantity < 1) return;
 
-    try {
-      const res = await axios.put('https://peghouse.in/api/cart/update', {
-        userId,
-        productId,
-        quantity,
-      });
-      setItems(res.data.cart.items);
-      toast.success('Quantity updated');
-    } catch (error) {
-      toast.error('Failed to update quantity');
-    }
-  };
+  try {
+    const res = await axios.put('https://peghouse.in/api/cart/update', {
+      userId,
+      productId,
+      quantity,
+    });
+
+    const updatedItems = res.data.cart.items.map((item: any) => ({
+      ...item,
+      category: item.productId?.category || null,
+      name: item.productId?.name || item.name,
+      image: item.productId?.image || item.image,
+      price: item.productId?.price || item.price,
+      productId: item.productId?._id || item.productId, // normalize
+      quantity: item.quantity
+    }));
+
+    setItems(updatedItems);
+    toast.success('Quantity updated');
+  } catch (error) {
+    toast.error('Failed to update quantity');
+  }
+};
+
 
   // Remove item from cart
   const removeFromCart = async (productId: string) => {
@@ -159,7 +166,10 @@ const drinksFee = items.reduce((sum, item) => {
         <p className="text-sm text-gray-500 capitalize">
           Category: {item.category || 'N/A'}
         </p>
-        <p className="text-lg font-semibold text-gray-900 mt-1">₹{item.price}</p>
+        <p className="text-lg font-semibold text-gray-900 mt-1">
+  ₹{(Number(item.price) * Number(item.quantity)).toFixed(2)}
+</p>
+
 
         {item.category === 'Drinks' && (
           <p className="text-sm text-red-600 mt-1">
