@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, Search, ShoppingCart, X, User, Settings, LogOut, Wine, Sparkles } from 'lucide-react';
+import { Menu, Search, ShoppingCart, X, User, Settings, LogOut, Wine, Sparkles, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -17,7 +17,7 @@ const categories = [
     image: 'https://images.unsplash.com/photo-1452725210141-07dda20225ec?q=80&w=2152&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
   },
   {
-    name: 'Ciggarettes',
+    name: 'Cigarettes',
     image: 'https://images.unsplash.com/photo-1702306455611-e3360e6ffeee?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
   },
   {
@@ -88,11 +88,11 @@ function Dashboard() {
     }, 2000);
     return () => clearInterval(interval);
   }, []);
-  const handleSearchChange = (e) => {
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value); // Update the search query
   };
 
-  const handleSearchSubmit = (e) => {
+  const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/products?search=${searchQuery}`); // Redirect with search query
@@ -268,6 +268,9 @@ function Dashboard() {
               </button>
               <button onClick={() => navigate('/issue-tracking')} className="flex items-center w-full p-3 hover:bg-gray-50 rounded-lg transition-colors">
                 <Sparkles size={20} className="mr-3 text-blue-500" /> Track Issue
+              </button>
+              <button onClick={() => navigate('/blog')} className="flex items-center w-full p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                <BookOpen size={20} className="mr-3 text-[#cd6839]" /> Blog
               </button>
               <button onClick={handleLogout} className="flex items-center w-full p-3 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                 <LogOut size={20} className="mr-3" /> Logout
