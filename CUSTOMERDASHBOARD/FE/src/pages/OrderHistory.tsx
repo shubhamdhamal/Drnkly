@@ -104,7 +104,7 @@ const OrderHistory: React.FC = () => {
                   ))}
                 </ul>
                 <p className={`text-sm font-medium ${order.paymentStatus === 'paid' ? 'text-green-600' : 'text-red-600'}`}>
-                  {order.paymentStatus === 'paid' ? 'Paid' : 'Pending Payment'}
+                  {order.paymentStatus === 'paid' ? 'Paid' : 'CASH ON DELIVERY'}
                 </p>
                 <p className="text-sm text-gray-500">{new Date(order.createdAt).toLocaleString()}</p>
                 <p className="font-bold text-lg mt-1">₹{order.totalAmount.toFixed(2)}</p>
