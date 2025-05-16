@@ -136,7 +136,7 @@ const Payment = () => {
             rel="noopener noreferrer"
             className="text-blue-600 underline"
           >
-            View Payment Screenshot Folder
+            UPLOAD PAYMENT SCREENSHOT HERE
           </a>
           <div className="mt-4">
             <input
@@ -149,14 +149,14 @@ const Payment = () => {
               htmlFor="paymentScreenshotCheckbox"
               className="ml-2 text-gray-700"
             >
-              I have uploaded the payment screenshot
+              I have Entered the Transaction ID or Uploaded the Payment Screenshot 
             </label>
           </div>
 
           {/* Conditional message */}
           {!isScreenshotUploaded && (
             <p className="mt-2 text-red-500 text-sm">
-              Please check the checkbox to confirm you've uploaded the payment screenshot.
+              Please check the checkbox to confirm you've entered the Transaction ID or Uploaded the payment screenshot.
             </p>
           )}
         </div>
