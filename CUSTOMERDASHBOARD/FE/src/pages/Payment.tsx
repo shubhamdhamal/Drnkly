@@ -8,9 +8,9 @@ const Payment = () => {
   const navigate = useNavigate();
   const [items, setItems] = useState<CartItem[]>([]);
   const [isScreenshotUploaded, setIsScreenshotUploaded] = useState(false);
-  const [transactionId, setTransactionId] = useState<string>('');
-  const [isCashOnDelivery, setIsCashOnDelivery] = useState(false); // New state for Cash on Delivery
+  const [transactionId, setTransactionId] = useState<string>(''); // New state for transaction ID
 
+  // 🔁 Fetch vendor cart items
   useEffect(() => {
     const fetchCart = async () => {
       const userId = localStorage.getItem('userId');
@@ -19,6 +19,11 @@ const Payment = () => {
       try {
         const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
         setItems(res.data.items || []);
+
+        // Debug check
+        res.data.items.forEach((item: any, i: number) => {
+          console.log(`Item ${i + 1} Category:`, item.productId?.category);
+        });
       } catch (err) {
         console.error('Cart fetch error:', err);
       }
@@ -27,8 +32,11 @@ const Payment = () => {
     fetchCart();
   }, []);
 
+
+
   const orderTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
+    // Calculate 35% fee on Drinks only
   const drinksFee = items.reduce((sum, item) => {
     const isDrink = item.productId?.category === 'Drinks';
     if (isDrink) {
@@ -43,65 +51,54 @@ const Payment = () => {
   const gstAmount = (orderTotal + drinksFee) * gst / 100;
   const total = orderTotal + drinksFee + deliveryCharges + platform + gstAmount;
 
+
+
   const handlePaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const orderId = localStorage.getItem('latestOrderId');
     if (!orderId) return alert('No order ID found. Please place an order first.');
 
-    // If Cash on Delivery is selected, mark the order as placed without requiring payment details
-    if (isCashOnDelivery) {
-      try {
-        const res = await axios.put(
-          `https://peghouse.in/api/orders/${orderId}/pay`,
-          {
-            paymentMethod: 'Cash on Delivery',
-          },
-          {
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-
-        if (res.data.message === 'Order placed successfully with COD') {
-          navigate('/order-success');
-        } else {
-          alert('Order placement failed. Please try again.');
-        }
-      } catch (err) {
-        console.error('Order placement error:', err.response ? err.response.data : err);
-        alert('Something went wrong while placing your order.');
-      }
-      return;
-    }
-
     if (!isScreenshotUploaded && !transactionId) {
       return alert('Please either upload the screenshot or provide the transaction ID.');
     }
 
+    // Log the data being sent to the backend
+    console.log("Request data being sent:", {
+      screenshotUploaded: isScreenshotUploaded,
+      orderId,
+      transactionId
+    });
+
     try {
+      // Send the request to backend
       const res = await axios.put(
         `https://peghouse.in/api/orders/${orderId}/pay`,
         {
-          screenshotUploaded: isScreenshotUploaded,
-          paymentProof: isScreenshotUploaded ? 'placeholder.jpg' : '',
-          transactionId: transactionId || null,
+          screenshotUploaded: isScreenshotUploaded, // Only send checkbox state
+          paymentProof: isScreenshotUploaded ? 'placeholder.jpg' : '', // Send a dummy payment proof
+          transactionId: transactionId || null, // Send transaction ID if available
         },
         {
           headers: {
-            'Content-Type': 'application/json',
-          },
+            'Content-Type': 'application/json', // Ensure content-type is correct
+          }
         }
       );
 
+      // Log the full response from the server
+      console.log("Response from server:", res.data);
+
+      // Check the response for success
       if (res.data.message === 'Payment status updated successfully') {
+        // If payment status was successfully updated, consider the payment successful
         navigate('/order-success');
       } else {
         console.error("Payment failed:", res.data);
         alert('Payment failed. Please try again.');
       }
     } catch (err) {
+      // Log the error response
       console.error('Payment error:', err.response ? err.response.data : err);
       alert('Something went wrong while submitting payment.');
     }
@@ -109,6 +106,7 @@ const Payment = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Header */}
       <div className="bg-white px-4 py-4 flex items-center shadow-md">
         <button onClick={() => navigate('/checkout')} className="p-2">
           <ArrowLeft size={24} />
@@ -171,22 +169,13 @@ const Payment = () => {
               I have Entered the Transaction ID or Uploaded the Payment Screenshot
             </label>
           </div>
-        </div>
 
-        {/* Cash on Delivery Toggle */}
-        <div className="mb-6">
-          <input
-            type="checkbox"
-            id="cashOnDeliveryCheckbox"
-            checked={isCashOnDelivery}
-            onChange={() => setIsCashOnDelivery(!isCashOnDelivery)}
-          />
-          <label
-            htmlFor="cashOnDeliveryCheckbox"
-            className="ml-2 text-gray-700"
-          >
-            Select Cash on Delivery
-          </label>
+          {/* Conditional message */}
+          {!isScreenshotUploaded && !transactionId && (
+            <p className="mt-2 text-red-500 text-sm">
+              Please check the checkbox to confirm you've entered the Transaction ID or Uploaded the payment screenshot.
+            </p>
+          )}
         </div>
 
         {/* Order Summary */}
@@ -226,7 +215,7 @@ const Payment = () => {
         <button
           onClick={handlePaymentSubmit}
           className="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold text-lg hover:bg-blue-700 transition-colors"
-          disabled={!isCashOnDelivery && !(isScreenshotUploaded || transactionId)}  // Enable if COD or screenshot/transaction ID provided
+          disabled={!isScreenshotUploaded && !transactionId}  // Disable button if neither checkbox nor transaction ID is provided
         >
           Submit Payment
         </button>
