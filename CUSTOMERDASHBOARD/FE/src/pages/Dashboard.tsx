@@ -185,7 +185,11 @@ function Dashboard() {
           <h2 className="text-xl font-semibold mb-4">Categories</h2>
           <div className="grid grid-cols-3 gap-4">
             {categories.map((category) => (
-              <div key={category.name} onClick={() => navigate('/products')} className="relative overflow-hidden rounded-xl cursor-pointer transform hover:scale-105 transition-transform">
+              <div 
+                key={category.name} 
+                onClick={() => navigate(`/products?category=${category.name.toLowerCase()}`)} 
+                className="relative overflow-hidden rounded-xl cursor-pointer transform hover:scale-105 transition-transform"
+              >
                 <img src={category.image} alt={category.name} className="w-full h-32 object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
                   <span className="text-white font-medium">{category.name}</span>
