@@ -41,6 +41,7 @@ exports.registerVendor = async (req, res) => {
       password, // Password will be hashed in the Vendor model before saving
       location,
       productCategories,
+      verificationStatus: 'pending'
     });
 
     // Save the vendor to the database
@@ -123,11 +124,12 @@ exports.loginVendor = async (req, res) => {
   try {
     const { emailOrPhone, password } = req.body;
 
+    // 🔍 Check for input
     if (!emailOrPhone || !password) {
       return res.status(400).json({ error: 'Email/Phone and password are required' });
     }
 
-    // Find vendor by email or phone
+    // 🔍 Find vendor by email or phone
     const vendor = await Vendor.findOne({
       $or: [{ businessEmail: emailOrPhone }, { businessPhone: emailOrPhone }],
     });
@@ -136,16 +138,35 @@ exports.loginVendor = async (req, res) => {
       return res.status(400).json({ error: 'Invalid credentials' });
     }
 
-    // Compare the provided password with the stored hashed password
+    // 🔐 Check password
     const isMatch = await bcrypt.compare(password, vendor.password);
     if (!isMatch) {
       return res.status(400).json({ error: 'Invalid credentials' });
     }
 
-    // Generate JWT token
+    // 🚫 Check verification status
+    if (vendor.verificationStatus === 'pending') {
+      return res.status(403).json({ error: 'Your account is under review by the admin.' });
+    }
+
+    if (vendor.verificationStatus === 'rejected') {
+      return res.status(403).json({ error: 'Your account has been rejected by the admin.' });
+    }
+
+    // ✅ Generate token if verified
     const token = jwt.sign({ vendorId: vendor._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-    res.status(200).json({ token });
+    res.status(200).json({
+      message: 'Login successful',
+      token,
+      vendor: {
+        id: vendor._id,
+        businessName: vendor.businessName,
+        businessEmail: vendor.businessEmail,
+        verificationStatus: vendor.verificationStatus
+      }
+    });
+
   } catch (error) {
     console.error('Error logging in vendor:', error);
     res.status(500).json({ error: 'Internal server error' });
