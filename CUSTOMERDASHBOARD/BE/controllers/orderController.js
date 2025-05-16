@@ -22,7 +22,7 @@ exports.placeOrder = async (req, res) => {
 exports.updatePaymentStatus = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const { screenshotUploaded } = req.body;  // Expecting checkbox value
+    const { screenshotUploaded, transactionId } = req.body;  // Expecting checkbox value and transactionId
 
     console.log("Request body:", req.body); // Log the request body
 
@@ -35,6 +35,7 @@ exports.updatePaymentStatus = async (req, res) => {
       orderId,
       {
         paymentStatus: screenshotUploaded ? 'paid' : 'pending', // Set payment status based on checkbox
+        transactionId: transactionId || null, // Save transaction ID if provided
       },
       { new: true }
     );
@@ -49,6 +50,7 @@ exports.updatePaymentStatus = async (req, res) => {
     res.status(500).json({ message: 'Error updating payment status', error: error.message });
   }
 };
+
 
 
 
