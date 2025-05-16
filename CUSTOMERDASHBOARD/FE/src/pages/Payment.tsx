@@ -112,12 +112,12 @@ const Payment = () => {
         <div className="bg-white rounded-xl p-6 mb-6 shadow-lg">
           <h2 className="text-lg font-semibold mb-4">Enter Transaction ID</h2>
           <p className="mb-4 text-gray-600">
-            If you don't have Google Access, please enter your transaction ID here:
+            Please enter your transaction ID here:
           </p>
           <input
             type="text"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4"
-            placeholder="Transaction ID (Optional)"
+            placeholder="Transaction ID"
             value={transactionId}
             onChange={(e) => setTransactionId(e.target.value)}
           />
