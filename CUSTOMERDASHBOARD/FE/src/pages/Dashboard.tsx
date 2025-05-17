@@ -170,7 +170,7 @@ function Dashboard() {
           className="relative mb-8 rounded-2xl overflow-hidden shadow-md cursor-pointer group"
         >
           <img
-            src="website.png"
+            src="website1.png"
             alt="The Glenwalk Banner"
             className="w-full h-auto object-cover transition-all duration-1000 ease-in-out scale-100 group-hover:scale-105"
           />
