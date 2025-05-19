@@ -14,7 +14,6 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [isTermsChecked, setIsTermsChecked] = useState(false);  // Set default to true to check it by default
 
-
   // New checkboxes states
   const [hasDrinkingLicense, setHasDrinkingLicense] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -22,7 +21,7 @@ function Login() {
   const [isSkipped, setIsSkipped] = useState(false);
   
   // Handle mobile number change and restrict to 10 digits
-  const handleMobileChange = (e) => {
+  const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
 
     // Allow only numbers and restrict the length to 10 digits
@@ -33,9 +32,9 @@ function Login() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
   
-    // Validation for checkboxes
-    if (!hasDrinkingLicense || !agreedToTerms) {
-      setError('Please confirm you have a drinking license and agree to the terms.');
+    // Validation only for Terms agreement
+    if (!agreedToTerms) {
+      setError('Please agree to the Terms & Govt. Regulations.');
       return;
     }
   
@@ -45,15 +44,11 @@ function Login() {
       return;
     }
 
-
-  
     // Validate user input
     if (!password) {
       setError('Please enter your password.');
       return;
     }
-  
-
   
     // Make the API call to login
     try {
@@ -75,6 +70,17 @@ function Login() {
         localStorage.setItem('authToken', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
         localStorage.setItem('userId', response.data.user._id);
+        
+        // Make sure to remove the skipped login flag if it exists
+        localStorage.removeItem('isSkippedLogin');
+        console.log('Login successful, localStorage updated:', { 
+          token: true, 
+          userId: true, 
+          skipped: false 
+        });
+        
+        // Dispatch a storage event to notify other components
+        window.dispatchEvent(new Event('storage'));
   
         // ✅ Location check
         if (localStorage.getItem('locationGranted') === 'true') {
@@ -151,6 +157,24 @@ function Login() {
   };
   const handleSkipLogin = () => {
     setIsSkipped(true);
+    
+    // Clear any existing auth tokens
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('user');
+    
+    // Set the skip login flag
+    localStorage.setItem('isSkippedLogin', 'true');
+    
+    console.log('Login skipped, localStorage updated:', { 
+      token: false, 
+      userId: false, 
+      skipped: true 
+    });
+    
+    // Dispatch a storage event to notify other components
+    window.dispatchEvent(new Event('storage'));
+    
     navigate('/dashboard'); // Navigate directly to dashboard without login
   };
   return (
@@ -188,7 +212,6 @@ function Login() {
                 placeholder="Enter your mobile number"
                 value={mobile}
                 onChange={handleMobileChange}
-
               />
             </div>
 
@@ -214,8 +237,7 @@ function Login() {
   </button>
 </div>
 
-
-            {/* Drinking License */}
+            {/* Drinking License - keep but not mandatory */}
             <div className="flex items-center space-x-2">
               <input
                 type="checkbox"
@@ -229,7 +251,7 @@ function Login() {
               </label>
             </div>
 
-            {/* Terms & Conditions */}
+            {/* Terms & Conditions - mandatory */}
             <div className="flex items-center space-x-2">
               <input
                 type="checkbox"
@@ -271,6 +293,17 @@ function Login() {
             >
               Create Account
             </button>
+          </p>
+          
+          {/* Forgot Password Link */}
+          <p className="mt-2 text-center">
+            <button
+              onClick={() => navigate('/forgot-password')}
+              className="text-[#cd6839] font-semibold hover:underline"
+            >
+              Forgot Password?
+            </button>
+          </p>
             {/* Alcohol Health Warning Banner */}
 <div className="py-4 px-2 flex justify-center items-center">
   <img
@@ -279,7 +312,6 @@ function Login() {
     className="w-[500px] h-[100px] object-cover"
   />
 </div>
-          </p>
         </div>
       </div>
 
@@ -340,7 +372,7 @@ function Login() {
               <p className="text-sm text-gray-700 mb-4">
               6. No Resale or Supply to Minors:The customer must agree not to resell liquor and not to supply it to minors (under 21/25).         </p>
               <p className="text-sm text-gray-700 mb-4">
-              7. Valid ID Proof Required at Delivery:The delivery agent will verify the customer’s original ID at the time of delivery. If ID is not provided, the order will be cancelled. </p> 
+              7. Valid ID Proof Required at Delivery:The delivery agent will verify the customer's original ID at the time of delivery. If ID is not provided, the order will be cancelled. </p> 
               <p className="text-sm text-gray-700 mb-4">
               8. No Returns or Refunds for Sealed Liquor Bottles:Once liquor is sold, returns or refunds are not permitted unless the product is damaged/spoiled (as per excise rules).
               </p>
@@ -378,7 +410,7 @@ function Login() {
             className="mt-1"
           />
           <label className="text-sm text-gray-700">
-            I confirm I’m of legal age and agree to all terms above.
+            I confirm I'm of legal age and agree to all terms above.
           </label>
         </div>
       </div>

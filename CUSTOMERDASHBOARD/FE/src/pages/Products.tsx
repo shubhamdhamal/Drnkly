@@ -1,25 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Wine, Search, ShoppingCart, ChevronDown } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
+interface Category {
+  _id: string;
+  name: string;
+}
+
+interface Product {
+  _id: string;
+  name: string;
+  price: number;
+  image: string;
+  volume: number;
+  category: string;
+  brand: string;
+  alcoholContent?: number;
+}
+
 function Products() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { addToCart } = useCart();
-  interface Product {
-    _id: string;
-    name: string;
-    price: number;
-    image: string;
-    volume: number;
-    category: string;
-    brand: string;
-  }
-
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [priceRange, setPriceRange] = useState<string>('all');
   const [selectedBrand, setSelectedBrand] = useState<string>('all');
@@ -28,7 +35,31 @@ function Products() {
   const [showBrandFilter, setShowBrandFilter] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // ✅ Fetch products and categories on component mount
+  // Handle URL parameters
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const categoryParam = params.get('category');
+    const storeParam = params.get('store');
+    const searchParam = params.get('search');
+
+    if (categoryParam) {
+      setSelectedCategory(categoryParam.toLowerCase());
+    }
+
+    if (storeParam === 'sunrise') {
+      // Add Food category if it doesn't exist
+      if (!categories.some(cat => cat.name === 'Food')) {
+        setCategories(prev => [...prev, { _id: 'food', name: 'Food' }]);
+      }
+      setSelectedCategory('food');
+    }
+
+    if (searchParam) {
+      setSearchQuery(searchParam);
+    }
+  }, [location.search, categories]);
+
+  // Fetch products and categories on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -38,26 +69,29 @@ function Products() {
         ]);
         setProducts(productRes.data);
         setCategories(categoryRes.data);
-      } catch (err) {
-        console.error('Error fetching data:', err);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          console.error('Error fetching data:', err.message);
+        } else {
+          console.error('An unknown error occurred');
+        }
       }
     };
 
     fetchData();
   }, []);
 
-  const handleAddToCart = async (e: React.MouseEvent, product: any) => {
+  const handleAddToCart = async (e: React.MouseEvent, product: Product) => {
     e.stopPropagation();
   
-const userId = localStorage.getItem('userId');
-  if (!userId) {
-    alert('Please log in first');
-    navigate('/login'); // Navigate to login after alert
-    return;
-  }
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      alert('Please log in first');
+      navigate('/login');
+      return;
+    }
   
     try {
-      // Proceed to add the product to the cart
       const res = await axios.post('https://peghouse.in/api/cart/add', {
         userId,
         productId: product._id,
@@ -69,10 +103,13 @@ const userId = localStorage.getItem('userId');
       });
   
       alert(`${product.name} added to cart!`);
-    } catch (error) {
-      // If the error is due to restrictions, show an alert
-      alert(error.response?.data?.message || 'Failed to add to cart');
-      console.error('Cart Error:', error);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        alert(err.message || 'Failed to add to cart');
+      } else {
+        alert('Failed to add to cart');
+      }
+      console.error('Cart Error:', err);
     }
   };
 
@@ -122,9 +159,8 @@ const userId = localStorage.getItem('userId');
       );
     }
 
-    filtered.sort((a, b) =>
-      sortOrder === 'asc' ? a.price - b.price : b.price - a.price
-    );
+    // Sort alphabetically by name
+    filtered.sort((a, b) => a.name.localeCompare(b.name));
 
     return filtered;
   };
@@ -176,7 +212,11 @@ const userId = localStorage.getItem('userId');
           type="text"
           placeholder="Search for drinks..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            setSearchQuery(value);
+            // No need to manually update URL - only update query state
+          }}
           className="w-full pl-10 pr-4 py-3 bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
         />
       </div>

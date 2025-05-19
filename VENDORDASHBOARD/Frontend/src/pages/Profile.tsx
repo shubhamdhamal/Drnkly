@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import Button from '../components/Button';
 import axios from 'axios';
+import { User, BookOpen } from 'lucide-react';
+import NavButton from '../components/NavButton';
+import { useNavigate } from 'react-router-dom';
 
 const Profile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -12,6 +15,8 @@ const Profile: React.FC = () => {
   });
   const [originalData, setOriginalData] = useState(formData);
   const [error, setError] = useState<string | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const navigate = useNavigate();
 
   // Fetch the vendor's profile on component mount
   useEffect(() => {
@@ -51,6 +56,13 @@ const Profile: React.FC = () => {
     };
 
     fetchVendorData();
+  }, []);
+
+  // Check if user is logged in
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    const isSkipped = localStorage.getItem('isSkippedLogin');
+    setIsLoggedIn(!!token && !isSkipped);
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

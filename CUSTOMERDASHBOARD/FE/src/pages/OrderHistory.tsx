@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { X } from 'lucide-react';
 
 interface OrderItem {
   productId: string;
@@ -21,18 +22,48 @@ interface Order {
 }
 
 const OrderHistory: React.FC = () => {
-  const navigate = useNavigate(); // Add this line to define navigate
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTrackingOrderId, setActiveTrackingOrderId] = useState<string | null>(null);  
+  const [activeTrackingOrderId, setActiveTrackingOrderId] = useState<string | null>(null);
+  const [showNotification, setShowNotification] = useState(false);
+  const [newOrder, setNewOrder] = useState<Order | null>(null);
   const userId = localStorage.getItem('userId');
+  const previousOrdersRef = useRef<Order[]>([]);
+
+  // Function to check for new orders
+  const checkForNewOrders = (currentOrders: Order[]) => {
+    if (previousOrdersRef.current.length === 0) {
+      previousOrdersRef.current = currentOrders;
+      return;
+    }
+
+    const latestOrder = currentOrders[0];
+    const previousLatestOrder = previousOrdersRef.current[0];
+
+    if (latestOrder && previousLatestOrder && latestOrder._id !== previousLatestOrder._id) {
+      setNewOrder(latestOrder);
+      setShowNotification(true);
+      
+      // Auto-hide notification after 5 seconds
+      setTimeout(() => {
+        setShowNotification(false);
+      }, 5000);
+    }
+
+    previousOrdersRef.current = currentOrders;
+  };
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
         const res = await axios.get(`https://peghouse.in/api/orders/user/${userId}`);
-        setOrders(res.data.orders);
+        const sortedOrders = res.data.orders.sort((a: Order, b: Order) => 
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        setOrders(sortedOrders);
+        checkForNewOrders(sortedOrders);
       } catch (error) {
         setError('Error fetching orders. Please try again later.');
         console.error('Error fetching orders:', error);
@@ -43,6 +74,9 @@ const OrderHistory: React.FC = () => {
 
     if (userId) {
       fetchOrders();
+      // Set up polling for new orders every 30 seconds
+      const interval = setInterval(fetchOrders, 30000);
+      return () => clearInterval(interval);
     } else {
       setLoading(false);
     }
@@ -64,9 +98,26 @@ const OrderHistory: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-80 px-3 py-">
+      {/* Notification Popup */}
+      {showNotification && newOrder && (
+        <div className="fixed top-4 right-4 bg-green-500 text-white p-4 rounded-lg shadow-lg z-50 transform transition-all duration-300 ease-in-out translate-x-0 opacity-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-bold">New Order Received!</h3>
+              <p>Order #{orders.length} - {newOrder._id.slice(-5)}</p>
+              <p className="text-sm">₹{newOrder.totalAmount.toFixed(2)}</p>
+            </div>
+            <button 
+              onClick={() => setShowNotification(false)}
+              className="ml-4 text-white hover:text-gray-200 transition-colors duration-200"
+            >
+              <X size={20} />
+            </button>
+          </div>
+        </div>
+      )}
 
-
-<div className="flex justify-center mb-6">
+      <div className="flex justify-center mb-6">
 
 <div 
         className="cursor-pointer inline-block"
@@ -91,11 +142,13 @@ const OrderHistory: React.FC = () => {
       ) : orders.length === 0 ? (
         <p className="text-gray-600">No orders found.</p>
       ) : (
-        orders.map((order) => (
+        orders.map((order, index) => (
           <div key={order._id} className="bg-white shadow-sm rounded-lg p-4 mb-4">
             <div className="flex justify-between items-start">
               <div>
-                <h2 className="font-semibold text-gray-800 mb-1">Order #{order._id.slice(-5)}</h2>
+                <h2 className="font-semibold text-gray-800 mb-1">
+                  Order #{orders.length - index} - {order._id.slice(-5)}
+                </h2>
                 <ul className="text-sm text-gray-700 mb-2 list-disc ml-4">
                   {order.items.map((item, idx) => (
                     <li key={idx}>

@@ -15,6 +15,7 @@ import OrderHistory from './pages/OrderHistory';
 import Profile from './pages/Profile';
 import IssueReport from './pages/IssueReport';     // ✅ Already Added
 import IssueTracking from './pages/IssueTracking'; // ✅ NEW
+import Blog from './pages/Blog'; // ✅ Added Blog import
 import Navigation from './components/Navigation';
 import { CartProvider } from './context/CartContext';
 // import ChatBox from './pages/Chatbox'; // Add the ChatBox import
@@ -44,6 +45,7 @@ function App() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/issue-report" element={<IssueReport />} />
               <Route path="/issue-tracking" element={<IssueTracking />} /> {/* ✅ NEW */}
+              <Route path="/blog" element={<Blog />} /> {/* ✅ Added Blog route */}
             </Routes>
           </main>
           {/* Pass the isChatOpen and setIsChatOpen to Navigation component */}

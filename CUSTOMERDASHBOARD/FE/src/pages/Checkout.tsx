@@ -13,19 +13,41 @@ function Checkout() {
     fullName: '',
     phone: '',
     street: '',
-    city: '',
-    state: '',
-    pincode: ''
+    city: 'Pune',
+    state: 'Maharashtra',
+    pincode: '411057'
   });
   const [phoneError, setPhoneError] = useState('');
   const [formError, setFormError] = useState('');
   const userId = localStorage.getItem('userId');
 
+  // Fetch user profile data
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const res = await axios.get(`http://localhost:5000/api/users/${userId}`);
+        if (res.data) {
+          setAddress(prev => ({
+            ...prev,
+            fullName: res.data.name || '',
+            phone: res.data.mobile || ''
+          }));
+        }
+      } catch (err) {
+        console.error('Error fetching user profile:', err);
+      }
+    };
+
+    if (userId) {
+      fetchUserProfile();
+    }
+  }, [userId]);
+
   // 🛒 Fetch Cart Items from Backend
   useEffect(() => {
     const fetchCart = async () => {
       try {
-        const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
+        const res = await axios.get(`http://localhost:5000/api/cart/${userId}`);
         const populatedItems = res.data.items.map((item: any) => ({
   ...item,
   category: item.productId?.category || null
@@ -165,7 +187,7 @@ setItems(populatedItems);
   
     try {
       // 🔁 Step 1: Fetch actual cart from backend
-      const cartRes = await axios.get(`https://peghouse.in/api/cart/${userId}`);
+      const cartRes = await axios.get(`http://localhost:5000/api/cart/${userId}`);
       const cartItems = cartRes.data.items;
   
       if (!cartItems || cartItems.length === 0) {
@@ -198,13 +220,18 @@ setItems(populatedItems);
       
   
       // 🧾 Step 3: Place order
-      const res = await axios.post('https://peghouse.in/api/orders', {
+      const res = await axios.post('http://localhost:5000/api/orders', {
         userId,
         items: formattedItems,
         address,
         totalAmount
       });
-  
+
+      // Clear the cart after successful order placement
+      await axios.delete('http://localhost/api/cart/clear', {
+        data: { userId }
+      });
+
       localStorage.setItem('latestOrderId', res.data.order._id);
       navigate('/payment');
     } catch (error) {

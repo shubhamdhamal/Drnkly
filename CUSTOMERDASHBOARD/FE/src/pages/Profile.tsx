@@ -565,47 +565,82 @@ const Profile = () => {
               >
                 <ChevronRight className="h-6 w-6 transform rotate-180" />
               </button>
-              <h2 className="text-2xl font-semibold">Terms & Conditions</h2>
+              <h2 className="text-2xl font-semibold">Terms & Regulations</h2>
             </div>
-            <div className="space-y-6">
+            <div className="space-y-6 overflow-y-auto max-h-[70vh]">
               <section>
-                <h3 className="text-xl font-semibold mb-3">Eligibility</h3>
-                <ul className="space-y-2 text-gray-700">
-                  <li>• Only users above 18 years of age are allowed to use this platform.</li>
-                  <li>• Valid government ID proof is mandatory for account creation and delivery.</li>
+                <h3 className="text-xl font-semibold mb-3">Terms & Conditions:</h3>
+                <ul className="space-y-4 text-gray-700">
+                  <li>
+                    <p><strong>1. Age Verification & Legal Drinking Age:</strong> The customer must confirm they are 21 years or older (Hard Liquor Prohibited) or 25 years or older (for All liquor) as per Maharashtra excise rules. Age verification via government ID (Aadhaar, PAN, Driving License, Passport) is mandatory before delivery.</p>
+                  </li>
+                  
+                  <li>
+                    <p><strong>2. Prohibition of Sale to Intoxicated Persons:</strong> Liquor will not be delivered to anyone who appears intoxicated at the time of delivery.</p>
+                  </li>
+                  
+                  <li>
+                    <p><strong>3. Prohibition of Sale in Dry Areas:</strong> Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone.</p>
+                  </li>
+                  
+                  <li>
+                    <p><strong>4. Restricted Timings for Sale & Delivery:</strong> Liquor delivery is allowed only during permitted hours (typically 11 AM to 11 PM in most areas, subject to local regulations).</p>
+                  </li>
+                  
+                  <li>
+                    <p><strong>5. Quantity Restrictions:</strong> Customers cannot purchase beyond the permissible limit (e.g., 3 liters of IMFL or 9 liters of beer per person per transaction). Bulk purchases may require additional permits.</p>
+                  </li>
+                  
+                  <li>
+                    <p><strong>6. No Resale or Supply to Minors:</strong> The customer must agree not to resell liquor and not to supply it to minors (under 21/25).</p>
+                  </li>
+                  
+                  <li>
+                    <p><strong>7. Valid ID Proof Required at Delivery:</strong> The delivery agent will verify the customer's original ID at the time of delivery. If ID is not provided, the order will be cancelled.</p>
+                  </li>
+                  
+                  <li>
+                    <p><strong>8. No Returns or Refunds for Sealed Liquor Bottles:</strong> Once liquor is sold, returns or refunds are not permitted unless the product is damaged/spoiled (as per excise rules).</p>
+                  </li>
+                  
+                  <li>
+                    <p><strong>9. Compliance with Local Municipal & Police Regulations:</strong> The customer must ensure that liquor consumption at their location complies with local laws (e.g., no consumption in public places).</p>
+                  </li>
+                  
+                  <li>
+                    <p><strong>10. Liability Disclaimer:</strong> The business is not responsible for misuse, overconsumption, or illegal resale by the customer.</p>
+                  </li>
+                  
+                  <li>
+                    <p><strong>11. Right to Refuse Service:</strong> The business reserves the right to cancel orders if: The customer fails age verification. The delivery location is in a dry area or restricted zone. Suspicion of fraudulent activity.</p>
+                  </li>
+                  
+                  <li>
+                    <p><strong>12. Data Privacy & Use of Customer Information:</strong> Customer ID and personal data will be stored as per excise department requirements and may be shared with authorities if required.</p>
+                  </li>
+                  
+                  <li>
+                    <p><strong>13. Mandatory Compliance with Maharashtra Excise Laws:</strong> The customer agrees that the sale is governed by the Maharashtra Prohibition Act, 1949, and any violation may lead to legal action.</p>
+                  </li>
                 </ul>
               </section>
               
               <section>
-                <h3 className="text-xl font-semibold mb-3">Account Registration</h3>
-                <ul className="space-y-2 text-gray-700">
-                  <li>• Users must provide accurate, complete, and up-to-date information.</li>
-                  <li>• You are responsible for maintaining the confidentiality of your login credentials.</li>
+                <h3 className="text-xl font-semibold mb-3">Government Rules & Excise Acts:</h3>
+                <ul className="list-disc pl-5">
+                  <li>✔ Maharashtra: Age 21</li>
+                  <li>✔ Delhi: Age 25</li>
+                  <li>✔ Karnataka: Age 21</li>
+                  <li>✔ Tamil Nadu: Only TASMAC allowed</li>
+                  <li>✔ Gujarat: Alcohol banned</li>
+                  <li>✔ Telangana: Excise Act applies</li>
                 </ul>
               </section>
               
-              <section>
-                <h3 className="text-xl font-semibold mb-3">Order Acceptance & Cancellation</h3>
-                <ul className="space-y-2 text-gray-700">
-                  <li>• Orders are accepted subject to availability and local laws.</li>
-                  <li>• The company reserves the right to cancel any order with or without notice.</li>
-                </ul>
-              </section>
-              
-              <section>
-                <h3 className="text-xl font-semibold mb-3">Delivery Terms</h3>
-                <ul className="space-y-2 text-gray-700">
-                  <li>• Delivery is subject to age verification and address validation.</li>
-                  <li>• In case of failure to verify age, the order will be cancelled.</li>
-                </ul>
-              </section>
-              
-              <section>
-                <h3 className="text-xl font-semibold mb-3">Payment Terms</h3>
-                <ul className="space-y-2 text-gray-700">
-                  <li>• All payments must be made via approved payment gateways.</li>
-                  <li>• Orders are processed only after successful payment confirmation.</li>
-                </ul>
+              <section className="text-center mt-6">
+                <p className="text-lg text-red-600 font-semibold">
+                  🚭 तुमच्या कुटुंबासाठी मद्यपान आणि धूम्रपान सोडा – आरोग्य हाच खरा धन आहे 
+                </p>
               </section>
             </div>
           </div>
@@ -622,41 +657,184 @@ const Profile = () => {
               </button>
               <h2 className="text-2xl font-semibold">Government Rules & Regulations</h2>
             </div>
-            <div className="space-y-6">
+            <div className="space-y-6 overflow-y-auto max-h-[70vh]">
               <section>
-                <h3 className="text-xl font-semibold mb-3">Licensing & Legal Authorization</h3>
-                <ul className="space-y-2 text-gray-700">
-                  <li>• We operate under valid liquor licenses issued by state excise departments.</li>
-                  <li>• Sales and delivery are restricted to authorized regions only.</li>
+                <h3 className="text-xl font-semibold mb-3">Government Rules & Regulations</h3>
+                <ul className="space-y-4 text-gray-700">
+                  <li>
+                    <p><strong>1. Age Verification & Legal Drinking Age</strong></p>
+                    <p className="ml-6">The customer must confirm they are 21 years or older (Hard Liquor Prohibited) or 25 years or older (for All liquor) as per Maharashtra excise rules.</p>
+                    <p className="ml-6">Age verification via government ID (Aadhaar, PAN, Driving License, Passport) is mandatory before delivery.</p>
+                  </li>
+                  
+                  <li>
+                    <p><strong>2. Prohibition of Sale to Intoxicated Persons</strong></p>
+                    <p className="ml-6">Liquor will not be delivered to anyone who appears intoxicated at the time of delivery.</p>
+                  </li>
+                  
+                  <li>
+                    <p><strong>3. Prohibition of Sale in Dry Areas</strong></p>
+                    <p className="ml-6">Liquor cannot be sold or delivered in dry areas (where prohibition is enforced). The customer must confirm their delivery location is not in a dry zone.</p>
+                  </li>
+                  
+                  <li>
+                    <p><strong>4. Restricted Timings for Sale & Delivery</strong></p>
+                    <p className="ml-6">Liquor delivery is allowed only during permitted hours (typically 11 AM to 11 PM in most areas, subject to local regulations).</p>
+                  </li>
+                  
+                  <li>
+                    <p><strong>5. Quantity Restrictions</strong></p>
+                    <p className="ml-6">Customers cannot purchase beyond the permissible limit (e.g., 3 liters of IMFL or 9 liters of beer per person per transaction). Bulk purchases may require additional permits.</p>
+                  </li>
+                  
+                  <li>
+                    <p><strong>6. No Resale or Supply to Minors</strong></p>
+                    <p className="ml-6">The customer must agree not to resell liquor and not to supply it to minors (under 21/25).</p>
+                  </li>
+                  
+                  <li>
+                    <p><strong>7. Valid ID Proof Required at Delivery</strong></p>
+                    <p className="ml-6">The delivery agent will verify the customer's original ID at the time of delivery. If ID is not provided, the order will be cancelled.</p>
+                  </li>
+                  
+                  <li>
+                    <p><strong>8. No Returns or Refunds for Sealed Liquor Bottles</strong></p>
+                    <p className="ml-6">Once liquor is sold, returns or refunds are not permitted unless the product is damaged/spoiled (as per excise rules).</p>
+                  </li>
+                  
+                  <li>
+                    <p><strong>9. Compliance with Local Municipal & Police Regulations</strong></p>
+                    <p className="ml-6">The customer must ensure that liquor consumption at their location complies with local laws (e.g., no consumption in public places).</p>
+                  </li>
+                  
+                  <li>
+                    <p><strong>10. Liability Disclaimer</strong></p>
+                    <p className="ml-6">The business is not responsible for misuse, overconsumption, or illegal resale by the customer.</p>
+                  </li>
+                  
+                  <li>
+                    <p><strong>11. Right to Refuse Service</strong></p>
+                    <p className="ml-6">The business reserves the right to cancel orders if:</p>
+                    <p className="ml-12">The customer fails age verification.</p>
+                    <p className="ml-12">The delivery location is in a dry area or restricted zone.</p>
+                    <p className="ml-12">Suspicion of fraudulent activity.</p>
+                  </li>
+                  
+                  <li>
+                    <p><strong>12. Data Privacy & Use of Customer Information</strong></p>
+                    <p className="ml-6">Customer ID and personal data will be stored as per excise department requirements and may be shared with authorities if required.</p>
+                  </li>
+                  
+                  <li>
+                    <p><strong>13. Mandatory Compliance with Maharashtra Excise Laws</strong></p>
+                    <p className="ml-6">The customer agrees that the sale is governed by the Maharashtra Prohibition Act, 1949, and any violation may lead to legal action.</p>
+                  </li>
                 </ul>
               </section>
               
               <section>
-                <h3 className="text-xl font-semibold mb-3">Age Verification & Prohibited Sales</h3>
-                <ul className="space-y-2 text-gray-700">
-                  <li>• Minimum age requirement: 21 years</li>
-                  <li>• Valid government ID mandatory</li>
-                  <li>• No sales to intoxicated individuals</li>
-                  <li>• No delivery in prohibited states</li>
+                <h3 className="text-xl font-semibold mb-3">Declaration</h3>
+                <p className="text-gray-700 font-medium p-4 bg-gray-100 rounded-lg border border-gray-300">
+                  "I confirm that I am above the legal drinking age, my delivery location is not in a dry area, and I agree to the Terms & Conditions."
+                </p>
+              </section>
+              
+              <section>
+                <h3 className="text-xl font-semibold mb-3">State-Wise Legal Drinking Age</h3>
+                <ul className="list-disc pl-5 text-gray-700">
+                  <li>✔ Maharashtra: Age 21</li>
+                  <li>✔ Delhi: Age 25</li>
+                  <li>✔ Karnataka: Age 21</li>
+                  <li>✔ Tamil Nadu: Only TASMAC allowed</li>
+                  <li>✔ Gujarat: Alcohol banned</li>
+                  <li>✔ Telangana: Excise Act applies</li>
+                </ul>
+              </section>
+              
+              <section className="text-center mt-6">
+                <p className="text-lg text-red-600 font-semibold">
+                  🚭 तुमच्या कुटुंबासाठी मद्यपान आणि धूम्रपान सोडा – आरोग्य हाच खरा धन आहे 
+                </p>
+              </section>
+            </div>
+          </div>
+        );
+      case 'about':
+        return (
+          <div className="p-6">
+            <div className="flex items-center mb-6">
+              <button 
+                onClick={() => setActiveTab('profile')} 
+                className="mr-3 hover:bg-gray-100 p-2 rounded-full transition-colors"
+              >
+                <ChevronRight className="h-6 w-6 transform rotate-180" />
+              </button>
+              <h2 className="text-2xl font-semibold">About Us</h2>
+            </div>
+            <div className="space-y-6 overflow-y-auto max-h-[70vh]">
+              <section>
+                <h3 className="text-xl font-semibold mb-3">Drnkly - Your Favorite Drinks, Delivered</h3>
+                <div className="mb-6">
+                  <img 
+                    src="/finallogo.png" 
+                    alt="Drnkly Logo" 
+                    className="h-28 object-contain mx-auto mb-4" 
+                  />
+                </div>
+                <p className="text-gray-700 mb-4">
+                  Drnkly is Pune's premier alcohol delivery platform, designed to bring your favorite drinks directly to your doorstep with just a few taps. We believe in responsible drinking and convenient access to quality beverages.
+                </p>
+              </section>
+              
+              <section>
+                <h3 className="text-xl font-semibold mb-3">Our Mission</h3>
+                <p className="text-gray-700 mb-4">
+                  To provide a safe, legal, and convenient way for adults to purchase alcoholic beverages while strictly adhering to government regulations and promoting responsible consumption.
+                </p>
+              </section>
+              
+              <section>
+                <h3 className="text-xl font-semibold mb-3">What We Offer</h3>
+                <ul className="list-disc pl-5 text-gray-700 space-y-2">
+                  <li>Wide selection of alcoholic beverages including whisky, beer, wine and more</li>
+                  <li>Verified quality products sourced directly from authorized dealers</li>
+                  <li>Fast and reliable delivery within permitted hours</li>
+                  <li>Secure payment options</li>
+                  <li>Age verification and strict compliance with excise laws</li>
                 </ul>
               </section>
               
               <section>
-                <h3 className="text-xl font-semibold mb-3">Delivery Compliance</h3>
-                <ul className="space-y-2 text-gray-700">
-                  <li>• Delivery only to registered address</li>
-                  <li>• Personal acceptance required</li>
-                  <li>• Digital transaction records maintained</li>
-                </ul>
+                <h3 className="text-xl font-semibold mb-3">Our Partners</h3>
+                <p className="text-gray-700 mb-4">
+                  We're proud to partner with authorized retailers like PK Wines and Sunrise Family Garden Restaurant to ensure you receive only authentic products with proper documentation.
+                </p>
+                <div className="flex flex-wrap gap-4 justify-center">
+                  <div className="border rounded-lg p-2 w-32 h-32 flex items-center justify-center">
+                    <p className="text-center font-semibold">PK Wines</p>
+                  </div>
+                  <div className="border rounded-lg p-2 w-32 h-32 flex items-center justify-center">
+                    <p className="text-center font-semibold">Sunrise Family Garden Restaurant</p>
+                  </div>
+                </div>
               </section>
               
               <section>
-                <h3 className="text-xl font-semibold mb-3">Data Privacy</h3>
-                <ul className="space-y-2 text-gray-700">
-                  <li>• Compliance with IT Act (2000)</li>
-                  <li>• Digital Personal Data Protection Act (2023)</li>
-                  <li>• Secure handling of customer data</li>
+                <h3 className="text-xl font-semibold mb-3">Contact Information</h3>
+                <p className="text-gray-700">
+                  Have questions? Get in touch with us:
+                </p>
+                <ul className="text-gray-700 space-y-2 mt-2">
+                  <li><strong>Email:</strong> support@drnkly.com</li>
+                  <li><strong>Phone:</strong> +91 1234567890</li>
+                  <li><strong>Hours:</strong> 11:00 AM - 11:00 PM</li>
                 </ul>
+              </section>
+              
+              <section className="text-center mt-6">
+                <p className="text-lg text-red-600 font-semibold">
+                  🚭 तुमच्या कुटुंबासाठी मद्यपान आणि धूम्रपान सोडा – आरोग्य हाच खरा धन आहे 
+                </p>
               </section>
             </div>
           </div>
@@ -695,8 +873,8 @@ const Profile = () => {
               />
                <MenuItem 
                 icon={<User className="w-5 h-5 text-gray-700" />} 
-                label="Profile" 
-                onClick={() => setActiveTab('profile')}
+                label="About Us" 
+                onClick={() => setActiveTab('about')}
               />
             </div>
             

@@ -56,10 +56,14 @@ function Dashboard() {
       try {
         const token = localStorage.getItem('authToken'); // ✅ correct token key
         const userId = localStorage.getItem('userId');
+        const isSkipped = localStorage.getItem('isSkippedLogin'); 
+        
+        // Only consider logged in if token exists AND not skipped login
+        const loginStatus = !!token && !isSkipped;
+        console.log('Dashboard login check:', { token: !!token, userId: !!userId, isSkipped: !!isSkipped, loginStatus });
+        setIsLoggedIn(loginStatus);
   
-        if (token && userId) {
-          setIsLoggedIn(true);
-  
+        if (token && userId && loginStatus) {
           const response = await axios.get(`https://peghouse.in/api/users/${userId}`, {
             headers: {
               Authorization: `Bearer ${token}`, // ✅ SEND token properly
@@ -75,6 +79,14 @@ function Dashboard() {
     };
   
     fetchUserName();
+    
+    // Also listen for changes to localStorage (e.g., from other tabs/components)
+    const handleStorageChange = () => {
+      fetchUserName();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
   
   
@@ -89,14 +101,14 @@ function Dashboard() {
     return () => clearInterval(interval);
   }, []);
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value); // Update the search query
+    const value = e.target.value;
+    setSearchQuery(value);
+    // Redirect immediately when typing
+    navigate(`/products?search=${encodeURIComponent(value)}`);
   };
 
   const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/products?search=${searchQuery}`); // Redirect with search query
-    }
   };
   return (
     <div className="min-h-screen bg-gray-50">
@@ -156,7 +168,7 @@ function Dashboard() {
                 type="text"
                 placeholder="Search for drinks..."
                 value={searchQuery}
-                onChange={handleSearchChange} // Update search query on change
+                onChange={handleSearchChange}
                 className="w-full pl-10 pr-4 py-3 bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
               />
             </div>
@@ -211,7 +223,14 @@ function Dashboard() {
           <h2 className="text-xl font-semibold mb-4">Nearby Stores</h2>
           <div className="grid gap-6">
             {stores.map((store) => (
-              <div key={store.id} className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/products')}>
+              <div key={store.id} className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
+                onClick={() => {
+                  if (store.name === "PK Wines") {
+                    navigate('/products?store=pkwines');
+                  } else if (store.name === "Sunrise Family Garden Restaurant") {
+                    navigate('/products?store=sunrise&category=Food');
+                  }
+                }}>
                 <div className="sm:flex">
                   <div className="sm:w-48 h-48 sm:h-auto">
                     <img src={store.image} alt={store.name} className="w-full h-full object-cover" />
@@ -264,9 +283,15 @@ function Dashboard() {
             </div>
 
             <div className="space-y-4">
-              <button onClick={() => navigate('/profile')} className="flex items-center w-full p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                <User size={20} className="mr-3" /> My Profile
-              </button>
+              {isLoggedIn ? (
+                <button onClick={() => navigate('/profile')} className="flex items-center w-full p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                  <User size={20} className="mr-3" /> My Profile
+                </button>
+              ) : (
+                <button onClick={() => navigate('/blog')} className="flex items-center w-full p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                  <BookOpen size={20} className="mr-3 text-[#cd6839]" /> Blog
+                </button>
+              )}
               <button onClick={() => navigate('/order-history')} className="flex items-center w-full p-3 hover:bg-gray-50 rounded-lg transition-colors">
                 <Settings size={20} className="mr-3" /> Order History
               </button>
@@ -276,12 +301,16 @@ function Dashboard() {
               <button onClick={() => navigate('/issue-tracking')} className="flex items-center w-full p-3 hover:bg-gray-50 rounded-lg transition-colors">
                 <Sparkles size={20} className="mr-3 text-blue-500" /> Track Issue
               </button>
-              <button onClick={() => navigate('/blog')} className="flex items-center w-full p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                <BookOpen size={20} className="mr-3 text-[#cd6839]" /> Blog
-              </button>
-              <button onClick={handleLogout} className="flex items-center w-full p-3 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                <LogOut size={20} className="mr-3" /> Logout
-              </button>
+              
+              {isLoggedIn ? (
+                <button onClick={handleLogout} className="flex items-center w-full p-3 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                  <LogOut size={20} className="mr-3" /> Logout
+                </button>
+              ) : (
+                <button onClick={() => navigate('/login')} className="flex items-center w-full p-3 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
+                  <LogOut size={20} className="mr-3" /> Login
+                </button>
+              )}
             </div>
           </div>
         </div>

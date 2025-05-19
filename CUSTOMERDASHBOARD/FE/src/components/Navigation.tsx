@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Home,
@@ -7,6 +7,7 @@ import {
   User,
   Clock,
   ChevronRight,
+  BookOpen
 } from 'lucide-react';
 
 
@@ -19,6 +20,28 @@ interface NavigationProps {
 const Navigation: React.FC<NavigationProps> = ({ isChatOpen, setIsChatOpen }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Check if user is logged in
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    const isSkipped = localStorage.getItem('isSkippedLogin');
+    const loginStatus = !!token && !isSkipped;
+    console.log('Navigation login check:', { token: !!token, isSkipped: !!isSkipped, loginStatus });
+    setIsLoggedIn(loginStatus);
+    
+    // Listen for changes to localStorage
+    const handleStorageChange = () => {
+      const updatedToken = localStorage.getItem('authToken');
+      const updatedSkipped = localStorage.getItem('isSkippedLogin');
+      const updatedStatus = !!updatedToken && !updatedSkipped;
+      console.log('Storage changed:', { token: !!updatedToken, isSkipped: !!updatedSkipped, loginStatus: updatedStatus });
+      setIsLoggedIn(updatedStatus);
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const hiddenPaths = ['/', '/signup', '/login', '/verify-age'];
 
@@ -67,12 +90,21 @@ const Navigation: React.FC<NavigationProps> = ({ isChatOpen, setIsChatOpen }) =>
             isActive={isActive('/order-history')}
             onClick={() => handleNavClick('/order-history')}
           />
-          <NavButton
-            icon={<User size={24} />}
-            label="Profile"
-            isActive={isActive('/profile')}
-            onClick={() => handleNavClick('/profile')}
-          />
+          {isLoggedIn ? (
+            <NavButton
+              icon={<User size={24} />}
+              label="Profile"
+              isActive={isActive('/profile')}
+              onClick={() => handleNavClick('/profile')}
+            />
+          ) : (
+            <NavButton
+              icon={<BookOpen size={24} />}
+              label="Blog"
+              isActive={isActive('/blog')}
+              onClick={() => handleNavClick('/blog')}
+            />
+          )}
         </div>
         <div className="py-1 text-center text-red-500 text-sm font-semibold">
         🚭 तुमच्या कुटुंबासाठी मद्यपान आणि धूम्रपान सोडा 🚯
