@@ -394,7 +394,9 @@ const userId = localStorage.getItem('userId');
               </div>
               <h3 style={{ margin: '10px 0', fontSize: '16px' }}>{product.name}</h3>
               <p style={{ color: '#666', margin: '5px 0' }}>{product.brand}</p>
-              <p style={{ color: '#666', margin: '5px 0' }}>{product.volume} ml</p>
+              {!['snacks', 'cigarette', 'glasses & plates'].includes(product.category.toLowerCase()) && (
+  <p style={{ color: '#666', margin: '5px 0' }}>{product.volume} ml</p>
+)}
               <p style={{ color: '#666', margin: '5px 0' }}>₹{product.price}</p>
             </div>
             
