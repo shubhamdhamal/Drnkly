@@ -5,14 +5,16 @@ exports.addToCart = async (req, res) => {
   const { userId, productId, name, price, image } = req.body;
 
   try {
-    let cart = await Cart.findOne({ userId }).populate('items.productId');
-    const newProduct = await Product.findById(productId);
-    if (!newProduct) {
+    // Find cart for user
+    let cart = await Cart.findOne({ userId });
+
+    // Check product exists
+    const product = await Product.findById(productId);
+    if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    const newLiquorType = newProduct.liquorType;
-
+    // If cart doesn't exist, create new cart with this product
     if (!cart) {
       const newCart = await Cart.create({
         userId,
@@ -21,78 +23,29 @@ exports.addToCart = async (req, res) => {
       return res.status(201).json({ message: 'Cart created', cart: newCart });
     }
 
-    let hardLiquorCount = 0;
-    let mildLiquorCount = 0;
-    let existingItem = null;
+    // Check if product already in cart
+    const existingItem = cart.items.find(item => item.productId.toString() === productId);
 
-    // Count current quantities (excluding the current product if already in cart)
-    cart.items.forEach(item => {
-      const type = item.productId.liquorType;
-      const qty = item.quantity;
-      const isSameProduct = item.productId._id.toString() === productId;
-
-      if (isSameProduct) {
-        existingItem = item;
-        return;
-      }
-
-      if (type === 'Hard Liquor') hardLiquorCount += qty;
-      if (type === 'Mild Liquor') mildLiquorCount += qty;
-    });
-
-    // Add +1 to respective type
-    const addQty = 1;
-    const futureHard = newLiquorType === 'Hard Liquor'
-      ? hardLiquorCount + addQty + (existingItem && existingItem.productId.liquorType === 'Hard Liquor' ? existingItem.quantity : 0)
-      : hardLiquorCount + (existingItem && existingItem.productId.liquorType === 'Hard Liquor' ? existingItem.quantity : 0);
-
-    const futureMild = newLiquorType === 'Mild Liquor'
-      ? mildLiquorCount + addQty + (existingItem && existingItem.productId.liquorType === 'Mild Liquor' ? existingItem.quantity : 0)
-      : mildLiquorCount + (existingItem && existingItem.productId.liquorType === 'Mild Liquor' ? existingItem.quantity : 0);
-
-    // ❌ BLOCKERS — BEFORE mutation
-    if (hardLiquorCount === 2 && newLiquorType === 'Mild Liquor') {
-      return res.status(400).json({ message: '❌ Cannot add Mild Liquor when 2 Hard Liquors already in cart.' });
-    }
-
-    if (mildLiquorCount === 12 && newLiquorType === 'Hard Liquor') {
-      return res.status(400).json({ message: '❌ Cannot add Hard Liquor when 12 Mild Liquors already in cart.' });
-    }
-
-    if (futureHard > 2) {
-      return res.status(400).json({ message: '❌ Max 2 Hard Liquors allowed.' });
-    }
-
-    if (futureMild > 12) {
-      return res.status(400).json({ message: '❌ Max 12 Mild Liquors allowed.' });
-    }
-
-    if (futureHard === 1 && futureMild > 6) {
-      return res.status(400).json({ message: '❌ Only 1 Hard + up to 6 Mild allowed.' });
-    }
-
-    if (futureHard === 2 && futureMild > 0) {
-      return res.status(400).json({ message: '❌ Cannot mix 2 Hard with any Mild Liquor.' });
-    }
-
-    // ✅ PASS — Proceed to update cart
     if (existingItem) {
+      // If exists, increment quantity by 1
       existingItem.quantity += 1;
     } else {
+      // Else, add new item with quantity 1
       cart.items.push({ productId, name, price, image, quantity: 1 });
     }
 
+    // Save updated cart
     await cart.save();
-    return res.status(200).json({ message: '✅ Cart updated', cart });
+
+    return res.status(200).json({ message: 'Cart updated', cart });
 
   } catch (error) {
     console.error('Error adding to cart:', error);
     return res.status(500).json({ message: 'Error adding to cart', error: error.message });
   }
+
+
 };
-
-
-
 
 
 
@@ -116,7 +69,6 @@ exports.getUserCart = async (req, res) => {
 
 
 // Update quantity
-// Update quantity
 exports.updateQuantity = async (req, res) => {
   const { userId, productId, quantity } = req.body;
 
@@ -127,55 +79,15 @@ exports.updateQuantity = async (req, res) => {
     const itemToUpdate = cart.items.find(item => item.productId._id.toString() === productId);
     if (!itemToUpdate) return res.status(404).json({ message: 'Item not found in cart' });
 
-    const product = itemToUpdate.productId;
-    const currentQty = itemToUpdate.quantity;
-
-    if (quantity === currentQty) {
+    if (itemToUpdate.quantity === quantity) {
       return res.status(200).json({ message: 'No change', cart });
     }
 
-    // ✅ Skip restrictions for non-Drinks category
-    if (product.category !== 'Drinks') {
-      itemToUpdate.quantity = quantity;
-      await cart.save();
-      return res.status(200).json({ message: '✅ Quantity updated (non-Drinks)', cart });
-    }
-
-    // 🔒 Apply restrictions only for Drinks
-    const newLiquorType = product.liquorType;
-
-    let hardLiquorCount = 0;
-    let mildLiquorCount = 0;
-
-    cart.items.forEach(item => {
-      if (item.productId._id.toString() === productId) return;
-      if (item.productId.category !== 'Drinks') return; // skip non-Drinks
-      const type = item.productId.liquorType;
-      if (type === 'Hard Liquor') hardLiquorCount += item.quantity;
-      else if (type === 'Mild Liquor') mildLiquorCount += item.quantity;
-    });
-
-    const futureHard = newLiquorType === 'Hard Liquor' ? hardLiquorCount + quantity : hardLiquorCount;
-    const futureMild = newLiquorType === 'Mild Liquor' ? mildLiquorCount + quantity : mildLiquorCount;
-
-    // 🔒 Restrictions
-    if (futureHard > 2) {
-      return res.status(400).json({ message: '❌ Max 2 Hard Liquors allowed.' });
-    }
-    if (futureHard === 2 && futureMild > 0) {
-      return res.status(400).json({ message: '❌ Cannot mix Mild with 2 Hard Liquors.' });
-    }
-    if (futureHard === 1 && futureMild > 6) {
-      return res.status(400).json({ message: '❌ Only 1 Hard + up to 6 Mild allowed.' });
-    }
-    if (futureHard === 0 && futureMild > 12) {
-      return res.status(400).json({ message: '❌ Max 12 Mild Liquors allowed.' });
-    }
-
-    // ✅ Passed all checks
+    // Simply update quantity without any checks
     itemToUpdate.quantity = quantity;
     await cart.save();
-    return res.status(200).json({ message: '✅ Quantity updated (Drinks)', cart });
+
+    return res.status(200).json({ message: 'Quantity updated', cart });
 
   } catch (error) {
     console.error('Error updating quantity:', error);
