@@ -13,13 +13,35 @@ function Checkout() {
     fullName: '',
     phone: '',
     street: '',
-    city: '',
-    state: '',
-    pincode: ''
+    city: 'Pune', // Prefill with Pune
+    state: 'Maharashtra', // Prefill with Maharashtra
+    pincode: '411057' // Prefill with 411057
   });
   const [phoneError, setPhoneError] = useState('');
   const [formError, setFormError] = useState('');
   const userId = localStorage.getItem('userId');
+
+  // Fetch user profile information
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        if (!userId) return;
+        
+        const response = await axios.get(`https://peghouse.in/api/users/${userId}`);
+        const user = response.data;
+        
+        setAddress(prev => ({
+          ...prev,
+          fullName: user.name || '',
+          phone: user.mobile || ''
+        }));
+      } catch (error) {
+        console.error('Failed to fetch user profile:', error);
+      }
+    };
+    
+    fetchUserProfile();
+  }, [userId]);
 
   // 🛒 Fetch Cart Items from Backend
   useEffect(() => {
@@ -285,9 +307,8 @@ setItems(populatedItems);
                 <input
                   type="text"
                   value={address.city}
-                  onChange={(e) => setAddress({ ...address, city: e.target.value })}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
+                  readOnly
+                  className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:outline-none cursor-not-allowed"
                 />
               </div>
               <div>
@@ -295,9 +316,8 @@ setItems(populatedItems);
                 <input
                   type="text"
                   value={address.state}
-                  onChange={(e) => setAddress({ ...address, state: e.target.value })}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
+                  readOnly
+                  className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:outline-none cursor-not-allowed"
                 />
               </div>
             </div>
@@ -307,9 +327,8 @@ setItems(populatedItems);
               <input
                 type="text"
                 value={address.pincode}
-                onChange={(e) => setAddress({ ...address, pincode: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
+                readOnly
+                className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:outline-none cursor-not-allowed"
               />
             </div>
           </form>
@@ -330,9 +349,21 @@ setItems(populatedItems);
                   <div>
                     <h3 className="font-medium">{item.name}</h3>
                     <p className="text-gray-600">Quantity: {item.quantity}</p>
+                    {item.productId?.category === 'Drinks' && (
+                      <p className="text-sm text-red-600 mt-1">
+                        + ₹{(item.price * item.quantity * 0.35).toFixed(2)} Service Fee (35%)
+                      </p>
+                    )}
                   </div>
                 </div>
+                <div className="text-right">
                 <p className="font-medium">₹{(item.price * item.quantity).toFixed(2)}</p>
+                  {item.productId?.category === 'Drinks' && (
+                    <p className="text-xs text-gray-500">
+                      (₹{item.price.toFixed(2)} × {item.quantity})
+                    </p>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -356,11 +387,11 @@ setItems(populatedItems);
             </div>
             <div className="flex justify-between text-gray-600">
               <span>GST (18%)</span>
-              <span>₹{((orderTotal+drinksFee) * 0.18).toFixed(2)}</span>
+              <span>₹{gstAmount.toFixed(2)}</span>
             </div>
             <div className="flex justify-between font-semibold text-lg pt-2">
               <span>Total</span>
-              <span>₹{(orderTotal + 100 + 12 + (orderTotal+drinksFee) * 0.18+drinksFee).toFixed(2)}</span>
+              <span>₹{total.toFixed(2)}</span>
             </div>
           </div>
         </div>
