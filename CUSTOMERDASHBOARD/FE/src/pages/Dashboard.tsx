@@ -122,7 +122,7 @@ const banners = [
     id: 1,
     image: "website1.png",
     title: "Premium Drinks Delivered",
-    description: "Fast delivery in 30 minutes or less. Order now!",
+    description: "Fast delivery in 45 minutes or less. Order now!",
     type: "regular"
   },
   {
