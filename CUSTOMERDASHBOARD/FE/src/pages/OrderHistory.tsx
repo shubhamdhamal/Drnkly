@@ -105,7 +105,10 @@ const OrderHistory: React.FC = () => {
             <div>
               <h3 className="font-bold">New Order Received!</h3>
               <p>Order #{orders.length} - {newOrder._id.slice(-5)}</p>
-              <p className="text-sm">₹{newOrder.totalAmount.toFixed(2)}</p>
+              <p className="text-sm">
+  ₹{newOrder?.totalAmount && typeof newOrder.totalAmount === 'number' ? newOrder.totalAmount.toFixed(2) : '0.00'}
+</p>
+
             </div>
             <button 
               onClick={() => setShowNotification(false)}
@@ -160,7 +163,10 @@ const OrderHistory: React.FC = () => {
                   {order.paymentStatus === 'paid' ? 'Paid' : 'CASH ON DELIVERY'}
                 </p>
                 <p className="text-sm text-gray-500">{new Date(order.createdAt).toLocaleString()}</p>
-                <p className="font-bold text-lg mt-1">₹{order.totalAmount.toFixed(2)}</p>
+                <p className="font-bold text-lg mt-1">
+  ₹{typeof order.totalAmount === 'number' ? order.totalAmount.toFixed(2) : '0.00'}
+</p>
+
               </div>
               <div className="flex space-x-2">
                 <button

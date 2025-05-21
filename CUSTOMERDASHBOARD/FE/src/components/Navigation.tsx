@@ -91,12 +91,12 @@ const Navigation: React.FC<NavigationProps> = ({ isChatOpen, setIsChatOpen }) =>
             onClick={() => handleNavClick('/order-history')}
           />
           {isLoggedIn ? (
-            <NavButton
-              icon={<User size={24} />}
-              label="Profile"
-              isActive={isActive('/profile')}
-              onClick={() => handleNavClick('/profile')}
-            />
+          <NavButton
+            icon={<User size={24} />}
+            label="Profile"
+            isActive={isActive('/profile')}
+            onClick={() => handleNavClick('/profile')}
+          />
           ) : (
             <NavButton
               icon={<BookOpen size={24} />}
