@@ -32,7 +32,7 @@ function VendorManagement() {
   // Approve or reject vendor
   const updateStatus = async (id: string, status: 'verified' | 'rejected') => {
     try {
-      const res = await axios.put(`http://localhost:5000/api/vendor/${id}/status`, { status });
+      const res = await axios.put(`https://vendor.peghouse.in/api/vendor/${id}/status`, { status });
       if (res.status === 200) {
         fetchVendors(); // Refresh UI
       } else {
@@ -70,7 +70,7 @@ function VendorManagement() {
                   {/* Add the download link for the license file */}
                   {vendor.license && (
                     <a 
-                      href={`http://localhost:5000/uploads/${vendor.license}`} 
+                      href={`https://vendor.peghouse.in/uploads/${vendor.license}`} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       download
@@ -134,7 +134,7 @@ function VendorManagement() {
                 <p>
                   <strong>Download License:</strong> 
                   <a 
-                    href={`http://localhost:5000/uploads/${selectedVendor.license}`} 
+                    href={`https://vendor.peghouse.in/uploads/${selectedVendor.license}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     download
