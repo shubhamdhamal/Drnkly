@@ -135,35 +135,28 @@ const fetchOrders = async () => {
     }
   };
 
-const updateOrderStatus = async (orderId: string, newStatus: string) => {
-  if (!selectedOrder) return;
-  
-  try {
-    const token = localStorage.getItem('superadminToken');
-    await axios.patch(
-      `https://admin.peghouse.in/api/orders/${orderId}`,
-      { status: newStatus },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
-    );
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    if (!selectedOrder) return;
     
-    // Update local state
-    const updatedOrders = orders.map(order => 
-      order.id === orderId ? {...order, status: newStatus as any} : order
-    );
-    
-    setOrders(updatedOrders);
-    setSelectedOrder({...selectedOrder, status: newStatus as any});
-    
-  } catch (err) {
-    console.error('Failed to update order status:', err);
-    alert('Failed to update order status. Please try again.');
-  }
-};
-
+    try {
+      // This would be replaced with your actual API call
+      await axios.patch(`https://admin.peghouse.in/api/orders/${orderId}`, {
+        status: newStatus
+      });
+      
+      // Update the local state
+      const updatedOrders = orders.map(order => 
+        order.id === orderId ? {...order, status: newStatus as any} : order
+      );
+      
+      setOrders(updatedOrders);
+      setSelectedOrder({...selectedOrder, status: newStatus as any});
+      
+    } catch (err) {
+      console.error('Failed to update order status:', err);
+      alert('Failed to update order status. Please try again.');
+    }
+  };
 
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
