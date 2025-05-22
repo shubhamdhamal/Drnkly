@@ -158,57 +158,63 @@ const drinksFee = items.reduce((sum, item) => {
                 </button>
               </div>
             ) : (
-              items.map((item: any) => (
-                <div key={item.productId._id || item.productId} className="flex items-center justify-between border-b pb-6">
-                  <div className="flex items-center space-x-4">
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-24 h-24 object-cover rounded-md"
-                    />
-                    <div>
-        <h3 className="text-lg font-medium text-gray-900">{item.name}</h3>
-        <p className="text-sm text-gray-500 capitalize">
-          Category: {item.category || 'N/A'}
-        </p>
-        <p className="text-lg font-semibold text-gray-900 mt-1">
-  ₹{(Number(item.price) * Number(item.quantity)).toFixed(2)}
-</p>
+              items.map((item: any) => {
+  // Check if this item is Old Monk 180 ml
+  const isOldMonk180 = item.name.toLowerCase().includes('old monk') && item.volume === 180 && item.quantity === 1;
 
-
-        {item.category === 'Drinks' && (
-          <p className="text-sm text-red-600 mt-1">
-            + ₹{(Number(item.price) * Number(item.quantity) * 0.35).toFixed(2)} Service Fee (35%)
+  return (
+    <div key={item.productId._id || item.productId} className="flex items-center justify-between border-b pb-6">
+      <div className="flex items-center space-x-4">
+        <img
+          src={item.image}
+          alt={item.name}
+          className="w-24 h-24 object-cover rounded-md"
+        />
+        <div>
+          <h3 className="text-lg font-medium text-gray-900">{item.name}</h3>
+          <p className="text-sm text-gray-500 capitalize">
+            Category: {item.category || 'N/A'}
           </p>
-        )}
+          <p className="text-lg font-semibold text-gray-900 mt-1">
+            ₹{(Number(item.price) * Number(item.quantity)).toFixed(2)}
+          </p>
+          {item.category === 'Drinks' && (
+            <p className="text-sm text-red-600 mt-1">
+              + ₹{(Number(item.price) * Number(item.quantity) * 0.35).toFixed(2)} Service Fee (35%)
+            </p>
+          )}
+        </div>
       </div>
-                  </div>
 
-                  <div className="flex items-center space-x-6">
-                    <div className="flex items-center space-x-2">
-                      <button
-                        className="p-1 rounded-md hover:bg-gray-100"
-                        onClick={() => updateQuantity(item.productId._id || item.productId, Number(item.quantity) - 1)}
-                      >
-                        <Minus className="h-5 w-5 text-gray-600" />
-                      </button>
-                      <span className="text-lg font-medium w-8 text-center">{item.quantity}</span>
-                      <button
-                        className="p-1 rounded-md hover:bg-gray-100"
-                        onClick={() => updateQuantity(item.productId._id || item.productId, Number(item.quantity) + 1)}
-                      >
-                        <Plus className="h-5 w-5 text-gray-600" />
-                      </button>
-                    </div>
-                    <button
-                      className="text-red-500 hover:text-red-600"
-                      onClick={() => removeFromCart(item.productId._id || item.productId)}
-                    >
-                      <Trash2 className="h-5 w-5" />
-                    </button>
-                  </div>
-                </div>
-              ))
+      <div className="flex items-center space-x-6">
+        <div className="flex items-center space-x-2">
+          <button
+            className="p-1 rounded-md hover:bg-gray-100"
+            onClick={() => !isOldMonk180 && updateQuantity(item.productId._id || item.productId, Number(item.quantity) - 1)}
+            disabled={isOldMonk180}
+          >
+            <Minus className={`h-5 w-5 ${isOldMonk180 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600'}`} />
+          </button>
+          <span className="text-lg font-medium w-8 text-center">{item.quantity}</span>
+          <button
+            className="p-1 rounded-md hover:bg-gray-100"
+            onClick={() => !isOldMonk180 && updateQuantity(item.productId._id || item.productId, Number(item.quantity) + 1)}
+            disabled={isOldMonk180}
+          >
+            <Plus className={`h-5 w-5 ${isOldMonk180 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600'}`} />
+          </button>
+        </div>
+        <button
+          className="text-red-500 hover:text-red-600"
+          onClick={() => removeFromCart(item.productId._id || item.productId)}
+        >
+          <Trash2 className="h-5 w-5" />
+        </button>
+      </div>
+    </div>
+  );
+})
+
             )}
           </div>
 

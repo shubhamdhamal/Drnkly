@@ -293,62 +293,79 @@ function Products() {
   };
 
   // Modify handleAddToCart to accept an optional event parameter
-  const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => {
-    if (e) {
-      e.stopPropagation();
-    }
-  
-    const userId = localStorage.getItem('userId');
-    if (!userId) {
-      toast.error('Please log in first');
-      navigate('/login');
+const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => {
+  if (e) {
+    e.stopPropagation();
+  }
+
+  const userId = localStorage.getItem('userId');
+  if (!userId) {
+    toast.error('Please log in first');
+    navigate('/login');
+    return;
+  }
+
+  // Check if product is Old Monk 180 ml
+  const isOldMonk180 = product.name.toLowerCase().includes('old monk') && product.volume === 180;
+
+  if (isOldMonk180) {
+    // Check if already in cart
+    const alreadyInCart = items.some(item =>
+      item.name.toLowerCase().includes('old monk') &&
+      item.volume === 180 &&
+      item.quantity === 1
+    );
+
+    if (alreadyInCart) {
+      toast.error('You can add only one 180ml Old Monk to the cart.');
       return;
     }
-  
-    try {
-      const res = await axios.post('https://peghouse.in/api/cart/add', {
-        userId,
-        productId: product._id,
-        name: product.name,
-        price: product.price,
-        image: product.image,
-        volume: product.volume,
-        alcoholContent: product.alcoholContent
-      });
-  
-      // Add to local cart context
-      addToCart({
-        id: parseInt(product._id) || Date.now(), // Use timestamp as fallback if conversion fails
-        productId: product._id,
-        category: product.category,
-        name: product.name,
-        price: product.price,
-        image: product.image
-      });
-      
-      // Show success toast instead of redirecting
-      toast.success(`${product.name} added to cart!`, {
-        position: "bottom-right",
-        autoClose: 2000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
-      
-      // Show cart popup with a small delay
-      setTimeout(() => {
-        setIsCartPopupOpen(true);
-      }, 500);
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        toast.error(err.message || 'Failed to add to cart');
-      } else {
-        toast.error('Failed to add to cart');
-      }
-      console.error('Cart Error:', err);
+  }
+
+  try {
+    const res = await axios.post('https://peghouse.in/api/cart/add', {
+      userId,
+      productId: product._id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      volume: product.volume,
+      alcoholContent: product.alcoholContent
+    });
+
+    // Add to local cart context
+    addToCart({
+      id: parseInt(product._id) || Date.now(), // Use timestamp as fallback if conversion fails
+      productId: product._id,
+      category: product.category,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      volume: product.volume
+    });
+
+    toast.success(`${product.name} added to cart!`, {
+      position: "bottom-right",
+      autoClose: 2000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    });
+
+    setTimeout(() => {
+      setIsCartPopupOpen(true);
+    }, 500);
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      toast.error(err.message || 'Failed to add to cart');
+    } else {
+      toast.error('Failed to add to cart');
     }
-  };
+    console.error('Cart Error:', err);
+  }
+};
+
 
   // Handle view cart action
   const handleViewCart = () => {

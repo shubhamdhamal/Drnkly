@@ -6,27 +6,53 @@ exports.addToCart = async (req, res) => {
   const { userId, productId, name, price, image } = req.body;
 
   try {
+    // Fetch product details from DB to check volume and name
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    // Check if product is Old Monk 180 ml
+    const isOldMonk180 = product.name.toLowerCase().includes('old monk') && product.volume === 180;
+
     let cart = await Cart.findOne({ userId });
 
     if (!cart) {
-      const newCart = await Cart.create({
-        userId,
-        items: [{ productId, name, price, image, quantity: 1 }]
-      });
-
-      // Populate before sending
-      const populatedCart = await Cart.findOne({ userId }).populate({
-        path: 'items.productId',
-        model: 'Product',
-        select: 'category liquorType name price image'
-      });
-
-      return res.status(201).json({ message: 'Cart created', cart: populatedCart });
+      if (isOldMonk180) {
+        // Add once with quantity 1
+        const newCart = await Cart.create({
+          userId,
+          items: [{ productId, name, price, image, quantity: 1 }]
+        });
+        const populatedCart = await Cart.findOne({ userId }).populate({
+          path: 'items.productId',
+          model: 'Product',
+          select: 'category liquorType name price image volume'
+        });
+        return res.status(201).json({ message: 'Cart created', cart: populatedCart });
+      } else {
+        // Non Old Monk 180, normal add
+        const newCart = await Cart.create({
+          userId,
+          items: [{ productId, name, price, image, quantity: 1 }]
+        });
+        const populatedCart = await Cart.findOne({ userId }).populate({
+          path: 'items.productId',
+          model: 'Product',
+          select: 'category liquorType name price image volume'
+        });
+        return res.status(201).json({ message: 'Cart created', cart: populatedCart });
+      }
     }
 
     const existingItem = cart.items.find(item => item.productId.toString() === productId);
 
     if (existingItem) {
+      if (isOldMonk180) {
+        // Cannot add again
+        return res.status(400).json({ message: '180ml Old Monk can only be added once' });
+      }
+      // For other products, increment quantity normally
       existingItem.quantity += 1;
     } else {
       cart.items.push({ productId, name, price, image, quantity: 1 });
@@ -37,7 +63,7 @@ exports.addToCart = async (req, res) => {
     const updatedCart = await Cart.findOne({ userId }).populate({
       path: 'items.productId',
       model: 'Product',
-      select: 'category liquorType name price image'
+      select: 'category liquorType name price image volume'
     });
 
     return res.status(200).json({ message: '✅ Cart updated', cart: updatedCart });
@@ -47,6 +73,7 @@ exports.addToCart = async (req, res) => {
     return res.status(500).json({ message: 'Error adding to cart', error: error.message });
   }
 };
+
 
 // ✅ Get User's Cart
 exports.getUserCart = async (req, res) => {
@@ -71,6 +98,15 @@ exports.updateQuantity = async (req, res) => {
   const { userId, productId, quantity } = req.body;
 
   try {
+    const product = await Product.findById(productId);
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+
+    const isOldMonk180 = product.name.toLowerCase().includes('old monk') && product.volume === 180;
+
+    if (isOldMonk180) {
+      return res.status(400).json({ message: 'Quantity for 180ml Old Monk cannot be updated' });
+    }
+
     const cart = await Cart.findOne({ userId });
     if (!cart) return res.status(404).json({ message: 'Cart not found' });
 
@@ -83,7 +119,7 @@ exports.updateQuantity = async (req, res) => {
     const updatedCart = await Cart.findOne({ userId }).populate({
       path: 'items.productId',
       model: 'Product',
-      select: 'category liquorType name price image'
+      select: 'category liquorType name price image volume'
     });
 
     return res.status(200).json({ message: '✅ Quantity updated', cart: updatedCart });
@@ -93,6 +129,7 @@ exports.updateQuantity = async (req, res) => {
     return res.status(500).json({ message: 'Error updating quantity', error: error.message });
   }
 };
+
 
 // ✅ Remove from Cart
 exports.removeFromCart = async (req, res) => {
