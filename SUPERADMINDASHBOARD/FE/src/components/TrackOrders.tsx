@@ -48,32 +48,27 @@ function TrackOrders() {
     applyFiltersAndSort();
   }, [orders, searchQuery, statusFilter, sortField, sortDirection]);
 
-const fetchOrders = async () => {
-  setLoading(true);
-  setError(null);
-  try {
-    setRefreshing(true);
-    const token = localStorage.getItem('superadminToken');
-    const res = await axios.get('https://admin.peghouse.in/api/orders', {
-      headers: {
-        Authorization: `Bearer ${token}`
+  const fetchOrders = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      setRefreshing(true);
+      const res = await axios.get('https://admin.peghouse.in/api/orders');
+      
+      // Enhance this with proper error handling for API response
+      if (res.data && res.data.orders) {
+        setOrders(res.data.orders);
+      } else {
+        setError('Invalid data received from server');
       }
-    });
-    
-    if (res.data && res.data.orders) {
-      setOrders(res.data.orders);
-    } else {
-      setError('Invalid data received from server');
+    } catch (err) {
+      console.error('Failed to fetch orders:', err);
+      setError('Failed to fetch orders. Please try again.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
-  } catch (err) {
-    console.error('Failed to fetch orders:', err);
-    setError('Failed to fetch orders. Please try again.');
-  } finally {
-    setLoading(false);
-    setRefreshing(false);
-  }
-};
-
+  };
 
   const applyFiltersAndSort = () => {
     let result = [...orders];
