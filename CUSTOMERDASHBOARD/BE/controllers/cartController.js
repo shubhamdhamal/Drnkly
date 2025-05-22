@@ -1,6 +1,7 @@
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 
+// ✅ Add to Cart
 exports.addToCart = async (req, res) => {
   const { userId, productId, name, price, image } = req.body;
 
@@ -12,7 +13,15 @@ exports.addToCart = async (req, res) => {
         userId,
         items: [{ productId, name, price, image, quantity: 1 }]
       });
-      return res.status(201).json({ message: 'Cart created', cart: newCart });
+
+      // Populate before sending
+      const populatedCart = await Cart.findOne({ userId }).populate({
+        path: 'items.productId',
+        model: 'Product',
+        select: 'category liquorType name price image'
+      });
+
+      return res.status(201).json({ message: 'Cart created', cart: populatedCart });
     }
 
     const existingItem = cart.items.find(item => item.productId.toString() === productId);
@@ -24,7 +33,14 @@ exports.addToCart = async (req, res) => {
     }
 
     await cart.save();
-    return res.status(200).json({ message: '✅ Cart updated', cart });
+
+    const updatedCart = await Cart.findOne({ userId }).populate({
+      path: 'items.productId',
+      model: 'Product',
+      select: 'category liquorType name price image'
+    });
+
+    return res.status(200).json({ message: '✅ Cart updated', cart: updatedCart });
 
   } catch (error) {
     console.error('Error adding to cart:', error);
@@ -32,20 +48,14 @@ exports.addToCart = async (req, res) => {
   }
 };
 
-
-
-
-
-
-
-// Get user's cart
+// ✅ Get User's Cart
 exports.getUserCart = async (req, res) => {
   const { userId } = req.params;
 
   try {
     const cart = await Cart.findOne({ userId }).populate({
       path: 'items.productId',
-      model: 'Product', // ✅ Ensure correct model name
+      model: 'Product',
       select: 'category liquorType name price image'
     });
 
@@ -56,8 +66,7 @@ exports.getUserCart = async (req, res) => {
   }
 };
 
-
-// Update quantity
+// ✅ Update Quantity
 exports.updateQuantity = async (req, res) => {
   const { userId, productId, quantity } = req.body;
 
@@ -70,7 +79,14 @@ exports.updateQuantity = async (req, res) => {
 
     itemToUpdate.quantity = quantity;
     await cart.save();
-    return res.status(200).json({ message: '✅ Quantity updated', cart });
+
+    const updatedCart = await Cart.findOne({ userId }).populate({
+      path: 'items.productId',
+      model: 'Product',
+      select: 'category liquorType name price image'
+    });
+
+    return res.status(200).json({ message: '✅ Quantity updated', cart: updatedCart });
 
   } catch (error) {
     console.error('Error updating quantity:', error);
@@ -78,12 +94,7 @@ exports.updateQuantity = async (req, res) => {
   }
 };
 
-
-
-
-
-
-// Remove item
+// ✅ Remove from Cart
 exports.removeFromCart = async (req, res) => {
   const { userId, productId } = req.body;
 
@@ -94,13 +105,19 @@ exports.removeFromCart = async (req, res) => {
     cart.items = cart.items.filter(item => item.productId.toString() !== productId);
     await cart.save();
 
-    res.status(200).json({ message: 'Item removed', cart });
+    const updatedCart = await Cart.findOne({ userId }).populate({
+      path: 'items.productId',
+      model: 'Product',
+      select: 'category liquorType name price image'
+    });
+
+    res.status(200).json({ message: 'Item removed', cart: updatedCart });
   } catch (error) {
     res.status(500).json({ message: 'Error removing item', error: error.message });
   }
 };
 
-// Clear entire cart
+// ✅ Clear Entire Cart
 exports.clearCart = async (req, res) => {
   const { userId } = req.body;
 
