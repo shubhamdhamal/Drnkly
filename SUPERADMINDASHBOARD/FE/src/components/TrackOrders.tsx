@@ -48,27 +48,32 @@ function TrackOrders() {
     applyFiltersAndSort();
   }, [orders, searchQuery, statusFilter, sortField, sortDirection]);
 
-  const fetchOrders = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      setRefreshing(true);
-      const res = await axios.get('https://admin.peghouse.in/api/orders');
-      
-      // Enhance this with proper error handling for API response
-      if (res.data && res.data.orders) {
-        setOrders(res.data.orders);
-      } else {
-        setError('Invalid data received from server');
+const fetchOrders = async () => {
+  setLoading(true);
+  setError(null);
+  try {
+    setRefreshing(true);
+    const token = localStorage.getItem('superadminToken');
+    const res = await axios.get('https://admin.peghouse.in/api/orders', {
+      headers: {
+        Authorization: `Bearer ${token}`
       }
-    } catch (err) {
-      console.error('Failed to fetch orders:', err);
-      setError('Failed to fetch orders. Please try again.');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+    });
+    
+    if (res.data && res.data.orders) {
+      setOrders(res.data.orders);
+    } else {
+      setError('Invalid data received from server');
     }
-  };
+  } catch (err) {
+    console.error('Failed to fetch orders:', err);
+    setError('Failed to fetch orders. Please try again.');
+  } finally {
+    setLoading(false);
+    setRefreshing(false);
+  }
+};
+
 
   const applyFiltersAndSort = () => {
     let result = [...orders];
@@ -130,28 +135,35 @@ function TrackOrders() {
     }
   };
 
-  const updateOrderStatus = async (orderId: string, newStatus: string) => {
-    if (!selectedOrder) return;
+const updateOrderStatus = async (orderId: string, newStatus: string) => {
+  if (!selectedOrder) return;
+  
+  try {
+    const token = localStorage.getItem('superadminToken');
+    await axios.patch(
+      `https://admin.peghouse.in/api/orders/${orderId}`,
+      { status: newStatus },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
     
-    try {
-      // This would be replaced with your actual API call
-      await axios.patch(`https://admin.peghouse.in/api/orders/${orderId}`, {
-        status: newStatus
-      });
-      
-      // Update the local state
-      const updatedOrders = orders.map(order => 
-        order.id === orderId ? {...order, status: newStatus as any} : order
-      );
-      
-      setOrders(updatedOrders);
-      setSelectedOrder({...selectedOrder, status: newStatus as any});
-      
-    } catch (err) {
-      console.error('Failed to update order status:', err);
-      alert('Failed to update order status. Please try again.');
-    }
-  };
+    // Update local state
+    const updatedOrders = orders.map(order => 
+      order.id === orderId ? {...order, status: newStatus as any} : order
+    );
+    
+    setOrders(updatedOrders);
+    setSelectedOrder({...selectedOrder, status: newStatus as any});
+    
+  } catch (err) {
+    console.error('Failed to update order status:', err);
+    alert('Failed to update order status. Please try again.');
+  }
+};
+
 
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
