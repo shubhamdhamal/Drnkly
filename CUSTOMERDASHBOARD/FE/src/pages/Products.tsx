@@ -177,6 +177,38 @@ function Products() {
 
     if (searchParam) {
       setSearchQuery(searchParam);
+      
+      // Special handling for Old Monk promotion
+      if (searchParam.toLowerCase().includes('old monk')) {
+        console.log('Old Monk search detected:', searchParam);
+        
+        // Set category to drinks
+        setSelectedCategory('drinks');
+        // Set brand to Old Monk if available
+        if (products.length > 0) {
+          const oldMonkProducts = products.filter(p => 
+            p.name.toLowerCase().includes('old monk') || 
+            p.brand.toLowerCase().includes('old monk')
+          );
+          
+          console.log('Found Old Monk products:', oldMonkProducts.length);
+          
+          if (oldMonkProducts.length > 0) {
+            setSelectedBrand('Old Monk');
+            setShowSubBrands(false);
+            
+            // Show a toast notification about the free offer
+            toast.success("🥃 Get a FREE Old Monk on your first order!", {
+              position: "top-center",
+              autoClose: 5000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+            });
+          }
+        }
+      }
     }
     
     if (brandParam) {

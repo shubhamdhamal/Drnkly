@@ -305,49 +305,128 @@ const handleAddProduct = async (e: React.FormEvent) => {
         </select>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
         {filteredProducts.map((product) => (
-          <div key={product._id} className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-            <div className="relative">
-              <img
-                src={product.image} // The image path returned by the backend
+          <div 
+            key={product._id} 
+            className="product-card bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%',
+              justifyContent: 'space-between',
+              position: 'relative',
+              boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              maxWidth: '220px',
+              margin: '0 auto',
+              width: '100%'
+            }}
+          >
+            <div className="relative"> {/* Content wrapper */}
+              <div style={{
+                width: '100%',
+                height: '120px',
+                position: 'relative',
+                overflow: 'hidden',
+                background: 'white'
+              }}>
+                <img
+                  src={product.image}
                 alt={product.name}
-                className="w-full h-48 object-cover"
+                  className="product-image"
+                  style={{
+                    position: 'absolute',
+                    top: '0',
+                    left: '0',
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    backgroundColor: 'white',
+                    transition: 'transform 0.3s ease'
+                  }}
               />
-              <span className="absolute top-2 right-2 px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
-                {product.alcoholContent}% ABV
+                <div className="ribbon">{product.alcoholContent}% ABV</div>
+              </div>
+              <div className="p-2">
+                <h3 style={{ fontSize: '14px', fontWeight: 600, height: '36px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{product.name}</h3>
+                <p className="text-xs text-gray-600 mb-1">{product.brand}</p>
+                
+                {/* Show volume for drinks */}
+                {['drinks', 'soft drinks'].includes(product.category.toLowerCase()) ? (
+                  <div className="flex justify-between items-center mt-1">
+                    <span className="text-xs font-medium bg-blue-50 text-blue-600 py-0.5 px-1.5 rounded">
+                      {product.volume} ml
+                    </span>
+                    <span className="text-base font-bold text-[#cd6839]">
+                      ₹{product.price}
               </span>
             </div>
-            <div className="p-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="font-semibold text-lg">{product.name}</h3>
-                  <p className="text-sm text-gray-600">{product.brand}</p>
-                  <p className="text-sm text-gray-600">{product.category}</p>
+                ) : (
+                  <p style={{ color: '#cd6839', fontWeight: 'bold', margin: '2px 0', fontSize: '16px' }}>₹{product.price}</p>
+                )}
+                
+                <div className={`text-xs mt-1 ${product.stock > 20 ? 'text-green-600' : 'text-red-600'}`}>
+                  {product.stock} in stock
                 </div>
               </div>
-              <p className="text-sm text-gray-600 mt-2">{product.description}</p>
-              <div className="mt-4 flex items-center justify-between">
-                <p className="font-semibold">₹{product.price}</p>
-                <p className={`text-sm ${product.stock > 20 ? 'text-green-600' : 'text-red-600'}`}>
-                  {product.stock} in stock
-                </p>
               </div>
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                <Button variant="secondary" icon={<Edit className="w-4 h-4" />} onClick={() => {
+            
+            <div className="p-2 mt-auto grid grid-cols-2 gap-1">
+              <Button variant="secondary" icon={<Edit className="w-3 h-3" />} onClick={(e) => {
+                e.stopPropagation();
                   setIsEditing(true);
                   setEditingProduct(product);
-                }}>
+              }}
+              className="text-xs py-1 px-2"
+              >
                   Edit
                 </Button>
-                <Button variant="danger" icon={<Trash2 className="w-4 h-4" />} onClick={() => handleDeleteProduct(product._id)}>
+              <Button variant="danger" icon={<Trash2 className="w-3 h-3" />} onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteProduct(product._id);
+              }}
+              className="text-xs py-1 px-2"
+              >
                   Delete
                 </Button>
-              </div>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Add hover effects styles */}
+      <style>
+        {`
+          .product-card {
+            border: 1px solid #f0f0f0;
+          }
+          
+          .product-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            border-color: #cd6839;
+            z-index: 10;
+          }
+          
+          .product-card:hover .product-image {
+            transform: scale(1.15);
+          }
+          
+          .ribbon {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: linear-gradient(45deg, #2563eb, #3b82f6);
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 8px;
+            clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 10% 50%);
+          }
+        `}
+      </style>
 
       {/* Add/Edit Product Modal */}
       {(showAddProduct || isEditing) && (
