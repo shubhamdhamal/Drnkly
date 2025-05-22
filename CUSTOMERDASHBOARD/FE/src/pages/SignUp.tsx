@@ -61,7 +61,7 @@ function SignUp() {
    // Aadhaar number validation
    const handleAadhaarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (/^\d{0,12}$/.test(value)) {
+    if (/^\d{0,2}$/.test(value)) {
       setExtraData({ ...extraData, aadhaar: value });
       setErrorMessage('');
     }
@@ -93,8 +93,8 @@ function SignUp() {
   };
   
   const handleAadhaarBlur = () => {
-    if (extraData.aadhaar.length !== 12) {
-      setErrorMessage('Aadhaar number should be exactly 12 digits.');
+    if (extraData.aadhaar.length !== 2) {
+      setErrorMessage('Enter 2 Magical Numbers.');
     } else {
       setErrorMessage('');
     }
@@ -109,8 +109,8 @@ function SignUp() {
     }
   
     // Validate Aadhaar
-    if (!extraData.aadhaar || extraData.aadhaar.length !== 12) {
-      setError('Please enter a valid 12-digit Aadhaar number');
+    if (!extraData.aadhaar || extraData.aadhaar.length !== 2) {
+      setError('Please enter 2 digit Number');
       return;
     }
   
@@ -252,13 +252,13 @@ function SignUp() {
                       age--;
                     }
 
-                    if (age >= 25) {
+                    if (age >= 21) {
                       setExtraData(prev => ({
                         ...prev,
                         dob: dob
                       }));
                     } else {
-                      alert('Your age is less than 25. You are not allowed to register.');
+                      alert('Your age is less than 21. You are not allowed to register.');
                       setExtraData(prev => ({
                         ...prev,
                         dob: '',
@@ -271,11 +271,11 @@ function SignUp() {
                 />
               </div>
               <div>
-            <label>Aadhaar Number</label>
+            <label>Magical Numbers</label>
             <input
               type="text"
               className="w-full border px-3 py-2 rounded"
-              placeholder="Enter Aadhaar"
+              placeholder="Enter Any two Magical Numbers"
               value={extraData.aadhaar}
               onChange={handleAadhaarChange}
               maxLength={12}
@@ -289,7 +289,7 @@ function SignUp() {
           {step === 3 && (
             <>
               <div>
-                <label>ID Proof (Upload)</label>
+                <label>Upload Random Photo(Upload)</label>
                 <input
                   type="file"
                   className="w-full"
@@ -473,14 +473,14 @@ function SignUp() {
                }
              }
              if (step === 2) {
-               if (!extraData.dob || extraData.aadhaar.length !== 12) {
-                 setError('Please enter valid Date of Birth and 12-digit Aadhaar number.');
+               if (!extraData.dob || extraData.aadhaar.length !== 2) {
+                 setError('Please enter valid Date of Birth and Magical Number.');
                  return;
                }
              }
              if (step === 3) {
                if (!extraData.idProof || !extraData.selfDeclaration) {
-                 setError('Please upload ID proof and declare the information.');
+                 setError('Please upload any random Photo.');
                  return;
                }
              }
