@@ -27,9 +27,14 @@ useEffect(() => {
     try {
       const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
       const populatedItems = res.data.items.map((item: any) => ({
-  ...item,
-  category: item.productId?.category || null
+  category: item.productId.category,
+  name: item.productId.name,
+  image: item.productId.image,
+  price: item.productId.price,
+  productId: item.productId._id,
+  quantity: item.quantity
 }));
+
 setItems(populatedItems);
 
 
@@ -59,15 +64,15 @@ const updateQuantity = async (productId: string, quantity: number) => {
       quantity,
     });
 
-    const updatedItems = res.data.cart.items.map((item: any) => ({
-      ...item,
-      category: item.productId?.category || null,
-      name: item.productId?.name || item.name,
-      image: item.productId?.image || item.image,
-      price: item.productId?.price || item.price,
-      productId: item.productId?._id || item.productId, // normalize
-      quantity: item.quantity
-    }));
+const updatedItems = res.data.cart.items.map((item: any) => ({
+  category: item.productId.category,
+  name: item.productId.name,
+  image: item.productId.image,
+  price: item.productId.price,
+  productId: item.productId._id,
+  quantity: item.quantity
+}));
+
 
     setItems(updatedItems);
     toast.success('Quantity updated');
