@@ -15,6 +15,7 @@ interface PickupOrder {
   totalAmount: number;
   readyTime: string;
   handoverStatus: 'pending' | 'handedOver'; // ✅ Add this
+  acceptedAt?: string; // Add timestamp for when order was accepted
 }
 
 
@@ -35,7 +36,16 @@ const Pickup: React.FC = () => {
           Authorization: `Bearer ${token}`,
         },
       });
-      setOrders(res.data.orders);
+      
+      // Sort orders by acceptedAt timestamp (most recent first)
+      // If acceptedAt is not available, use readyTime as fallback
+      const sortedOrders = res.data.orders.sort((a: PickupOrder, b: PickupOrder) => {
+        const timeA = a.acceptedAt ? new Date(a.acceptedAt).getTime() : new Date(a.readyTime).getTime();
+        const timeB = b.acceptedAt ? new Date(b.acceptedAt).getTime() : new Date(b.readyTime).getTime();
+        return timeB - timeA; // Descending order (newest first)
+      });
+      
+      setOrders(sortedOrders);
       setLoading(false);
     } catch (err) {
       console.error('Failed to fetch pickup orders', err);
@@ -82,7 +92,9 @@ const Pickup: React.FC = () => {
     <div style={{ padding: '24px', fontFamily: 'sans-serif' }}>
       <h1 style={{ fontSize: '24px', fontWeight: 600, marginBottom: '20px' }}>Ready for Pickup</h1>
 
-      {loading ? <p>Loading...</p> : (
+      {loading ? <p>Loading...</p> : orders.length === 0 ? (
+        <p style={{ textAlign: 'center', color: '#666', padding: '24px' }}>No orders ready for pickup</p>
+      ) : (
         <div style={{ display: 'grid', gap: '20px' }}>
           {orders.map((order, idx) => (
             <div key={idx} style={{ background: '#fff', borderRadius: '12px', padding: '20px', boxShadow: '0 0 10px rgba(0,0,0,0.05)' }}>
@@ -105,15 +117,13 @@ const Pickup: React.FC = () => {
                 <p>Total: ₹{order.totalAmount}</p>
                 <p>Ready by: {new Date(order.readyTime).toLocaleTimeString()}</p>
                 <Button
-  icon={<Truck />}
-  className="w-full"
-  disabled={order.handoverStatus === 'handedOver'}
-  onClick={() => handleHandover(order.productId, order.orderNumber)}
->
-  {order.handoverStatus === 'handedOver' ? 'Already Handed Over' : 'Hand Over to Delivery'}
-</Button>
-
-
+                  icon={<Truck />}
+                  className="w-full"
+                  disabled={order.handoverStatus === 'handedOver'}
+                  onClick={() => handleHandover(order.productId, order.orderNumber)}
+                >
+                  {order.handoverStatus === 'handedOver' ? 'Already Handed Over' : 'Hand Over to Delivery'}
+                </Button>
               </div>
 
               {mapVisibleFor === order.orderNumber && (

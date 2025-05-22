@@ -25,7 +25,6 @@ function SignUp() {
     city: '',
     dob: '',
     aadhaar: '',
-    idProof: null as File | null,
     selfDeclaration: false,
   });
 
@@ -126,7 +125,7 @@ function SignUp() {
   
     // Check if the user agreed to the terms and conditions
     if (!agreed) {
-      setError('Please agree to the terms and conditions');
+      setError('You must agree to the terms and conditions to continue');
       return;
     }
   
@@ -173,11 +172,7 @@ function SignUp() {
     // ✅ If all validations passed, Prepare the data for submission
     const finalData = new FormData();
     Object.entries(formData).forEach(([key, val]) => finalData.append(key, val));
-    Object.entries(extraData).forEach(([key, val]) =>
-      key === 'idProof'
-        ? val && finalData.append(key, val as Blob)
-        : finalData.append(key, String(val))
-    );
+    Object.entries(extraData).forEach(([key, val]) => finalData.append(key, String(val)));
   
     try {
       // Submit the form data to the backend
@@ -311,19 +306,12 @@ function SignUp() {
           {step === 3 && (
             <>
               <div>
-                <label> Govt ID Proof (Upload)</label>
-                <input
-                  type="file"
-                  className="w-full"
-                  onChange={(e) =>
-                    setExtraData({
-                      ...extraData,
-                      idProof: e.target.files?.[0] || null,
-                    })
-                  }
-                />
+                <label>Age Verification</label>
+                <p className="text-sm text-gray-600 mt-1">
+                  By continuing, you confirm that you are of legal drinking age as per your state regulations.
+                </p>
               </div>
-              <div className="mt-2">
+              <div className="mt-4">
                 <label className="flex items-center space-x-2">
                   <input
                     type="checkbox"
@@ -335,7 +323,7 @@ function SignUp() {
                       })
                     }
                   />
-                  <span>I declare the above information is correct</span>
+                  <span>I confirm I am of legal drinking age</span>
                 </label>
               </div>
             </>
@@ -540,8 +528,8 @@ function SignUp() {
                }
              }
              if (step === 3) {
-               if (!extraData.idProof || !extraData.selfDeclaration) {
-                 setError('Please upload ID proof and declare the information.');
+               if (!extraData.selfDeclaration) {
+                 setError('Please confirm your legal drinking age.');
                  return;
                }
              }
@@ -570,9 +558,9 @@ function SignUp() {
         {showInfo && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-80 text-center shadow-xl">
-              <h3 className="text-lg font-semibold mb-2">Verification Process</h3>
+              <h3 className="text-lg font-semibold mb-2">Registration Complete</h3>
               <p className="text-sm text-gray-600">
-                Your account and uploaded documents will be reviewed. You'll receive confirmation mail if everything is valid.
+                Your account has been created successfully. You will be redirected to the login page shortly.
               </p>
               <button
                 onClick={() => setShowInfo(false)}

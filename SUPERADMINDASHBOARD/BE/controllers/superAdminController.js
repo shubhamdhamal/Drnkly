@@ -19,14 +19,13 @@ exports.superAdminLogin = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // ✅ Generate JWT token
+    // Generate JWT token with only admin ID
     const token = jwt.sign(
-      { id: admin._id, role: 'superadmin' },
+      { id: admin._id },  // No role included
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || '2h' }
     );
 
-    // ✅ Return token in response
     res.status(200).json({
       message: 'Login successful',
       token,
