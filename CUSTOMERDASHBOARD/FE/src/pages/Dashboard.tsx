@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, Search, ShoppingCart, X, User, Settings, LogOut, BookOpen, Clock, AlertTriangle, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Menu, Search, ShoppingCart, X, User, Settings, LogOut, BookOpen, Clock, AlertTriangle, Sparkles, ChevronLeft, ChevronRight, Gift } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -81,6 +81,24 @@ const bannerAnimations = `
     background-color: rgba(255,255,255,0.6);
     pointer-events: none;
   }
+  
+  @keyframes flashingText {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  
+  .free-tag {
+    animation: flashingText 1.5s infinite;
+  }
+  
+  @keyframes glowEffect {
+    0%, 100% { box-shadow: 0 0 5px rgba(255, 255, 255, 0.8), 0 0 10px rgba(255, 215, 0, 0.5); }
+    50% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 0 30px rgba(255, 215, 0, 0.8); }
+  }
+  
+  .glow-effect {
+    animation: glowEffect 2s infinite;
+  }
 `;
 
 const categories = [
@@ -148,6 +166,73 @@ const banners = [
   }
 ];
 
+// Old Monk Promotional Popup Component
+const OldMonkPromotion = ({ isOpen, onClose, onGetOffer }: { isOpen: boolean, onClose: () => void, onGetOffer: () => void }) => {
+  if (!isOpen) return null;
+  
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center p-4">
+      <div className="relative max-w-lg w-full bg-black bg-opacity-90 rounded-lg overflow-hidden shadow-2xl">
+        {/* Close button */}
+        <button 
+          onClick={onClose}
+          className="absolute top-3 right-3 text-white hover:text-gray-300 z-10"
+        >
+          <X size={24} />
+        </button>
+        
+        {/* Main content */}
+        <div className="relative">
+          {/* Background with Old Monk bottle */}
+          <img 
+            src="https://i.ibb.co/Sd9tNqF/old-monk-promo.jpg" 
+            alt="Old Monk Promotion" 
+            className="w-full object-cover h-full absolute inset-0"
+          />
+          
+          <div className="relative z-10 p-6 pt-12 pb-12 text-white text-center">
+            <h2 className="text-4xl font-bold text-white mb-4 banner-appear">
+              Get <span className="text-yellow-400">OLD MONK</span> Quarter
+            </h2>
+            
+            <div className="my-4 banner-appear-delay-1">
+              <span 
+                onClick={onGetOffer}
+                className="inline-block bg-red-600 text-white text-2xl font-bold px-6 py-2 rounded-lg free-tag cursor-pointer hover:bg-red-700 transform hover:scale-105 transition-all duration-300"
+              >
+                FREE
+              </span>
+            </div>
+            
+            <p className="text-xl font-medium text-white my-4 banner-appear-delay-1">
+              On Your First Order
+            </p>
+            
+            <div className="flex items-center justify-center my-4 banner-appear-delay-1 cursor-pointer" onClick={onGetOffer}>
+              <span className="text-4xl font-bold text-yellow-400 mx-2">180</span>
+              <span className="text-4xl font-cursive text-yellow-300">ml</span>
+            </div>
+            
+            <div className="text-lg font-medium text-blue-300 my-4 banner-appear-delay-2">
+              Delivered in <span className="text-4xl font-bold text-blue-300">45</span> min
+            </div>
+            
+            <button
+              onClick={onGetOffer}
+              className="mt-6 px-8 py-3 bg-gradient-to-r from-yellow-600 to-yellow-400 text-black font-bold rounded-full text-lg transform hover:scale-105 transition-transform duration-300 glow-effect banner-appear-delay-2"
+            >
+              <div className="flex items-center justify-center">
+                <Gift className="mr-2" size={20} />
+                Get Your FREE Old Monk
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 function Dashboard() {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -159,6 +244,9 @@ function Dashboard() {
   const [lastScrollY, setLastScrollY] = useState(0);
   const [currentBanner, setCurrentBanner] = useState(0);
   const [sparkles, setSparkles] = useState<{ x: number, y: number, size: number, delay: number }[]>([]);
+  
+  // Old Monk promotion state
+  const [showOldMonkPromo, setShowOldMonkPromo] = useState(false);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -170,6 +258,21 @@ function Dashboard() {
     setIsLoggedIn(false);
     navigate('/login');
   };
+  
+  // Function to handle the Old Monk offer
+  const handleGetOldMonkOffer = () => {
+    // Close the popup
+    setShowOldMonkPromo(false);
+    
+    // Add debug log
+    console.log('Navigating to Old Monk products page...');
+    
+    // Navigate to Old Monk product in Products page - search ONLY for "Old Monk" (without 180ml)
+    navigate('/products?search=Old%20Monk');
+    
+    // Set a flag to mark the offer as shown to this user
+    localStorage.setItem('oldMonkOfferShown', 'true');
+  };
 
   useEffect(() => {
     const fetchUserName = async () => {
@@ -177,10 +280,16 @@ function Dashboard() {
         const token = localStorage.getItem('authToken');
         const userId = localStorage.getItem('userId');
         const isSkipped = localStorage.getItem('isSkippedLogin'); 
+        const oldMonkOfferShown = localStorage.getItem('oldMonkOfferShown');
         
         const loginStatus = !!token && !isSkipped;
         console.log('Dashboard login check:', { token: !!token, userId: !!userId, isSkipped: !!isSkipped, loginStatus });
         setIsLoggedIn(loginStatus);
+  
+        // Show the Old Monk promotion if the user just logged in and hasn't seen the offer before
+        if (loginStatus && !oldMonkOfferShown) {
+          setShowOldMonkPromo(true);
+        }
   
         if (token && userId && loginStatus) {
           const response = await axios.get(`https://peghouse.in/api/users/${userId}`, {
@@ -285,6 +394,13 @@ function Dashboard() {
     <div className="min-h-screen bg-gray-50">
       {/* Add animation styles */}
       <style>{bannerAnimations}</style>
+
+      {/* Old Monk Promotional Popup */}
+      <OldMonkPromotion 
+        isOpen={showOldMonkPromo} 
+        onClose={() => setShowOldMonkPromo(false)} 
+        onGetOffer={handleGetOldMonkOffer}
+      />
 
       {/* Header */}
       <div 

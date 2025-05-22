@@ -73,6 +73,10 @@ function Login() {
         
         // Make sure to remove the skipped login flag if it exists
         localStorage.removeItem('isSkippedLogin');
+        
+        // Reset the Old Monk offer shown flag to ensure they see it on this login
+        localStorage.removeItem('oldMonkOfferShown');
+        
         console.log('Login successful, localStorage updated:', { 
           token: true, 
           userId: true, 

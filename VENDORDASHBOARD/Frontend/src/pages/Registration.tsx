@@ -16,7 +16,7 @@ const Registration: React.FC = () => {
   const [step, setStep] = useState(1);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFiles>({});
-  const categories = ['Wine', 'Whiskey', 'Vodka'];
+  const categories = ['Drinks', 'Cigarette', 'Soft Drinks', 'Snacks', 'Glasses & Plates'];
   const [verificationStatus, setVerificationStatus] = useState<'pending' | 'verified' | 'rejected'>('pending');
   const [vendorId, setVendorId] = useState<string>('');
 
@@ -34,6 +34,12 @@ const Registration: React.FC = () => {
 
   const [errors, setErrors] = useState<any>({});
   const [showPassword, setShowPassword] = useState(false);
+  const [passwordRequirements, setPasswordRequirements] = useState({
+    length: false,
+    uppercase: false,
+    lowercase: false,
+    special: false
+  });
 
   useEffect(() => {
     if (!vendorId) return;
@@ -47,6 +53,20 @@ const Registration: React.FC = () => {
     };
     fetchStatus();
   }, [vendorId]);
+
+  useEffect(() => {
+    // Validate password as user types
+    setPasswordRequirements({
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
+    });
+  }, [password]);
+
+  const isPasswordValid = () => {
+    return Object.values(passwordRequirements).every(req => req === true);
+  };
 
   const handleCategoryToggle = (category: string) => {
     setSelectedCategories(prev =>
@@ -77,6 +97,14 @@ const Registration: React.FC = () => {
         setErrors((prev: any) => ({
           ...prev,
           businessPhone: 'Business phone number must be exactly 10 digits.'
+        }));
+        return;
+      }
+      
+      if (!isPasswordValid()) {
+        setErrors((prev: any) => ({
+          ...prev,
+          password: 'Password does not meet the requirements.'
         }));
         return;
       }
@@ -196,6 +224,26 @@ const Registration: React.FC = () => {
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
+            
+            <div className="mt-2 space-y-1 text-sm">
+              <p className="font-medium text-gray-700">Password must contain:</p>
+              <ul className="pl-4 space-y-1">
+                <li className={passwordRequirements.length ? "text-green-600" : "text-red-500"}>
+                  ✓ At least 8 characters
+                </li>
+                <li className={passwordRequirements.uppercase ? "text-green-600" : "text-red-500"}>
+                  ✓ At least one uppercase letter (A-Z)
+                </li>
+                <li className={passwordRequirements.lowercase ? "text-green-600" : "text-red-500"}>
+                  ✓ At least one lowercase letter (a-z)
+                </li>
+                <li className={passwordRequirements.special ? "text-green-600" : "text-red-500"}>
+                  ✓ At least one special character (@, #, $, etc.)
+                </li>
+              </ul>
+            </div>
+            
+            {errors.password && <p className="text-red-500">{errors.password}</p>}
             {errors.businessInfo && <p className="text-red-500">{errors.businessInfo}</p>}
           </div>
         );
@@ -226,17 +274,20 @@ const Registration: React.FC = () => {
           return (
             <div className="space-y-6">
               <h2 className="text-xl font-semibold">Product Categories</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {categories.map(category => (
-                  <button
-                    key={category}
-                    type="button"
-                    onClick={() => handleCategoryToggle(category)}
-                    className={`p-4 rounded-lg border-2 flex items-center gap-3 transition-colors ${selectedCategories.includes(category) ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}
-                  >
-                    <Wine className="w-5 h-5" />
-                    <span>{category}</span>
-                  </button>
+                  <div key={category} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id={`category-${category}`}
+                      checked={selectedCategories.includes(category)}
+                      onChange={() => handleCategoryToggle(category)}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <label htmlFor={`category-${category}`} className="ml-2 text-gray-700">
+                      {category}
+                    </label>
+                  </div>
                 ))}
               </div>
             </div>

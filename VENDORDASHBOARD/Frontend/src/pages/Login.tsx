@@ -14,11 +14,57 @@ const Login: React.FC = () => {
   const [rememberMe, setRememberMe] = React.useState(false);
   const [showPassword, setShowPassword] = React.useState(false);
 
+  // Session timeout in milliseconds (30 minutes)
+  const SESSION_TIMEOUT = 30 * 60 * 1000;
+  let sessionTimer: number | undefined;
+
+  // Function to reset the session timer
+  const resetSessionTimer = () => {
+    if (sessionTimer) {
+      window.clearTimeout(sessionTimer);
+    }
+    
+    sessionTimer = window.setTimeout(() => {
+      // Clear auth token and redirect to login
+      localStorage.removeItem('authToken');
+      navigate('/login');
+      alert('Your session has expired. Please login again.');
+    }, SESSION_TIMEOUT);
+  };
+
+  // Setup activity listeners
   React.useEffect(() => {
+    const activityEvents = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
+    
+    // Event handler to reset timer on user activity
+    const handleUserActivity = () => {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        resetSessionTimer();
+      }
+    };
+    
+    // Add event listeners
+    activityEvents.forEach(event => {
+      window.addEventListener(event, handleUserActivity);
+    });
+    
+    // Initial session timer if user is already logged in
     const token = localStorage.getItem('authToken');
     if (token) {
+      resetSessionTimer();
       navigate('/dashboard');
     }
+    
+    // Cleanup function
+    return () => {
+      if (sessionTimer) {
+        window.clearTimeout(sessionTimer);
+      }
+      activityEvents.forEach(event => {
+        window.removeEventListener(event, handleUserActivity);
+      });
+    };
   }, [navigate]);
 
   const handleEmailOrPhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,6 +125,8 @@ const Login: React.FC = () => {
 
       if (token) {
         localStorage.setItem('authToken', token);
+        // Start the session timer
+        resetSessionTimer();
         navigate('/dashboard');
       } else {
         setError('Invalid credentials.');
@@ -107,10 +155,10 @@ const Login: React.FC = () => {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {/* Email or Phone Input */}
           <Input
-            label="Mobile number"
+            label="Email address"
             type="text"
             required
-            placeholder="Enter your mobile number"
+            placeholder="Enter your email address"
             value={emailOrPhone}
             onChange={handleEmailOrPhoneChange}
           />
@@ -152,6 +200,7 @@ const Login: React.FC = () => {
                 Remember me
               </label>
             </div>
+            {/* Session management is active but message is hidden */}
           </div>
 
           {/* Submit Button */}

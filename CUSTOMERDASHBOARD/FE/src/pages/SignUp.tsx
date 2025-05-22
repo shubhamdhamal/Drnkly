@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wine, ArrowRight, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Wine, ArrowRight, AlertCircle, Eye, EyeOff, Check, X } from 'lucide-react';
 import axios from 'axios';
 
 function SignUp() {
@@ -25,7 +25,6 @@ function SignUp() {
     city: '',
     dob: '',
     aadhaar: '',
-    idProof: null as File | null,
     selfDeclaration: false,
   });
 
@@ -33,6 +32,13 @@ function SignUp() {
   const [error, setError] = useState('');
   
   const [errorMessage, setErrorMessage] = useState('');
+
+  const [passwordRequirements, setPasswordRequirements] = useState({
+    length: false,
+    uppercase: false,
+    lowercase: false,
+    special: false
+  });
 
   const allowedAlcoholStates: Record<string, string[]> = {
     'Maharashtra': ['Mumbai', 'Pune', 'Nagpur'],
@@ -58,10 +64,10 @@ function SignUp() {
     'Jammu & Kashmir': ['Srinagar', 'Jammu'],
     'Ladakh': ['Leh', 'Kargil'],
   };
-   // Aadhaar number validation
+   // Random number validation
    const handleAadhaarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (/^\d{0,12}$/.test(value)) {
+    if (/^\d{0,2}$/.test(value)) {
       setExtraData({ ...extraData, aadhaar: value });
       setErrorMessage('');
     }
@@ -93,24 +99,39 @@ function SignUp() {
   };
   
   const handleAadhaarBlur = () => {
-    if (extraData.aadhaar.length !== 12) {
-      setErrorMessage('Aadhaar number should be exactly 12 digits.');
+    if (extraData.aadhaar.length < 2) {
+      setErrorMessage('Number should be 2 digits.');
     } else {
       setErrorMessage('');
     }
   };
+
+  // Validate password as it changes
+  useEffect(() => {
+    setPasswordRequirements({
+      length: formData.password.length >= 8,
+      uppercase: /[A-Z]/.test(formData.password),
+      lowercase: /[a-z]/.test(formData.password),
+      special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password)
+    });
+  }, [formData.password]);
+
+  const isPasswordValid = () => {
+    return Object.values(passwordRequirements).every(req => req === true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
   
     // Check if the user agreed to the terms and conditions
     if (!agreed) {
-      setError('Please agree to the terms and conditions');
+      setError('You must agree to the terms and conditions to continue');
       return;
     }
   
-    // Validate Aadhaar
-    if (!extraData.aadhaar || extraData.aadhaar.length !== 12) {
-      setError('Please enter a valid 12-digit Aadhaar number');
+    // Validate 2-digit number
+    if (!extraData.aadhaar || extraData.aadhaar.length !== 2) {
+      setError('Please enter a valid 2-digit random number');
       return;
     }
   
@@ -138,8 +159,8 @@ function SignUp() {
       return;
     }
   
-    if (formData.password.length < 6) {
-      setError('Password should be at least 6 characters long.');
+    if (!isPasswordValid()) {
+      setError('Password does not meet all requirements.');
       return;
     }
   
@@ -151,11 +172,7 @@ function SignUp() {
     // ✅ If all validations passed, Prepare the data for submission
     const finalData = new FormData();
     Object.entries(formData).forEach(([key, val]) => finalData.append(key, val));
-    Object.entries(extraData).forEach(([key, val]) =>
-      key === 'idProof'
-        ? val && finalData.append(key, val as Blob)
-        : finalData.append(key, String(val))
-    );
+    Object.entries(extraData).forEach(([key, val]) => finalData.append(key, String(val)));
   
     try {
       // Submit the form data to the backend
@@ -252,13 +269,13 @@ function SignUp() {
                       age--;
                     }
 
-                    if (age >= 25) {
+                    if (age >= 21) {
                       setExtraData(prev => ({
                         ...prev,
                         dob: dob
                       }));
                     } else {
-                      alert('Your age is less than 25. You are not allowed to register.');
+                      alert('Your age is less than 21. You are not allowed to register.');
                       setExtraData(prev => ({
                         ...prev,
                         dob: '',
@@ -271,14 +288,14 @@ function SignUp() {
                 />
               </div>
               <div>
-            <label>Aadhaar Number</label>
+            <label>Any Random Number</label>
             <input
               type="text"
               className="w-full border px-3 py-2 rounded"
-              placeholder="Enter Aadhaar"
+              placeholder="Enter any 2-digit number"
               value={extraData.aadhaar}
               onChange={handleAadhaarChange}
-              maxLength={12}
+              maxLength={2}
               onBlur={handleAadhaarBlur}
             />
             {errorMessage && <p className="text-red-500">{errorMessage}</p>} {/* Display error message */}
@@ -289,19 +306,12 @@ function SignUp() {
           {step === 3 && (
             <>
               <div>
-                <label>ID Proof (Upload)</label>
-                <input
-                  type="file"
-                  className="w-full"
-                  onChange={(e) =>
-                    setExtraData({
-                      ...extraData,
-                      idProof: e.target.files?.[0] || null,
-                    })
-                  }
-                />
+                <label>Age Verification</label>
+                <p className="text-sm text-gray-600 mt-1">
+                  By continuing, you confirm that you are of legal drinking age as per your state regulations.
+                </p>
               </div>
-              <div className="mt-2">
+              <div className="mt-4">
                 <label className="flex items-center space-x-2">
                   <input
                     type="checkbox"
@@ -313,7 +323,7 @@ function SignUp() {
                       })
                     }
                   />
-                  <span>I declare the above information is correct</span>
+                  <span>I confirm I am of legal drinking age</span>
                 </label>
               </div>
             </>
@@ -389,6 +399,45 @@ function SignUp() {
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
+                
+                {/* Password requirements */}
+                <div className="mt-2 space-y-1 text-sm">
+                  <p className="font-medium text-gray-700">Password must contain:</p>
+                  <ul className="space-y-1">
+                    <li className="flex items-center space-x-2">
+                      {passwordRequirements.length ? 
+                        <Check size={16} className="text-green-500" /> : 
+                        <X size={16} className="text-red-500" />}
+                      <span className={passwordRequirements.length ? "text-green-600" : "text-red-500"}>
+                        At least 8 characters
+                      </span>
+                    </li>
+                    <li className="flex items-center space-x-2">
+                      {passwordRequirements.uppercase ? 
+                        <Check size={16} className="text-green-500" /> : 
+                        <X size={16} className="text-red-500" />}
+                      <span className={passwordRequirements.uppercase ? "text-green-600" : "text-red-500"}>
+                        At least one uppercase letter (A-Z)
+                      </span>
+                    </li>
+                    <li className="flex items-center space-x-2">
+                      {passwordRequirements.lowercase ? 
+                        <Check size={16} className="text-green-500" /> : 
+                        <X size={16} className="text-red-500" />}
+                      <span className={passwordRequirements.lowercase ? "text-green-600" : "text-red-500"}>
+                        At least one lowercase letter (a-z)
+                      </span>
+                    </li>
+                    <li className="flex items-center space-x-2">
+                      {passwordRequirements.special ? 
+                        <Check size={16} className="text-green-500" /> : 
+                        <X size={16} className="text-red-500" />}
+                      <span className={passwordRequirements.special ? "text-green-600" : "text-red-500"}>
+                        At least one special character (@, #, $, etc.)
+                      </span>
+                    </li>
+                  </ul>
+                </div>
               </div>
 
 
@@ -473,14 +522,14 @@ function SignUp() {
                }
              }
              if (step === 2) {
-               if (!extraData.dob || extraData.aadhaar.length !== 12) {
-                 setError('Please enter valid Date of Birth and 12-digit Aadhaar number.');
+               if (!extraData.dob || extraData.aadhaar.length !== 2) {
+                 setError('Please enter valid Date of Birth and 2-digit random number.');
                  return;
                }
              }
              if (step === 3) {
-               if (!extraData.idProof || !extraData.selfDeclaration) {
-                 setError('Please upload ID proof and declare the information.');
+               if (!extraData.selfDeclaration) {
+                 setError('Please confirm your legal drinking age.');
                  return;
                }
              }
@@ -509,9 +558,9 @@ function SignUp() {
         {showInfo && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-80 text-center shadow-xl">
-              <h3 className="text-lg font-semibold mb-2">Verification Process</h3>
+              <h3 className="text-lg font-semibold mb-2">Registration Complete</h3>
               <p className="text-sm text-gray-600">
-                Your account and uploaded documents will be reviewed. You’ll receive confirmation mail if everything is valid.
+                Your account has been created successfully. You will be redirected to the login page shortly.
               </p>
               <button
                 onClick={() => setShowInfo(false)}
@@ -542,7 +591,7 @@ function SignUp() {
               <p className="text-sm text-gray-700 mb-4">
               6. No Resale or Supply to Minors:The customer must agree not to resell liquor and not to supply it to minors (under 21/25).         </p>
               <p className="text-sm text-gray-700 mb-4">
-              7. Valid ID Proof Required at Delivery:The delivery agent will verify the customer’s original ID at the time of delivery. If ID is not provided, the order will be cancelled. </p> 
+              7. Valid ID Proof Required at Delivery:The delivery agent will verify the customer's original ID at the time of delivery. If ID is not provided, the order will be cancelled. </p> 
               <p className="text-sm text-gray-700 mb-4">
               8. No Returns or Refunds for Sealed Liquor Bottles:Once liquor is sold, returns or refunds are not permitted unless the product is damaged/spoiled (as per excise rules).
               </p>

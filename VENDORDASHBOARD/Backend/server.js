@@ -27,11 +27,12 @@ app.use('/uploads', express.static('/var/www/Drnkly/images/uploads'));
 
   // This serves files from the 'uploads' folder
 
-// ✅ 3. Apply middlewares
+//✅ 3. Apply middlewares
 app.use(cors({
   origin: ['http://localhost:5173', 'https://vendor.drnkly.com'],
   credentials: true
 }));
+//app.use(cors());
 
 app.use(bodyParser.json());
 
