@@ -49,9 +49,13 @@ const CartPopup = ({
   const deliveryCharge = 40; // Fixed delivery charge
   const total = subtotal + deliveryCharge;
 
+  // Get the 3 most recently added items (assuming they're at the end of the array)
+  const recentItems = [...items].slice(-3).reverse();
+  const remainingCount = items.length - recentItems.length;
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-      <div className="bg-white rounded-lg w-full max-w-md mx-4 relative overflow-hidden">
+      <div className="bg-white rounded-lg w-full max-w-md mx-4 relative overflow-hidden shadow-2xl animate-fadeIn">
         {/* Close button */}
         <button 
           onClick={onClose}
@@ -62,17 +66,20 @@ const CartPopup = ({
         
         {/* Header */}
         <div className="bg-[#cd6839] text-white p-4">
-          <h2 className="text-xl font-bold">Your Cart</h2>
+          <h2 className="text-xl font-bold flex items-center">
+            <ShoppingCart className="mr-2" size={20} />
+            Product Added to Cart
+          </h2>
         </div>
         
-        {/* Items list */}
-        <div className="px-4 py-3 max-h-60 overflow-y-auto">
-          {items.map((item) => (
-            <div key={item.id} className="flex items-center gap-3 py-2 border-b">
+        {/* Recently added items */}
+        <div className="px-4 py-3">
+          {recentItems.map((item) => (
+            <div key={item.id} className="flex items-center gap-3 py-2 border-b animate-slideIn">
               <img 
                 src={item.image} 
                 alt={item.name}
-                className="w-12 h-12 object-contain bg-gray-100 rounded"
+                className="w-14 h-14 object-contain bg-gray-100 rounded"
               />
               <div className="flex-1">
                 <h3 className="font-medium text-sm">{item.name}</h3>
@@ -83,48 +90,40 @@ const CartPopup = ({
               </div>
             </div>
           ))}
+          
+          {remainingCount > 0 && (
+            <div className="text-sm text-center text-gray-500 mt-2">
+              +{remainingCount} more {remainingCount === 1 ? 'item' : 'items'} in cart
+            </div>
+          )}
         </div>
         
-        {/* Bill details */}
+        {/* Bill summary */}
         <div className="px-4 py-3 bg-gray-50">
-          <h3 className="font-bold text-lg mb-2">Bill Details</h3>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Subtotal</span>
-              <span>₹{subtotal}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Delivery Charge</span>
-              <span>₹{deliveryCharge}</span>
-            </div>
-            <div className="flex justify-between font-bold pt-2 border-t">
-              <span>Total</span>
-              <span>₹{total}</span>
-            </div>
+          <div className="flex justify-between font-medium">
+            <span>Total Items:</span>
+            <span>{items.reduce((total, item) => total + item.quantity, 0)}</span>
           </div>
-        </div>
-        
-        {/* Cancellation policy */}
-        <div className="px-4 py-3 bg-gray-100 border-t">
-          <h3 className="font-semibold text-sm mb-1">Cancellation Policy</h3>
-          <p className="text-xs text-gray-600">
-            Orders cannot be cancelled once packed for delivery. In case of unexpected delays, a refund will be provided, if applicable.
-          </p>
+          <div className="flex justify-between font-medium mt-1">
+            <span>Subtotal:</span>
+            <span>₹{subtotal}</span>
+          </div>
         </div>
         
         {/* Action buttons */}
         <div className="p-4 flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 py-2 px-4 border border-[#cd6839] text-[#cd6839] rounded-lg font-medium"
+            className="flex-1 py-2 px-4 border border-[#cd6839] text-[#cd6839] rounded-lg font-medium hover:bg-[#cd6839]/5 transition-colors"
           >
             Continue Shopping
           </button>
           <button
             onClick={onViewCart}
-            className="flex-1 py-2 px-4 bg-[#cd6839] text-white rounded-lg font-medium"
+            className="flex-1 py-2 px-4 bg-[#cd6839] text-white rounded-lg font-medium hover:bg-[#b55a31] transition-colors flex items-center justify-center"
           >
-            Proceed to Payment
+            <ShoppingBag className="mr-2" size={16} />
+            View Cart
           </button>
         </div>
       </div>
@@ -269,7 +268,7 @@ function Products() {
   
     const userId = localStorage.getItem('userId');
     if (!userId) {
-      alert('Please log in first');
+      toast.error('Please log in first');
       navigate('/login');
       return;
     }
@@ -295,13 +294,25 @@ function Products() {
         image: product.image
       });
       
-      // Redirect to cart page directly instead of showing popup
-      navigate('/cart');
+      // Show success toast instead of redirecting
+      toast.success(`${product.name} added to cart!`, {
+        position: "bottom-right",
+        autoClose: 2000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+      
+      // Show cart popup with a small delay
+      setTimeout(() => {
+        setIsCartPopupOpen(true);
+      }, 500);
     } catch (err: unknown) {
       if (err instanceof Error) {
-        alert(err.message || 'Failed to add to cart');
+        toast.error(err.message || 'Failed to add to cart');
       } else {
-        alert('Failed to add to cart');
+        toast.error('Failed to add to cart');
       }
       console.error('Cart Error:', err);
     }
@@ -381,35 +392,6 @@ function Products() {
     }
   };
 
-  // Add a quick add to cart function that doesn't navigate away
-  const quickAddToCart = async (e: React.MouseEvent, product: Product) => {
-    e.stopPropagation();
-    e.preventDefault();
-  
-    const userId = localStorage.getItem('userId');
-    if (!userId) {
-      toast.error('Please log in first');
-      return;
-    }
-  
-    try {
-      await axios.post('https://peghouse.in/api/cart/add', {
-        userId,
-        productId: product._id,
-        name: product.name,
-        price: product.price,
-        image: product.image,
-        volume: product.volume,
-        alcoholContent: product.alcoholContent
-      });
-  
-      toast.success(`${product.name} added to cart!`);
-    } catch (err) {
-      toast.error('Failed to add to cart');
-      console.error('Cart Error:', err);
-    }
-  };
-
   // Product Grid styles
   const productContainerStyle = {
     display: 'grid',
@@ -471,6 +453,24 @@ function Products() {
     .brand-card:hover .brand-image {
       transform: scale(1.1);
     }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes slideIn {
+      from { transform: translateY(10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .animate-fadeIn {
+      animation: fadeIn 0.3s ease forwards;
+    }
+    
+    .animate-slideIn {
+      animation: slideIn 0.4s ease forwards;
+    }
   `;
 
   return (
@@ -527,10 +527,14 @@ function Products() {
             >
               Login
             </button>
-            <ShoppingCart
-              onClick={() => navigate('/cart')}
-              className="cursor-pointer"
-            />
+            <div className="relative cursor-pointer" onClick={() => navigate('/cart')}>
+              <ShoppingCart className="hover:text-[#cd6839] transition-colors" />
+              {items.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-[#cd6839] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {items.reduce((total, item) => total + item.quantity, 0)}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -784,8 +788,8 @@ function Products() {
               className="product-card"
               style={productCardStyle}
               onClick={() => {
-                // Simply call handleAddToCart with null for the event
-                handleAddToCart(null, product);
+                // Navigate to product detail page if needed
+                // navigate(`/product/${product._id}`);
               }}
             >
               <div> {/* Content wrapper */}
@@ -824,8 +828,10 @@ function Products() {
                   border: 'none',
                   borderRadius: '8px',
                   marginTop: '10px',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  transition: 'background-color 0.3s ease'
                 }}
+                className="hover:bg-[#b55a31]"
               >
                 Add to Cart
               </button>
