@@ -5,7 +5,7 @@ const { superAdminLogin } = require('../controllers/superAdminController');
 
 // ✅ Rate limiter for login route (max 5 tries in 15 mins)
 const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 mins
+  windowMs: 1 * 60 * 1000, // 15 mins
   max: 5,
   message: 'Too many login attempts. Try again after 15 minutes.',
   standardHeaders: true,
