@@ -1,14 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { getAllCustomers, acceptVerification, rejectVerification } = require('../controllers/userController');
+const verifySuperAdminToken = require('../middleware/authMiddleware'); // ✅ Make sure path is correct
 
-// Route to get all customers
-router.get('/customers', getAllCustomers);
-
-// Route to accept verification
-router.put('/customers/accept/:userId', acceptVerification);
-
-// Route to reject verification
-router.put('/customers/reject/:userId', rejectVerification);
+router.get('/customers', verifySuperAdminToken, getAllCustomers);
+router.put('/customers/accept/:userId', verifySuperAdminToken, acceptVerification);
+router.put('/customers/reject/:userId', verifySuperAdminToken, rejectVerification);
 
 module.exports = router;
