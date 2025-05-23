@@ -109,6 +109,7 @@ const removeFromCart = async (productId: string) => {
 };
 
 
+
   // Base total
   const total = items.reduce((sum, item) => {
     const rawPrice = typeof item.price === 'string' ? item.price.replace(/[^\d.]/g, '') : item.price;
