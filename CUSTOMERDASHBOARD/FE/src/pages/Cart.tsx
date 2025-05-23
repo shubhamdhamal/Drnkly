@@ -98,15 +98,17 @@ const removeFromCart = async (productId: string) => {
       price: item.productId.price,
       productId: item.productId._id,
       quantity: item.quantity,
+      volume: item.productId.volume  // IMPORTANT: include volume for Old Monk logic
     }));
 
-    setItems(updatedItems); // This updates the state to reflect the change in the cart
+    setItems(updatedItems); // Update local state immediately
 
     toast.success('Item removed');
   } catch (error) {
     toast.error('Failed to remove item');
   }
 };
+
 
 
 

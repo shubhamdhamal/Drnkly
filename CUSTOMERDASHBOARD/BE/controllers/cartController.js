@@ -18,43 +18,40 @@ exports.addToCart = async (req, res) => {
     let cart = await Cart.findOne({ userId });
 
     if (!cart) {
-      if (isOldMonk180) {
-        // Add once with quantity 1
-        const newCart = await Cart.create({
-          userId,
-          items: [{ productId, name, price, image, quantity: 1 }]
-        });
-        const populatedCart = await Cart.findOne({ userId }).populate({
-          path: 'items.productId',
-          model: 'Product',
-          select: 'category liquorType name price image volume'
-        });
-        return res.status(201).json({ message: 'Cart created', cart: populatedCart });
-      } else {
-        // Non Old Monk 180, normal add
-        const newCart = await Cart.create({
-          userId,
-          items: [{ productId, name, price, image, quantity: 1 }]
-        });
-        const populatedCart = await Cart.findOne({ userId }).populate({
-          path: 'items.productId',
-          model: 'Product',
-          select: 'category liquorType name price image volume'
-        });
-        return res.status(201).json({ message: 'Cart created', cart: populatedCart });
-      }
+      // Create new cart with this product
+      const newCart = await Cart.create({
+        userId,
+        items: [{ productId, name, price, image, quantity: 1 }]
+      });
+
+      const populatedCart = await Cart.findOne({ userId }).populate({
+        path: 'items.productId',
+        model: 'Product',
+        select: 'category liquorType name price image volume'
+      });
+
+      return res.status(201).json({ message: 'Cart created', cart: populatedCart });
     }
 
+    // Check if Old Monk 180ml is already in the cart (fresh from DB)
+    const oldMonkInCart = cart.items.some(item => {
+      const isOldMonkItem = item.productId.toString() === productId && isOldMonk180;
+      return isOldMonkItem;
+    });
+
+    if (isOldMonk180 && oldMonkInCart) {
+      // Prevent adding duplicate 180ml Old Monk
+      return res.status(400).json({ message: '180ml Old Monk can only be added once' });
+    }
+
+    // Check if the product already exists in the cart
     const existingItem = cart.items.find(item => item.productId.toString() === productId);
 
     if (existingItem) {
-      if (isOldMonk180) {
-        // Cannot add again
-        return res.status(400).json({ message: '180ml Old Monk can only be added once' });
-      }
-      // For other products, increment quantity normally
+      // For other products increment quantity normally
       existingItem.quantity += 1;
     } else {
+      // Add new product to cart
       cart.items.push({ productId, name, price, image, quantity: 1 });
     }
 
@@ -73,6 +70,7 @@ exports.addToCart = async (req, res) => {
     return res.status(500).json({ message: 'Error adding to cart', error: error.message });
   }
 };
+
 
 
 // ✅ Get User's Cart
