@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Menu, Search, ShoppingCart, X, User, Settings, LogOut, BookOpen, Clock, AlertTriangle, Sparkles, ChevronLeft, ChevronRight, Gift } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import oldMonkImage from './pop.jpeg';
 
 // Banner animations CSS
 const bannerAnimations = `
@@ -36,6 +37,24 @@ const bannerAnimations = `
       opacity: 1;
       transform: translateY(0);
     }
+  }
+  
+  /* Rain animation */
+  @keyframes rain {
+    0% {
+      background-position: 0px 0px;
+    }
+    100% {
+      background-position: 500px 1000px;
+    }
+  }
+  
+  .rain-animation {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAMAAAAECAYAAABLLYUHAAAAGElEQVQYV2NkYGD4z8DAwMgAI0AMdM5/ACRwAgMsRgU3AAAAAElFTkSuQmCC');
+    width: 100%;
+    height: 100%;
+    animation: rain 10s linear infinite;
+    opacity: 0.5;
   }
   
   .banner-element {
@@ -172,7 +191,7 @@ const OldMonkPromotion = ({ isOpen, onClose, onGetOffer }: { isOpen: boolean, on
   
   return (
     <div className="fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center p-4">
-      <div className="relative max-w-lg w-full bg-black bg-opacity-90 rounded-lg overflow-hidden shadow-2xl">
+      <div className="relative max-w-3xl w-full overflow-hidden shadow-2xl">
         {/* Close button */}
         <button 
           onClick={onClose}
@@ -181,52 +200,13 @@ const OldMonkPromotion = ({ isOpen, onClose, onGetOffer }: { isOpen: boolean, on
           <X size={24} />
         </button>
         
-        {/* Main content */}
-        <div className="relative">
-          {/* Background with Old Monk bottle */}
+        {/* Main content - clickable image with built-in FREE button */}
+        <div className="relative cursor-pointer" onClick={onGetOffer}>
           <img 
-            src="https://i.ibb.co/Sd9tNqF/old-monk-promo.jpg" 
-            alt="Old Monk Promotion" 
-            className="w-full object-cover h-full absolute inset-0"
+            src={oldMonkImage} 
+            alt="Promotion Background" 
+            className="w-full h-auto"
           />
-          
-          <div className="relative z-10 p-6 pt-12 pb-12 text-white text-center">
-            <h2 className="text-4xl font-bold text-white mb-4 banner-appear">
-              Get <span className="text-yellow-400">OLD MONK</span> Quarter
-            </h2>
-            
-            <div className="my-4 banner-appear-delay-1">
-              <span 
-                onClick={onGetOffer}
-                className="inline-block bg-red-600 text-white text-2xl font-bold px-6 py-2 rounded-lg free-tag cursor-pointer hover:bg-red-700 transform hover:scale-105 transition-all duration-300"
-              >
-                FREE
-              </span>
-            </div>
-            
-            <p className="text-xl font-medium text-white my-4 banner-appear-delay-1">
-              On Your First Order
-            </p>
-            
-            <div className="flex items-center justify-center my-4 banner-appear-delay-1 cursor-pointer" onClick={onGetOffer}>
-              <span className="text-4xl font-bold text-yellow-400 mx-2">180</span>
-              <span className="text-4xl font-cursive text-yellow-300">ml</span>
-            </div>
-            
-            <div className="text-lg font-medium text-blue-300 my-4 banner-appear-delay-2">
-              Delivered in <span className="text-4xl font-bold text-blue-300">45</span> min
-            </div>
-            
-            <button
-              onClick={onGetOffer}
-              className="mt-6 px-8 py-3 bg-gradient-to-r from-yellow-600 to-yellow-400 text-black font-bold rounded-full text-lg transform hover:scale-105 transition-transform duration-300 glow-effect banner-appear-delay-2"
-            >
-              <div className="flex items-center justify-center">
-                <Gift className="mr-2" size={20} />
-                Get Your FREE Old Monk
-              </div>
-            </button>
-          </div>
         </div>
       </div>
     </div>
@@ -282,14 +262,13 @@ function Dashboard() {
         const isSkipped = localStorage.getItem('isSkippedLogin'); 
         const oldMonkOfferShown = localStorage.getItem('oldMonkOfferShown');
         
+        // Set login status
         const loginStatus = !!token && !isSkipped;
         console.log('Dashboard login check:', { token: !!token, userId: !!userId, isSkipped: !!isSkipped, loginStatus });
         setIsLoggedIn(loginStatus);
   
-        // Show the Old Monk promotion if the user just logged in and hasn't seen the offer before
-        if (loginStatus && !oldMonkOfferShown) {
-          setShowOldMonkPromo(true);
-        }
+        // Show the Old Monk promotion for all users
+        setShowOldMonkPromo(true);
   
         if (token && userId && loginStatus) {
           const response = await axios.get(`https://peghouse.in/api/users/${userId}`, {
