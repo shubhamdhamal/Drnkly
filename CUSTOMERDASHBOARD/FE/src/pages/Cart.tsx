@@ -83,17 +83,31 @@ const updatedItems = res.data.cart.items.map((item: any) => ({
 
 
   // Remove item from cart
-  const removeFromCart = async (productId: string) => {
-    try {
-      const res = await axios.delete('https://peghouse.in/api/cart/remove', {
-        data: { userId, productId },
-      });
-      setItems(res.data.cart.items);
-      toast.success('Item removed');
-    } catch (error) {
-      toast.error('Failed to remove item');
-    }
-  };
+const removeFromCart = async (productId: string) => {
+  try {
+    // Remove item from the cart in the backend
+    const res = await axios.delete('https://peghouse.in/api/cart/remove', {
+      data: { userId, productId },
+    });
+
+    // Update the state with the updated cart items from the backend response
+    const updatedItems = res.data.cart.items.map((item: any) => ({
+      category: item.productId.category,
+      name: item.productId.name,
+      image: item.productId.image,
+      price: item.productId.price,
+      productId: item.productId._id,
+      quantity: item.quantity,
+    }));
+
+    setItems(updatedItems); // This updates the state to reflect the change in the cart
+
+    toast.success('Item removed');
+  } catch (error) {
+    toast.error('Failed to remove item');
+  }
+};
+
 
   // Base total
   const total = items.reduce((sum, item) => {

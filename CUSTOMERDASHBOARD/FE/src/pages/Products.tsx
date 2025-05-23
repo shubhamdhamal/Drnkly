@@ -75,7 +75,7 @@ const CartPopup = ({
         {/* Recently added items */}
         <div className="px-4 py-3">
           {recentItems.map((item) => (
-            <div key={item.id} className="flex items-center gap-3 py-2 border-b animate-slideIn">
+            <div key={item.productId._id || item.productId} className="flex items-center gap-3 py-2 border-b animate-slideIn">
               <img 
                 src={item.image} 
                 alt={item.name}
@@ -130,6 +130,8 @@ const CartPopup = ({
     </div>
   );
 };
+
+
 
 function Products() {
   const navigate = useNavigate();
