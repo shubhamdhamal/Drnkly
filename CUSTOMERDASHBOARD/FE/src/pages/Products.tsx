@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Wine, Search, ShoppingCart, ChevronDown, ArrowLeft, ShoppingBag, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Wine, Search, ShoppingCart, ChevronDown, ArrowLeft, ShoppingBag, X, ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
 import { useCart, CartItem } from '../context/CartContext';
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -148,6 +148,26 @@ function Products() {
   const [subBrands, setSubBrands] = useState<SubBrand[]>([]);
   const [sortMethod, setSortMethod] = useState<'price' | 'volume'>('price');
   const [isCartPopupOpen, setIsCartPopupOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Check login status
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    const userId = localStorage.getItem('userId');
+    const isSkipped = localStorage.getItem('isSkippedLogin');
+    
+    const loginStatus = !!token && !isSkipped;
+    setIsLoggedIn(loginStatus);
+  }, []);
+
+  // Handle logout
+  const handleLogout = () => {
+    localStorage.clear();
+    localStorage.removeItem("locationGranted");
+    setIsLoggedIn(false);
+    toast.success("Logged out successfully");
+    navigate('/login');
+  };
 
   // Handle URL parameters
   useEffect(() => {
@@ -560,22 +580,42 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
             />
           </div>
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate('/login')}
-              style={{
-                padding: '8px 16px',
-                background: '#cd6839',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              Login
-            </button>
+            {isLoggedIn ? (
+              <button
+                onClick={handleLogout}
+                style={{
+                  padding: '8px 16px',
+                  background: '#e53e3e',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <LogOut size={16} />
+                Logout
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate('/login')}
+                style={{
+                  padding: '8px 16px',
+                  background: '#cd6839',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                Login
+              </button>
+            )}
             <div className="relative cursor-pointer" onClick={() => navigate('/cart')}>
               <ShoppingCart className="hover:text-[#cd6839] transition-colors" />
               {items.length > 0 && (
