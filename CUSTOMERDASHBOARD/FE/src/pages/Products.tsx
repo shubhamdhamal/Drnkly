@@ -372,6 +372,15 @@ function Products() {
   const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => {
     if (e) {
       e.stopPropagation();
+      
+      // Add visual feedback on the button
+      const target = e.currentTarget as HTMLButtonElement;
+      target.style.backgroundColor = '#e8a87c';
+      
+      // Return to original color after animation completes
+      setTimeout(() => {
+        target.style.backgroundColor = '#cd6839';
+      }, 300);
     }
   
     const userId = localStorage.getItem('userId');
@@ -578,6 +587,15 @@ function Products() {
     
     .animate-slideIn {
       animation: slideIn 0.4s ease forwards;
+    }
+    
+    .add-to-cart-btn {
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+    
+    .add-to-cart-btn:active {
+      background-color: #e8a87c !important;
+      transform: scale(0.95);
     }
   `;
 
@@ -1014,7 +1032,7 @@ function Products() {
                   cursor: 'pointer',
                   transition: 'background-color 0.3s ease'
                 }}
-                className="hover:bg-[#b55a31]"
+                className="hover:bg-[#b55a31] add-to-cart-btn"
               >
                 Add to Cart
               </button>
