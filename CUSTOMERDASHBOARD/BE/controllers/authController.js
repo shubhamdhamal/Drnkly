@@ -6,72 +6,15 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto'); // Ensure this is required at the top
 
+
 // Secret key for JWT signing
 const JWT_SECRET = 'your_jwt_secret_key'; // Ideally, store this in an environment variable
 // Send OTP to email
-// Send OTP to email
-// Send OTP to email
-exports.sendOtp = async (req, res) => {
-  const { email } = req.body;
 
-  try {
-    // Check if the email exists in the database
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: 'User not found with this email address' });
-    }
-
-    // Generate OTP (6-digit)
-    const otp = Math.floor(100000 + Math.random() * 900000); // Generates a 6-digit OTP
-    const otpExpire = Date.now() + 10 * 60 * 1000; // OTP expires in 10 minutes
-
-    // Store OTP and expiry in the user's document
-    user.otp = otp;
-    user.otpExpire = otpExpire;
-    await user.save();
-
-    // Create a transporter for sending email
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER, // your email address
-        pass: process.env.EMAIL_PASS, // your email password
-      },
-    });
-
-    // Mail options
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: 'Your OTP for Password Reset',
-      text: `Your OTP for password reset is: ${otp}. It will expire in 10 minutes.`,
-    };
-
-    // Send the OTP email
     await transporter.sendMail(mailOptions);
 
     res.status(200).json({ success: true, message: 'OTP sent successfully to your email' });
   } catch (err) {
-    console.error('Error sending OTP:', err);
-    res.status(500).json({ message: 'Error sending OTP. Please try again later.' });
-  }
-};
-const verifyOtp = async (req, res) => {
-  const { email, otp } = req.body;
-
-  // Validate inputs
-  if (!email || !otp) {
-    return res.status(400).json({ message: 'Please provide email and OTP.' });
-  }
-
-  // Check if OTP matches
-  if (otpStore[email] === otp) {
-    delete otpStore[email]; // Clear OTP after successful verification
-    return res.status(200).json({ success: true, message: 'OTP verified successfully.' });
-  }
-
-  return res.status(400).json({ message: 'Invalid OTP. Please try again.' });
-};
 
 exports.sendOtp = async (req, res) => {
   const { email } = req.body;

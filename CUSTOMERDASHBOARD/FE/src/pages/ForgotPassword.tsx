@@ -1,33 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Lock, ArrowRight, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
-const ForgotPassword: React.FC = () => {
-  // Track the current step in the password reset process
-  const [step, setStep] = useState<number>(1);
-  
-  // Form data state
-  const [formData, setFormData] = useState({
-    email: '',
-    otp: '',
-    mobile: '',
-    newPassword: '',
-    confirmPassword: '',
-  });
 
-  // UI state management
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>('');
-  const [success, setSuccess] = useState<string>('');
-  const [otpSent, setOtpSent] = useState<boolean>(false);
-  const [timer, setTimer] = useState<number>(0);
-  const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
-
-  // Handle input changes
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    setError('');
   };
 
   // Validate email format
@@ -35,125 +9,29 @@ const ForgotPassword: React.FC = () => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
-  // Validate OTP (6 digits)
-  const isOtpValid = (otp: string): boolean => {
-    return /^\d{6}$/.test(otp);
-  };
 
-  // Send OTP to email
-  const handleSendOtp = async () => {
-    const { email } = formData;
-    
-    if (!email) {
-      setError('Please enter your email address');
-      return;
-    }
-    
-    if (!isEmailValid(email)) {
-      setError('Please enter a valid email address');
-      return;
-    }
-
-    setLoading(true);
-    
-    try {
-      // Simulate API call for sending OTP
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      setOtpSent(true);
-      setSuccess(`OTP sent to ${email}`);
-      setTimer(60);
-      setStep(2);
-    } catch (error) {
-      setError('Failed to send OTP. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Verify OTP
-  const handleVerifyOtp = async () => {
-    const { otp } = formData;
-    
-    if (!otp) {
-      setError('Please enter the OTP');
-      return;
-    }
-    
-    if (!isOtpValid(otp)) {
-      setError('Please enter a valid 6-digit OTP');
-      return;
-    }
 
-    setLoading(true);
-    
-    try {
-      // Simulate API call for verifying OTP
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      setSuccess('OTP verified successfully');
-      setStep(3);
-    } catch (error) {
-      setError('Invalid OTP. Please try again.');
+    }
+  } catch (error: any) {
+    setError('Invalid OTP or verification failed. Please try again.');
+    console.error('OTP Verification Error:', error);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
     } finally {
       setLoading(false);
     }
   };
 
-  // Reset password
-  const handleResetPassword = async () => {
-    const { mobile, newPassword, confirmPassword } = formData;
-    
-    if (!mobile || mobile.length !== 10) {
-      setError('Please enter a valid 10-digit mobile number');
-      return;
-    }
-    
-    if (!newPassword) {
-      setError('Please enter a new password');
-      return;
-    }
-    
-    if (newPassword.length < 8) {
-      setError('Password must be at least 8 characters long');
-      return;
-    }
-    
-    if (newPassword !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
 
-    setLoading(true);
-    
-    try {
-      // Simulate API call for resetting password
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      setSuccess('Password reset successfully! You can now login with your new password.');
-      // Reset form
-      setFormData({
-        email: '',
-        otp: '',
-        mobile: '',
-        newPassword: '',
-        confirmPassword: '',
-      });
-      setStep(1);
-    } catch (error) {
-      setError('Failed to reset password. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Timer for OTP resend
-  React.useEffect(() => {
-    if (timer > 0) {
-      const interval = setInterval(() => {
-        setTimer(prevTimer => prevTimer - 1);
-      }, 1000);
-      return () => clearInterval(interval);
     }
   }, [timer]);
 
@@ -281,19 +159,7 @@ const ForgotPassword: React.FC = () => {
                   </span>
                 )}
               </button>
-            </div>
-          </div>
-        );
-      
-      case 3:
-        return (
-          <div className="space-y-6">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-gray-800">Create New Password</h2>
-              <p className="text-gray-600 mt-2">Enter your mobile number and new password</p>
-            </div>
-            
-            <div className="space-y-4">
+
               <div>
                 <label htmlFor="mobile" className="block text-sm font-medium text-gray-700 mb-1">
                   Mobile Number
@@ -390,69 +256,11 @@ const ForgotPassword: React.FC = () => {
     }
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">
-      <div className="w-full max-w-md">
-        <div className="bg-white shadow-md rounded-lg p-8">
-          {/* Progress steps */}
-          <div className="flex items-center justify-between mb-8">
-            {[1, 2, 3].map((stepNumber) => (
-              <div key={stepNumber} className="flex flex-col items-center">
-                <div
-                  className={`w-8 h-8 flex items-center justify-center rounded-full border-2 ${
-                    step === stepNumber
-                      ? 'border-orange-500 bg-orange-500 text-white'
-                      : step > stepNumber
-                      ? 'border-green-500 bg-green-500 text-white'
-                      : 'border-gray-300 text-gray-500'
-                  }`}
-                >
-                  {step > stepNumber ? (
-                    <CheckCircle size={16} />
-                  ) : (
-                    stepNumber
-                  )}
-                </div>
-                <span
-                  className={`text-xs mt-2 ${
-                    step === stepNumber
-                      ? 'text-orange-500 font-medium'
-                      : step > stepNumber
-                      ? 'text-green-500'
-                      : 'text-gray-500'
-                  }`}
-                >
-                  {stepNumber === 1
-                    ? 'Email'
-                    : stepNumber === 2
-                    ? 'Verify'
-                    : 'Reset'}
-                </span>
-              </div>
-            ))}
-          </div>
 
-          {/* Error and success messages */}
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-600 flex items-center">
-              <AlertCircle size={16} className="mr-2 flex-shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {success && (
-            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md text-sm text-green-600 flex items-center">
-              <CheckCircle size={16} className="mr-2 flex-shrink-0" />
-              <span>{success}</span>
-            </div>
-          )}
-
-          {/* Step content */}
-          {renderStepContent()}
         </div>
       </div>
     </div>
   );
 };
 
-export default ForgotPassword;
+
