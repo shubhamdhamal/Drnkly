@@ -10,10 +10,10 @@ connectDB(); // Call the DB connection
 
 const app = express();
 
-// app.use(cors({
-//   origin: 'https://peghouse.in', 
-//   credentials: true
-// }));
+app.use(cors({
+origin: 'https://peghouse.in', 
+credentials: true
+}));
 
 app.use(cors());
 // Increase limits for JSON and urlencoded requests
