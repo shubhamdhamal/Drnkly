@@ -28,4 +28,8 @@ router.post('/update-status', vendorController.updateVerificationStatus); // Upd
 router.post('/login', vendorController.loginVendor); // Vendor login
 router.get('/status/:vendorId', vendorController.getVendorStatus);
 
+// OTP routes
+router.post('/send-otp', vendorController.sendOtp); // Send OTP
+router.post('/verify-otp', vendorController.verifyOtp); // Verify OTP
+
 module.exports = router;

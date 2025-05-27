@@ -149,6 +149,9 @@ function Products() {
   const [sortMethod, setSortMethod] = useState<'price' | 'volume'>('price');
   const [isCartPopupOpen, setIsCartPopupOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [allBrands, setAllBrands] = useState<string[]>([]);
+  const [searchResults, setSearchResults] = useState<{products: Product[], brands: string[]}>({products: [], brands: []});
+  const [showSearchResults, setShowSearchResults] = useState(false);
 
   // Check login status
   useEffect(() => {
@@ -258,6 +261,59 @@ function Products() {
 
     fetchData();
   }, []);
+
+  // Extract all unique brands from products
+  useEffect(() => {
+    if (products.length > 0) {
+      const uniqueBrands = Array.from(new Set(products.map(product => product.brand).filter(Boolean)));
+      setAllBrands(uniqueBrands);
+    }
+  }, [products]);
+
+  // Enhanced search function that handles both products and brands
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    
+    if (query.trim() === '') {
+      setShowSearchResults(false);
+      return;
+    }
+    
+    const lowerQuery = query.toLowerCase();
+    
+    // Search products
+    const matchedProducts = products.filter(product =>
+      product.name.toLowerCase().includes(lowerQuery)
+    );
+    
+    // Search brands
+    const matchedBrands = allBrands.filter(brand => 
+      brand.toLowerCase().includes(lowerQuery)
+    );
+    
+    setSearchResults({
+      products: matchedProducts.slice(0, 5), // Limit to 5 product results
+      brands: matchedBrands.slice(0, 3)      // Limit to 3 brand results
+    });
+    
+    setShowSearchResults(matchedProducts.length > 0 || matchedBrands.length > 0);
+  };
+
+  // Handle brand selection from search results
+  const handleBrandSelect = (brand: string) => {
+    setSelectedBrand(brand);
+    setSearchQuery('');
+    setShowSearchResults(false);
+    setShowSubBrands(false);
+  };
+
+  // Handle product selection from search results
+  const handleProductSelect = (product: Product) => {
+    // Navigate to product detail or just close the search results
+    setSearchQuery('');
+    setShowSearchResults(false);
+    // Optional: highlight the product somehow
+  };
 
   // Get sub-brands for a specific category
   const getSubBrandsForCategory = (category: string) => {
@@ -582,22 +638,22 @@ function Products() {
                 Logout
               </button>
             ) : (
-              <button
-                onClick={() => navigate('/login')}
-                style={{
-                  padding: '8px 16px',
-                  background: '#cd6839',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                Login
-              </button>
+            <button
+              onClick={() => navigate('/login')}
+              style={{
+                padding: '8px 16px',
+                background: '#cd6839',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              Login
+            </button>
             )}
             <div className="relative cursor-pointer" onClick={() => navigate('/cart')}>
               <ShoppingCart className="hover:text-[#cd6839] transition-colors" />
@@ -610,19 +666,74 @@ function Products() {
           </div>
         </div>
 
-        {/* Search Bar */}
+        {/* Search Bar with enhanced dropdown */}
         <div className="mt-4 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
           <input
             type="text"
-            placeholder="Search for drinks..."
+            placeholder="Search for products or brands..."
             value={searchQuery}
             onChange={(e) => {
               const value = e.target.value;
-              setSearchQuery(value);
+              handleSearch(value);
             }}
             className="w-full pl-10 pr-4 py-3 bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
           />
+          
+          {/* Search Results Dropdown */}
+          {showSearchResults && searchQuery.trim() !== '' && (
+            <div className="absolute left-0 right-0 top-full mt-1 bg-white rounded-lg shadow-lg z-20 border border-gray-200 max-h-80 overflow-y-auto">
+              {/* Brand Results */}
+              {searchResults.brands.length > 0 && (
+                <div className="p-2 border-b border-gray-200">
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase px-2 py-1">Brands</h3>
+                  {searchResults.brands.map(brand => (
+                    <div 
+                      key={brand} 
+                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                      onClick={() => handleBrandSelect(brand)}
+                    >
+                      <Wine size={16} className="mr-2 text-[#cd6839]" />
+                      <span>{brand}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {/* Product Results */}
+              {searchResults.products.length > 0 && (
+                <div className="p-2">
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase px-2 py-1">Products</h3>
+                  {searchResults.products.map(product => (
+                    <div 
+                      key={product._id} 
+                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                      onClick={() => handleProductSelect(product)}
+                    >
+                      <div className="w-10 h-10 mr-3 bg-gray-100 rounded overflow-hidden">
+                        <img 
+                          src={product.image} 
+                          alt={product.name}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                      <div>
+                        <div className="font-medium">{product.name}</div>
+                        <div className="text-sm text-gray-600">₹{product.price} • {product.brand}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {/* No Results */}
+              {searchResults.products.length === 0 && searchResults.brands.length === 0 && (
+                <div className="p-4 text-center text-gray-500">
+                  No results found for "{searchQuery}"
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Sub-Brands Horizontal Display */}
