@@ -2,15 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Wine, ArrowRight, AlertCircle, Eye, EyeOff, Check, X } from 'lucide-react';
 import axios from 'axios';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function SignUp() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  const [showInfo, setShowInfo] = useState(false); // This controls the visibility of the info modal
-  const [showTermsModal, setShowTermsModal] = useState(false); // Modal for Terms & Conditions
+  const [showInfo, setShowInfo] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -30,7 +35,6 @@ function SignUp() {
 
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState('');
-  
   const [errorMessage, setErrorMessage] = useState('');
 
   const [passwordRequirements, setPasswordRequirements] = useState({
@@ -64,31 +68,18 @@ function SignUp() {
     'Jammu & Kashmir': ['Srinagar', 'Jammu'],
     'Ladakh': ['Leh', 'Kargil'],
   };
-   // Random number validation
-   const handleAadhaarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (/^\d{0,2}$/.test(value)) {
-      setExtraData({ ...extraData, aadhaar: value });
-      setErrorMessage('');
-    }
-  };
-   // Name validation for first and last name
-   const validateNameWithoutSpace = (name: string) => {
-    const nameParts = name.trim().split(' ');
 
-    // Ensure there are exactly two parts (first name and last name)
+  // Validate name with first and last name
+  const validateNameWithoutSpace = (name: string) => {
+    const nameParts = name.trim().split(' ');
     if (nameParts.length !== 2) {
       return false;
     }
-
     const firstName = nameParts[0];
     const lastName = nameParts[1];
-
-    const nameRegex = /^[A-Za-z]{2,}$/; // Only letters, at least two characters
-
+    const nameRegex = /^[A-Za-z]{2,}$/;
     return nameRegex.test(firstName) && nameRegex.test(lastName);
   };
-  
   
   const validateMobile = (mobile: string) => {
     return /^\d{10}$/.test(mobile);
@@ -96,14 +87,6 @@ function SignUp() {
   
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
-  
-  const handleAadhaarBlur = () => {
-    if (extraData.aadhaar.length < 2) {
-      setErrorMessage('Number should be 2 digits.');
-    } else {
-      setErrorMessage('');
-    }
   };
 
   // Validate password as it changes
@@ -120,6 +103,64 @@ function SignUp() {
     return Object.values(passwordRequirements).every(req => req === true);
   };
 
+  const sendOtp = async () => {
+    if (!formData.email || !validateEmail(formData.email)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+    
+    try {
+      setError('');
+      // Replace with your actual API endpoint
+      const response = await axios.post('http://localhost:5000/api/auth/send-otp', {
+        email: formData.email
+      });
+      
+      if (response.data.success) {
+        setOtpSent(true);
+        setError('');
+        setStep(2);
+      } else {
+        setError(response.data.message || 'Failed to send OTP. Please try again.');
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to send OTP. Please try again.');
+    }
+  };
+
+  // Verify OTP entered by the user
+  const verifyOtp = async () => {
+    if (!otp || otp.length !== 6) {
+      setError('Please enter a valid 6-digit OTP.');
+      return;
+    }
+    
+    try {
+      setError('');
+      // Call your backend API to verify OTP
+      const response = await axios.post('http://localhost:5000/api/auth/verify-otp', {
+        email: formData.email,
+        otp: otp
+      });
+      
+      if (response.data.success) {
+        setOtpVerified(true);
+        setError('');
+        setStep(3); // Move to step 3 after OTP verification
+        
+        // Add a success message
+        toast.success('OTP verified successfully!', {
+          position: "top-right",
+          autoClose: 2000
+        });
+      } else {
+        setError(response.data.message || 'Invalid OTP. Please try again.');
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Invalid OTP. Please try again.');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
   
@@ -129,24 +170,12 @@ function SignUp() {
       return;
     }
   
-    // Validate 2-digit number
-    if (!extraData.aadhaar || extraData.aadhaar.length !== 2) {
-      setError('Please enter a valid 2-digit random number');
-      return;
-    }
-  
-  
     // Validate Name (First name and Last name together in one field)
     if (!formData.name || !validateNameWithoutSpace(formData.name)) {
-      setError('Please enter your first name and last name together without space (e.g., John Doe).');
+      setError('Please enter your first name and last name (e.g., John Doe).');
       return;
     }
-    // Validate Email
-    if (!formData.email || !validateEmail(formData.email)) {
-      setError('Please enter a valid email address.');
-      return;
-    }
-  
+    
     // Validate Mobile
     if (!formData.mobile || !validateMobile(formData.mobile)) {
       setError('Please enter a valid 10-digit mobile number.');
@@ -169,14 +198,14 @@ function SignUp() {
       return;
     }
   
-    // ✅ If all validations passed, Prepare the data for submission
+    // Prepare the data for submission
     const finalData = new FormData();
     Object.entries(formData).forEach(([key, val]) => finalData.append(key, val));
     Object.entries(extraData).forEach(([key, val]) => finalData.append(key, String(val)));
   
     try {
       // Submit the form data to the backend
-      const res = await axios.post('https://peghouse.in/api/auth/signup', finalData, {
+      const res = await axios.post('http://localhost:5000/api/auth/signup', finalData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
   
@@ -191,7 +220,6 @@ function SignUp() {
     }
   };
   
-
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">
       <div className="w-full max-w-md">
@@ -200,7 +228,7 @@ function SignUp() {
             <Wine size={28} className="text-orange-500" />
           </div>
           <h2 className="text-2xl font-bold mt-4">User Registration</h2>
-          <p className="text-sm text-gray-500">Step {step} of 4</p>
+          <p className="text-sm text-gray-500">Step {step} of 3</p>
         </div>
 
         {error && (
@@ -213,40 +241,28 @@ function SignUp() {
           {step === 1 && (
             <>
               <div>
-                <label>State</label>
-                <select
+                <label>Email</label>
+                <input
+                  type="email"
                   className="w-full border px-3 py-2 rounded"
-                  value={extraData.state}
-                  onChange={(e) =>
-                    setExtraData({ ...extraData, state: e.target.value, city: '' })
-                  }
-                >
-                  <option value="">-- Select State --</option>
-                  {Object.keys(allowedAlcoholStates).map((state) => (
-                    <option key={state} value={state}>
-                      {state}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="Email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                />
+                {formData.email && !validateEmail(formData.email) && (
+                  <p className="text-red-500 text-xs mt-1">Please enter a valid email address.</p>
+                )}
               </div>
-              <div>
-                <label>City</label>
-                <select
-                  className="w-full border px-3 py-2 rounded"
-                  value={extraData.city}
-                  onChange={(e) =>
-                    setExtraData({ ...extraData, city: e.target.value })
-                  }
-                  disabled={!extraData.state}
+              
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={sendOtp}
+                  className="px-4 py-2 bg-orange-500 text-white rounded flex items-center space-x-1"
                 >
-                  <option value="">-- Select City --</option>
-                  {extraData.state &&
-                    allowedAlcoholStates[extraData.state].map((city) => (
-                      <option key={city} value={city}>
-                        {city}
-                      </option>
-                    ))}
-                </select>
+                  <span>Send OTP</span>
+                  <ArrowRight size={18} />
+                </button>
               </div>
             </>
           )}
@@ -254,84 +270,45 @@ function SignUp() {
           {step === 2 && (
             <>
               <div>
-                <label>DOB</label>
+                <label>Enter OTP sent to {formData.email}</label>
                 <input
-                  type="date"
+                  type="text"
                   className="w-full border px-3 py-2 rounded"
-                  value={extraData.dob}
+                  placeholder="6-digit OTP"
+                  value={otp}
                   onChange={(e) => {
-                    const dob = e.target.value;
-                    const today = new Date();
-                    const birthDate = new Date(dob);
-                    let age = today.getFullYear() - birthDate.getFullYear();
-                    const m = today.getMonth() - birthDate.getMonth();
-                    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-                      age--;
-                    }
-
-                    if (age >= 21) {
-                      setExtraData(prev => ({
-                        ...prev,
-                        dob: dob
-                      }));
-                    } else {
-                      alert('Your age is less than 21. You are not allowed to register.');
-                      setExtraData(prev => ({
-                        ...prev,
-                        dob: '',
-                        aadhaar: '',
-                        idProof: null,
-                        selfDeclaration: false
-                      }));
+                    const value = e.target.value;
+                    if (/^\d{0,6}$/.test(value)) {
+                      setOtp(value);
                     }
                   }}
+                  maxLength={6}
                 />
               </div>
-              <div>
-            <label>Any Random Number</label>
-            <input
-              type="text"
-              className="w-full border px-3 py-2 rounded"
-              placeholder="Enter any 2-digit number"
-              value={extraData.aadhaar}
-              onChange={handleAadhaarChange}
-              maxLength={2}
-              onBlur={handleAadhaarBlur}
-            />
-            {errorMessage && <p className="text-red-500">{errorMessage}</p>} {/* Display error message */}
-          </div>
+              
+              <div className="flex justify-between">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="px-4 py-2 bg-gray-300 rounded"
+                >
+                  Back
+                </button>
+                <button
+                  type="button"
+                  onClick={verifyOtp}
+                  className="px-4 py-2 bg-orange-500 text-white rounded flex items-center space-x-1"
+                >
+                  <span>Verify OTP</span>
+                  <ArrowRight size={18} />
+                </button>
+              </div>
             </>
           )}
 
           {step === 3 && (
             <>
               <div>
-                <label>Age Verification</label>
-                <p className="text-sm text-gray-600 mt-1">
-                  By continuing, you confirm that you are of legal drinking age as per your state regulations.
-                </p>
-              </div>
-              <div className="mt-4">
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={extraData.selfDeclaration}
-                    onChange={() =>
-                      setExtraData({
-                        ...extraData,
-                        selfDeclaration: !extraData.selfDeclaration,
-                      })
-                    }
-                  />
-                  <span>I confirm I am of legal drinking age</span>
-                </label>
-              </div>
-            </>
-          )}
-
-        {step === 4 && (
-  <>
-            <div>
                 <label>Name</label>
                 <input
                   type="text"
@@ -345,42 +322,26 @@ function SignUp() {
                 )}
               </div>
 
-    <div>
-      <label>Email</label>
-      <input
-        type="email"
-        className="w-full border px-3 py-2 rounded"
-        placeholder="Email"
-        value={formData.email}
-        onChange={(e) =>
-          setFormData({ ...formData, email: e.target.value })
-        }
-      />
-      {formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) && (
-        <p className="text-red-500 text-xs mt-1">Please enter a valid email address.</p>
-      )}
-    </div>
+              <div>
+                <label>Mobile</label>
+                <input
+                  type="tel"
+                  className="w-full border px-3 py-2 rounded"
+                  placeholder="Mobile Number"
+                  value={formData.mobile}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (/^\d{0,10}$/.test(value)) {
+                      setFormData({ ...formData, mobile: value });
+                    }
+                  }}
+                />
+                {formData.mobile && formData.mobile.length !== 10 && (
+                  <p className="text-red-500 text-xs mt-1">Mobile number must be exactly 10 digits.</p>
+                )}
+              </div>
 
-    <div>
-      <label>Mobile</label>
-      <input
-        type="tel"
-        className="w-full border px-3 py-2 rounded"
-        placeholder="Mobile Number"
-        value={formData.mobile}
-        onChange={(e) => {
-          const value = e.target.value;
-          if (/^\d{0,10}$/.test(value)) {
-            setFormData({ ...formData, mobile: value });
-          }
-        }}
-      />
-      {formData.mobile && formData.mobile.length !== 10 && (
-        <p className="text-red-500 text-xs mt-1">Mobile number must be exactly 10 digits.</p>
-      )}
-    </div>
-
-    <div className="relative">
+              <div className="relative">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Password
                 </label>
@@ -440,121 +401,166 @@ function SignUp() {
                 </div>
               </div>
 
-
               <div className="relative">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Confirm Password
-                        </label>
-                        <input
-                          type={showConfirmPassword ? "text" : "password"}
-                          className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
-                          placeholder="Confirm your password"
-                          value={formData.confirmPassword}
-                          onChange={(e) =>
-                            setFormData({ ...formData, confirmPassword: e.target.value })
-                          }
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute right-4 top-10 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                          tabIndex={-1}
-                        >
-                          {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                        </button>
-                      </div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Confirm Password
+                </label>
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
+                  placeholder="Confirm your password"
+                  value={formData.confirmPassword}
+                  onChange={(e) =>
+                    setFormData({ ...formData, confirmPassword: e.target.value })
+                  }
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-4 top-10 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  tabIndex={-1}
+                >
+                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
 
+              <div>
+                <label>State</label>
+                <select
+                  className="w-full border px-3 py-2 rounded"
+                  value={extraData.state}
+                  onChange={(e) =>
+                    setExtraData({ ...extraData, state: e.target.value, city: '' })
+                  }
+                >
+                  <option value="">-- Select State --</option>
+                  {Object.keys(allowedAlcoholStates).map((state) => (
+                    <option key={state} value={state}>
+                      {state}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label>City</label>
+                <select
+                  className="w-full border px-3 py-2 rounded"
+                  value={extraData.city}
+                  onChange={(e) =>
+                    setExtraData({ ...extraData, city: e.target.value })
+                  }
+                  disabled={!extraData.state}
+                >
+                  <option value="">-- Select City --</option>
+                  {extraData.state &&
+                    allowedAlcoholStates[extraData.state].map((city) => (
+                      <option key={city} value={city}>
+                        {city}
+                      </option>
+                    ))}
+                </select>
+              </div>
 
+              <div>
+                <label>DOB</label>
+                <input
+                  type="date"
+                  className="w-full border px-3 py-2 rounded"
+                  value={extraData.dob}
+                  onChange={(e) => {
+                    const dob = e.target.value;
+                    const today = new Date();
+                    const birthDate = new Date(dob);
+                    let age = today.getFullYear() - birthDate.getFullYear();
+                    const m = today.getMonth() - birthDate.getMonth();
+                    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                      age--;
+                    }
 
-    {/* Terms Modal Trigger */}
-    <div className="mt-2 flex items-center space-x-2">
-  <input
-    type="checkbox"
-    checked={agreed}
-    readOnly
-    onClick={() => setShowTermsModal(true)} // ✅ Always open Terms modal on click
-  />
-  <span className="text-sm text-gray-800">
-    I agree to the{" "}
-    <button
-      type="button"
-      onClick={() => setShowTermsModal(true)}
-      className="text-blue-600 underline hover:text-blue-800"
-    >
-      Terms & Conditions
-    </button>
-  </span>
-</div>
+                    if (age >= 21) {
+                      setExtraData(prev => ({
+                        ...prev,
+                        dob: dob
+                      }));
+                    } else {
+                      alert('Your age is less than 21. You are not allowed to register.');
+                      setExtraData(prev => ({
+                        ...prev,
+                        dob: '',
+                        selfDeclaration: false
+                      }));
+                    }
+                  }}
+                />
+              </div>
 
+              <div className="mt-4">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={extraData.selfDeclaration}
+                    onChange={() =>
+                      setExtraData({
+                        ...extraData,
+                        selfDeclaration: !extraData.selfDeclaration,
+                      })
+                    }
+                  />
+                  <span>I confirm I am of legal drinking age</span>
+                </label>
+              </div>
 
-    {/* ✅ Show message only after Submit */}
-    {isSubmitted && (
-      <p
-        className="text-sm text-green-700 font-medium mt-4 cursor-pointer hover:underline"
-        onClick={() => setShowInfo(true)}
-      >
-        ✅ Account will be verified within 24 hours
-      </p>
-    )}
-  </>
-)}
+              {/* Terms Modal Trigger */}
+              <div className="mt-2 flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={agreed}
+                  readOnly
+                  onClick={() => setShowTermsModal(true)}
+                />
+                <span className="text-sm text-gray-800">
+                  I agree to the{" "}
+                  <button
+                    type="button"
+                    onClick={() => setShowTermsModal(true)}
+                    className="text-blue-600 underline hover:text-blue-800"
+                  >
+                    Terms & Conditions
+                  </button>
+                </span>
+              </div>
 
-
-          {/* Navigation Buttons */}
-          <div className="flex justify-between items-center pt-2">
-            {step > 1 && (
-              <button
-                type="button"
-                onClick={() => setStep(step - 1)}
-                className="px-4 py-2 bg-gray-300 rounded"
-              >
-                Back
-              </button>
-            )}
-            {step < 4 ? (
-           <button
-           type="button"
-           onClick={() => {
-             if (step === 1) {
-               if (!extraData.state || !extraData.city) {
-                 setError('Please select both State and City to continue.');
-                 return;
-               }
-             }
-             if (step === 2) {
-               if (!extraData.dob || extraData.aadhaar.length !== 2) {
-                 setError('Please enter valid Date of Birth and 2-digit random number.');
-                 return;
-               }
-             }
-             if (step === 3) {
-               if (!extraData.selfDeclaration) {
-                 setError('Please confirm your legal drinking age.');
-                 return;
-               }
-             }
-             // If no validation errors, move to next step
-             setError('');
-             setStep(step + 1);
-           }}
-           className="ml-auto px-4 py-2 bg-orange-500 text-white rounded flex items-center space-x-1"
-         >
-           <span>Continue</span>
-           <ArrowRight size={18} />
-         </button>
-         
-            ) : (
-              <button
-                type="submit"
-                className="ml-auto px-4 py-2 bg-green-600 text-white rounded"
-              >
-                Submit
-              </button>
-            )}
-          </div>
+              {/* Show message only after Submit */}
+              {isSubmitted && (
+                <p
+                  className="text-sm text-green-700 font-medium mt-4 cursor-pointer hover:underline"
+                  onClick={() => setShowInfo(true)}
+                >
+                  ✅ Account will be verified within 24 hours
+                </p>
+              )}
+              
+              <div className="flex justify-between items-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  className="px-4 py-2 bg-gray-300 rounded"
+                >
+                  Back
+                </button>
+                <button
+                  type="submit"
+                  className="ml-auto px-4 py-2 bg-green-600 text-white rounded"
+                >
+                  Submit
+                </button>
+              </div>
+            </>
+          )}
         </form>
 
-{/* ✅ Info Modal */}
+        {/* Info Modal */}
         {showInfo && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-80 text-center shadow-xl">
@@ -572,7 +578,7 @@ function SignUp() {
           </div>
         )}
 
-        {/* ✅ Terms Modal */}
+        {/* Terms Modal */}
         {showTermsModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
             <div className="bg-white rounded-lg shadow-lg p-6 max-w-lg w-full text-left overflow-y-auto max-h-[90vh]">
@@ -601,10 +607,10 @@ function SignUp() {
              10. Liability Disclaimer:The business is not responsible for misuse, overconsumption, or illegal resale by the customer.</p>
 <p className="text-sm text-gray-700 mb-4">
 11. Right to Refuse Service
-      The business reserves the right to cancel orders if:
-            The customer fails age verification.
-            The delivery location is in a dry area or restricted zone.
-            Suspicion of fraudulent activity.</p>
+      The business reserves the right to cancel orders if:
+            The customer fails age verification.
+            The delivery location is in a dry area or restricted zone.
+            Suspicion of fraudulent activity.</p>
 <p className="text-sm text-gray-700 mb-4">
              12. Data Privacy & Use of Customer Information:Customer ID and personal data will be stored as per excise department requirements and may be shared with authorities if required.
 </p>

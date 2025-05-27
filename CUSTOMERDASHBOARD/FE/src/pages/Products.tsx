@@ -408,31 +408,7 @@ function Products() {
   };
 
   // Modify handleAddToCart to accept an optional event parameter
-const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => {
-  if (e) {
-    e.stopPropagation();
-  }
 
-  const userId = localStorage.getItem('userId');
-  if (!userId) {
-    toast.error('Please log in first');
-    navigate('/login');
-    return;
-  }
-
-  // Check if product is Old Monk 180 ml
-  const isOldMonk180 = product.name.toLowerCase().includes('old monk') && product.volume === 180;
-
-  if (isOldMonk180) {
-    // Check if already in cart
-    const alreadyInCart = items.some(item =>
-      item.name.toLowerCase().includes('old monk') &&
-      item.volume === 180 &&
-      item.quantity === 1
-    );
-
-    if (alreadyInCart) {
-      toast.error('You can add only one 180ml Old Monk to the cart.');
       return;
     }
   }
@@ -634,6 +610,15 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
     
     .animate-slideIn {
       animation: slideIn 0.4s ease forwards;
+    }
+    
+    .add-to-cart-btn {
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+    
+    .add-to-cart-btn:active {
+      background-color: #e8a87c !important;
+      transform: scale(0.95);
     }
   `;
 
@@ -1070,7 +1055,7 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
                   cursor: 'pointer',
                   transition: 'background-color 0.3s ease'
                 }}
-                className="hover:bg-[#b55a31]"
+                className="hover:bg-[#b55a31] add-to-cart-btn"
               >
                 Add to Cart
               </button>

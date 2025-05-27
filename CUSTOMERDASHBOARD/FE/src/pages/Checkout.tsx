@@ -180,9 +180,9 @@ setItems(populatedItems);
       return alert("Sorry! We currently deliver only to selected areas. Please check the pincode.");
     }
 
-        if (address.city.trim().toLowerCase() !== 'pune'.toLowerCase()) {
-          return alert("Sorry! We currently deliver only in City (Pune)");
-        }
+    if (address.city.trim().toLowerCase() !== 'pune'.toLowerCase()) {
+      return alert("Sorry! We currently deliver only in City (Pune)");
+    }
         
   
     try {
@@ -205,33 +205,35 @@ setItems(populatedItems);
   
       const orderTotal = items.reduce((sum: number, item: CartItem) => sum + item.price * item.quantity, 0);
       // Calculate 35% fee on Drinks only
-  const drinksFee = items.reduce((sum, item) => {
-    const isDrink = item.productId?.category === 'Drinks';
-    if (isDrink) {
-      return sum + item.price * item.quantity * 0.35;
-    }
-    return sum;
-  }, 0);
+      const drinksFee = items.reduce((sum, item) => {
+        const isDrink = item.productId?.category === 'Drinks';
+        if (isDrink) {
+          return sum + item.price * item.quantity * 0.35;
+        }
+        return sum;
+      }, 0);
       const deliveryCharges = 100;
       const platform = 12;
       const gst = 18;
       const gstAmount = ((orderTotal+drinksFee) * gst) / 100;
       const totalAmount = orderTotal + deliveryCharges + platform + gstAmount+drinksFee;
       
-  
-      // 🧾 Step 3: Place order
-      const res = await axios.post('https://peghouse.in/api/orders', {
+      // Store order data in localStorage instead of creating an order
+      const orderData = {
         userId,
         items: formattedItems,
         address,
         totalAmount
-      });
-  
-      localStorage.setItem('latestOrderId', res.data.order._id);
+      };
+      
+      // Save order details to localStorage
+      localStorage.setItem('pendingOrderData', JSON.stringify(orderData));
+      
+      // Navigate to payment page without creating an order
       navigate('/payment');
     } catch (error) {
-      console.error("Order failed", error);
-      alert("Something went wrong while placing the order");
+      console.error("Order preparation failed", error);
+      alert("Something went wrong while preparing your order");
     }
   };
   
