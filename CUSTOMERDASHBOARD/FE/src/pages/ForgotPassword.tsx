@@ -16,11 +16,10 @@ function ForgotPassword() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Handle mobile number change and restrict to 10 digits
   const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // Allow only numbers and restrict the length to 10 digits
     if (/^\d{0,10}$/.test(value)) {
       setMobile(value);
     }
@@ -34,7 +33,6 @@ function ForgotPassword() {
   // Handle OTP input (numeric only)
   const handleOtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // Allow only numbers
     if (/^\d*$/.test(value)) {
       setOtp(value);
     }
@@ -45,22 +43,19 @@ function ForgotPassword() {
     e.preventDefault();
     setError('');
     setSuccess('');
-    
-    // Validate email
+
     if (!email || !email.includes('@') || !email.includes('.')) {
       setError('Please enter a valid email address.');
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
-      // Make API call to send OTP to email
-      const response = await axios.post('https://peghouse.in/api/auth/send-email-otp', { email });
-      
+      const response = await axios.post('http://localhost:5000/api/auth/send-email-otp', { email });
       if (response.data.success) {
         setSuccess('OTP sent successfully to your email address.');
-        setStep('otp');
+        setStep('otp'); // Change the step to 'otp' to show the OTP verification form
       } else {
         setError(response.data.message || 'Failed to send OTP. Please try again.');
       }
@@ -77,95 +72,128 @@ function ForgotPassword() {
     }
   };
 
-  // Verify OTP
-  const handleVerifyOTP = async (e: React.FormEvent) => {
-    e.preventDefault();
+const handleVerifyOTP = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError('');
+  setSuccess('');
+
+  if (!otp || otp.length < 4) {
+    setError('Please enter a valid OTP.');
+    return;
+  }
+
+  setIsLoading(true);
+
+  try {
+    const response = await axios.post('http://localhost:5000/api/auth/verify-email-otp', { 
+      email, 
+      otp 
+    });
+
+    // If OTP verification is successful
+    if (response.data.message === 'OTP verified successfully') {
+      setSuccess('OTP verified successfully.');
+      setStep('newPassword');  // Move to the New Password form
+    } else {
+      setError(response.data.message || 'Invalid OTP. Please try again.');
+    }
+  } catch (error: any) {
+    setError('Invalid OTP or verification failed. Please try again.');
+    console.error('OTP Verification Error:', error);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
+
+
+
+  // Resend OTP
+  const handleResendOTP = async () => {
     setError('');
     setSuccess('');
-    
-    // Validate OTP
-    if (!otp || otp.length < 4) {
-      setError('Please enter a valid OTP.');
-      return;
-    }
-    
+
     setIsLoading(true);
-    
     try {
-      // Make API call to verify OTP
-      const response = await axios.post('https://peghouse.in/api/auth/verify-email-otp', { 
-        email, 
-        otp 
-      });
-      
+      const response = await axios.post('http://localhost:5000/api/auth/send-email-otp', { email });
       if (response.data.success) {
-        setSuccess('OTP verified successfully.');
-        setStep('newPassword');
+        setSuccess('OTP resent successfully to your email address.');
       } else {
-        setError(response.data.message || 'Invalid OTP. Please try again.');
+        setError(response.data.message || 'Failed to resend OTP. Please try again.');
       }
     } catch (error: any) {
-      setError('Invalid OTP or verification failed. Please try again.');
-      console.error('OTP Verification Error:', error);
+      setError('Failed to resend OTP. Please try again.');
+      console.error('Resend OTP Error:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Reset Password
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-    
-    // Validate mobile
-    if (!mobile || mobile.length !== 10) {
-      setError('Mobile number must be exactly 10 digits.');
-      return;
+const handleResetPassword = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError('');
+  setSuccess('');
+
+  // Validate required fields
+  if (!mobile || !newPassword || !confirmPassword) {
+    setError('Please fill in all the fields');
+    return;
+  }
+
+  // Validate mobile number
+  if (mobile.length !== 10) {
+    setError('Mobile number must be exactly 10 digits.');
+    return;
+  }
+
+  // Validate passwords
+  if (!newPassword) {
+    setError('Please enter a new password.');
+    return;
+  }
+
+  if (newPassword.length < 6) {
+    setError('Password must be at least 6 characters long.');
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    setError('Passwords do not match.');
+    return;
+  }
+
+  setIsLoading(true);
+
+  try {
+    // Make API call to reset password using mobile number
+    const response = await axios.post('http://localhost:5000/api/auth/reset-password', {
+      mobile,       // Send mobile number
+      newPassword  // Send new password
+    });
+
+    if (response.data.message === 'Password updated successfully') {
+      setSuccess('Password updated successfully!');
+      setTimeout(() => {
+        navigate('/login');  // Redirect to login after success
+      }, 2000);
+    } else {
+      setError(response.data.message || 'Failed to reset password. Please try again.');
     }
-    
-    // Validate passwords
-    if (!newPassword) {
-      setError('Please enter a new password.');
-      return;
-    }
-    
-    if (newPassword.length < 6) {
-      setError('Password must be at least 6 characters long.');
-      return;
-    }
-    
-    if (newPassword !== confirmPassword) {
-      setError('Passwords do not match.');
-      return;
-    }
-    
-    setIsLoading(true);
-    
-    try {
-      // Make API call to reset password
-      const response = await axios.post('https://peghouse.in/api/auth/reset-password', {
-        email,
-        mobile,
-        otp,
-        newPassword
-      });
-      
-      if (response.data.success) {
-        setSuccess('Password reset successfully! Redirecting to login...');
-        setTimeout(() => {
-          navigate('/login');
-        }, 2000);
-      } else {
-        setError(response.data.message || 'Failed to reset password. Please try again.');
-      }
-    } catch (error: any) {
-      setError('Failed to reset password. Please try again.');
-      console.error('Password Reset Error:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  } catch (error: any) {
+    setError('Failed to reset password. Please try again.');
+    console.error('Password Reset Error:', error);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
+
+
+
+
+
 
   // Go back to previous step
   const handleBack = () => {
@@ -285,7 +313,7 @@ function ForgotPassword() {
               <div className="text-center">
                 <button
                   type="button"
-                  onClick={handleRequestOTP}
+                  onClick={handleResendOTP}
                   className="text-[#cd6839] text-sm font-medium hover:underline"
                   disabled={isLoading}
                 >
@@ -295,7 +323,7 @@ function ForgotPassword() {
             </form>
           )}
 
-          {/* Step 3: New Password Form with Mobile Number */}
+          {/* Step 3: New Password Form */}
           {step === 'newPassword' && (
             <form onSubmit={handleResetPassword} className="space-y-4">
               <div className="mb-4">
@@ -383,19 +411,10 @@ function ForgotPassword() {
               Back to Login
             </button>
           </p>
-          
-          {/* Alcohol Health Warning Banner */}
-          <div className="py-4 px-2 flex justify-center items-center mt-4">
-            <img
-              src="https://upload.wikimedia.org/wikipedia/commons/1/10/Alcohol_warning_India.png"
-              alt="Alcohol is Dangerous Warning"
-              className="w-[500px] h-[100px] object-cover"
-            />
-          </div>
         </div>
       </div>
     </div>
   );
 }
 
-export default ForgotPassword; 
+export default ForgotPassword;
