@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Mail, Lock, ArrowRight, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 
-  };
+  
 
   // Validate email format
   const isEmailValid = (email: string): boolean => {
