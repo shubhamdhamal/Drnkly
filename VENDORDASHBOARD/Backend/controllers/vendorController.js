@@ -3,6 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs'); // Make sure bcryptjs is imported at the top
+const { generateOTP, saveOTP, verifyOTP, sendOTPEmail } = require('../utils/otpUtils');
 
 
 // Configure Multer for file storage
@@ -23,7 +24,7 @@ const upload = multer({
 
 exports.registerVendor = async (req, res) => {
   try {
-    const { businessName, businessEmail, businessPhone, password, location, productCategories } = req.body;
+    const { businessName, businessEmail, businessPhone, password, location, productCategories, verificationMethod } = req.body;
 
     // Check if the vendor already exists by email or phone
     const vendorExists = await Vendor.findOne({
@@ -41,7 +42,7 @@ exports.registerVendor = async (req, res) => {
       password, // Password will be hashed in the Vendor model before saving
       location,
       productCategories,
-      verificationStatus: 'pending'
+      verificationStatus: verificationMethod === 'otp' ? 'verified' : 'pending' // If OTP verified, set to verified directly
     });
 
     // Save the vendor to the database
@@ -49,8 +50,9 @@ exports.registerVendor = async (req, res) => {
     
     // Send response with the vendor's data and vendorId
     res.status(201).json({
-      message: 'Vendor registration started successfully',
+      message: verificationMethod === 'otp' ? 'Registration completed successfully' : 'Registration submitted for admin approval',
       vendorId: newVendor._id,
+      verificationStatus: newVendor.verificationStatus
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -248,5 +250,53 @@ exports.getVendorStatus = async (req, res) => {
   } catch (error) {
     console.error('Error fetching vendor status:', error);
     res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// Send OTP for email verification
+exports.sendOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    // Generate a new OTP
+    const otp = generateOTP();
+    
+    // Save the OTP
+    saveOTP(email, otp);
+    
+    // Send the OTP via email
+    await sendOTPEmail(email, otp);
+    
+    res.status(200).json({ message: 'OTP sent successfully' });
+  } catch (error) {
+    console.error('Error sending OTP:', error);
+    res.status(500).json({ error: 'Failed to send OTP', details: error.message });
+  }
+};
+
+// Verify OTP
+exports.verifyOtp = (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    
+    if (!email || !otp) {
+      return res.status(400).json({ error: 'Email and OTP are required' });
+    }
+    
+    // Verify the OTP
+    const isValid = verifyOTP(email, otp);
+    
+    if (isValid) {
+      res.status(200).json({ message: 'OTP verified successfully' });
+    } else {
+      res.status(400).json({ error: 'Invalid or expired OTP' });
+    }
+  } catch (error) {
+    console.error('Error verifying OTP:', error);
+    res.status(500).json({ error: 'Failed to verify OTP', details: error.message });
   }
 };

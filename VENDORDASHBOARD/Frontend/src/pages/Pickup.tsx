@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Package, Truck } from 'lucide-react';
+import { Package, Truck, CheckCircle } from 'lucide-react';
 import Button from '../components/Button';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 interface PickupOrder {
   productId: string;
@@ -20,6 +22,7 @@ interface PickupOrder {
 
 
 const Pickup: React.FC = () => {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<PickupOrder[]>([]);
   const [mapVisibleFor, setMapVisibleFor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -68,20 +71,34 @@ const Pickup: React.FC = () => {
   
       // Check if the response indicates success
       if (res.status === 200) {
-        // 🔄 Update frontend state to reflect status
+        // Update frontend state to reflect status
         setOrders((prev) =>
           prev.map((order) =>
             order.orderNumber === orderNumber
               ? {
                   ...order,
-                  handoverStatus: 'handedOver', // Update only the relevant order
+                  handoverStatus: 'handedOver',
                 }
               : order
           )
         );
+        
+        // Show success message
+        toast.success('Order handed over to delivery successfully!');
+        
+        // Remove the order after a brief delay so user can see the status change
+        setTimeout(() => {
+          setOrders(prev => prev.filter(order => order.orderNumber !== orderNumber));
+          
+          // If no more orders, navigate back to orders page
+          if (orders.length <= 1) {
+            navigate('/orders');
+          }
+        }, 1500);
       }
     } catch (err) {
       console.error('Error handing over to delivery', err);
+      toast.error('Failed to hand over the order');
     }
   };
   

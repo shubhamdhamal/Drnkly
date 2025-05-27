@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Eye, Check, X, Search, Bell } from 'lucide-react';
+import { Eye, Check, X, Search, Bell, Truck } from 'lucide-react';
 import axios from 'axios';
 import Button from '../components/Button';
 import Input from '../components/Input';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 interface OrderItem {
   productId: string;
@@ -25,6 +27,7 @@ interface Order {
 }
 
 const Orders: React.FC = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('All Orders');
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
@@ -96,6 +99,21 @@ const Orders: React.FC = () => {
         setOrders(fetchedOrders);
         lastOrdersCountRef.current = fetchedOrders.length;
         setLoading(false);
+        
+        // Check if we need to scroll to past orders
+        const showPastOrders = localStorage.getItem('showPastOrders');
+        if (showPastOrders === 'true') {
+          // Clear the flag
+          localStorage.removeItem('showPastOrders');
+          
+          // Wait for the component to render
+          setTimeout(() => {
+            const pastOrdersElement = document.getElementById('past-orders');
+            if (pastOrdersElement) {
+              pastOrdersElement.scrollIntoView({ behavior: 'smooth' });
+            }
+          }, 500);
+        }
       } catch (err) {
         console.error(err);
         setError('Failed to load orders');
@@ -250,6 +268,58 @@ const Orders: React.FC = () => {
     if ("Notification" in window && Notification.permission !== "granted") {
       Notification.requestPermission();
     }
+  };
+
+  // Add function to confirm order and move to pickup
+  const confirmOrder = async (orderId: string) => {
+    try {
+      const token = localStorage.getItem('authToken');
+      
+      // Find the order details
+      const orderToConfirm = orders.find(order => order.id === orderId);
+      if (!orderToConfirm) {
+        toast.error('Order not found');
+        return;
+      }
+      
+      // Call API to update order status to ready for pickup
+      const response = await axios.put(
+        `https://vendor.peghouse.in/api/vendor/orders/${orderId}/ready-for-pickup`,
+        { 
+          orderId: orderId,
+          orderNumber: orderToConfirm.orderNumber
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      
+      if (response.status === 200) {
+        // Remove this order from current orders display
+        setOrders(prev => prev.filter(order => order.id !== orderId));
+        
+        // Show success message
+        toast.success('Order confirmed and ready for pickup!');
+        
+        // Navigate to pickup page
+        navigate('/pickup');
+      }
+    } catch (err) {
+      console.error('Failed to confirm order', err);
+      toast.error('Failed to confirm order');
+    }
+  };
+
+  // Check if all items in an order are accepted
+  const areAllItemsAccepted = (order: Order) => {
+    return order.items.every(item => item.status === 'accepted');
+  };
+
+  // Check if any item in an order is still pending
+  const hasAnyPendingItem = (order: Order) => {
+    return order.items.some(item => item.status === 'pending');
   };
 
   if (loading) return <p style={{ textAlign: 'center' }}>Loading orders...</p>;
@@ -495,13 +565,24 @@ const Orders: React.FC = () => {
               >
                 {expandedOrderId === order.id ? 'Hide' : 'View'}
               </Button>
+              
+              {/* Add Confirm Order button that appears only when all items are accepted */}
+              {areAllItemsAccepted(order) && !hasAnyPendingItem(order) && (
+                <Button
+                  variant="primary"
+                  icon={<Truck className="w-4 h-4" />}
+                  onClick={() => confirmOrder(order.id)}
+                >
+                  Confirm Order
+                </Button>
+              )}
             </div>
           </div>
         ))
       )}
 
       {/* Past Orders Section */}
-      <h2 style={{ fontSize: '20px', fontWeight: 600, marginTop: '32px', marginBottom: '16px', borderTop: '1px solid #eee', paddingTop: '24px' }}>Past Orders</h2>
+      <h2 style={{ fontSize: '20px', fontWeight: 600, marginTop: '32px', marginBottom: '16px', borderTop: '1px solid #eee', paddingTop: '24px' }} id="past-orders">Past Orders</h2>
       {pastOrders.length === 0 ? (
         <p style={{ textAlign: 'center', color: '#666', padding: '24px' }}>No past orders</p>
       ) : (

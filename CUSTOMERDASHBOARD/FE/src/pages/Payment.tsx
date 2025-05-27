@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import axios from 'axios';
@@ -10,6 +10,9 @@ const Payment = () => {
   const [isScreenshotUploaded, setIsScreenshotUploaded] = useState(false);
   const [transactionId, setTransactionId] = useState<string>(''); // New state for transaction ID
   const [isCashOnDelivery, setIsCashOnDelivery] = useState(false); // New state for cash on delivery
+  
+  // Reference for payment method section
+  const paymentMethodRef = useRef<HTMLDivElement>(null);
 
   // Derived state to check if payment details are provided
   const isPaymentDetailsProvided = isScreenshotUploaded || transactionId.trim().length > 0;
@@ -61,6 +64,13 @@ const Payment = () => {
     };
 
     fetchCart();
+    
+    // Scroll to payment method section on component mount
+    if (paymentMethodRef.current) {
+      setTimeout(() => {
+        paymentMethodRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
   }, []);
 
   const orderTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -135,31 +145,34 @@ const Payment = () => {
         <h1 className="text-2xl font-semibold text-center flex-1">Payment</h1>
       </div>
 
-      <div className="max-w-lg mx-auto px-4 py-6 md:px-8 md:py-10">
-        {/* Payment Method Selection */}
-        <div className="bg-white rounded-xl p-4 mb-6 shadow-lg">
-          <h2 className="text-lg font-semibold mb-3">Select Payment Method</h2>
-          <div className="flex flex-col gap-3">
-            <label className={`flex items-center p-3 border rounded-lg ${!isCashOnDelivery ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}>
+      <div className="max-w-lg mx-auto px-4 py-6 md:px-8 md:py-6">
+        {/* Payment Method Selection - Prominent and first in order */}
+        <div 
+          ref={paymentMethodRef}
+          className="bg-white rounded-xl p-5 mb-6 shadow-lg animate-pulse-once border-2 border-blue-100"
+        >
+          <h2 className="text-xl font-semibold mb-4 text-blue-800">Select Payment Method</h2>
+          <div className="flex flex-col gap-4">
+            <label className={`flex items-center p-4 border-2 rounded-lg ${!isCashOnDelivery ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}>
               <input
                 type="radio"
                 name="paymentMethod"
                 checked={!isCashOnDelivery}
                 onChange={handleOnlinePaymentSelect}
-                className="w-4 h-4 mr-3 accent-blue-600"
+                className="w-5 h-5 mr-4 accent-blue-600"
               />
-              <span className="font-medium">Online Payment</span>
+              <span className="font-medium text-lg">Online Payment</span>
             </label>
             
-            <label className={`flex items-center p-3 border rounded-lg ${isCashOnDelivery ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}>
+            <label className={`flex items-center p-4 border-2 rounded-lg ${isCashOnDelivery ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}>
               <input
                 type="radio"
                 name="paymentMethod"
                 checked={isCashOnDelivery}
                 onChange={handleCashOnDeliveryChange}
-                className="w-4 h-4 mr-3 accent-blue-600"
+                className="w-5 h-5 mr-4 accent-blue-600"
               />
-              <span className="font-medium">Cash on Delivery</span>
+              <span className="font-medium text-lg">Cash on Delivery</span>
             </label>
           </div>
         </div>
@@ -231,16 +244,8 @@ const Payment = () => {
           </div>
         )}
 
-        {/* Cancellation Policy */}
-        <div className="bg-white rounded-xl p-6 mb-6 shadow-lg">
-          <h3 className="text-lg font-semibold mb-2">Cancellation Policy</h3>
-          <p className="text-gray-600 text-sm">
-            Orders cannot be cancelled once packed for delivery. In case of unexpected delays, a refund will be provided, if applicable.
-          </p>
-        </div>
-
         {/* Order Summary */}
-        <div className="bg-white rounded-xl p-6 mb-6">
+        <div className="bg-white rounded-xl p-6 mb-6 shadow-md">
           <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
           <div className="space-y-3">
             <div className="flex justify-between">
@@ -270,6 +275,14 @@ const Payment = () => {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Cancellation Policy */}
+        <div className="bg-white rounded-xl p-6 mb-6 shadow-md">
+          <h3 className="text-lg font-semibold mb-2">Cancellation Policy</h3>
+          <p className="text-gray-600 text-sm">
+            Orders cannot be cancelled once packed for delivery. In case of unexpected delays, a refund will be provided, if applicable.
+          </p>
         </div>
 
         {/* Pay Now Button */}
