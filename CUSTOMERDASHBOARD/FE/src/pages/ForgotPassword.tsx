@@ -52,7 +52,7 @@ function ForgotPassword() {
     setIsLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/send-email-otp', { email });
+      const response = await axios.post('https://peghouse.in/api/auth/send-email-otp', { email });
       if (response.data.success) {
         setSuccess('OTP sent successfully to your email address.');
         setStep('otp'); // Change the step to 'otp' to show the OTP verification form
@@ -85,7 +85,7 @@ const handleVerifyOTP = async (e: React.FormEvent) => {
   setIsLoading(true);
 
   try {
-    const response = await axios.post('http://localhost:5000/api/auth/verify-email-otp', { 
+    const response = await axios.post('https://peghouse.in/api/auth/verify-email-otp', { 
       email, 
       otp 
     });
@@ -116,7 +116,7 @@ const handleVerifyOTP = async (e: React.FormEvent) => {
 
     setIsLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/send-email-otp', { email });
+      const response = await axios.post('https://peghouse.in/api/auth/send-email-otp', { email });
       if (response.data.success) {
         setSuccess('OTP resent successfully to your email address.');
       } else {
@@ -167,7 +167,7 @@ const handleResetPassword = async (e: React.FormEvent) => {
 
   try {
     // Make API call to reset password using mobile number
-    const response = await axios.post('http://localhost:5000/api/auth/reset-password', {
+    const response = await axios.post('https://peghouse.in/api/auth/reset-password', {
       mobile,       // Send mobile number
       newPassword  // Send new password
     });
