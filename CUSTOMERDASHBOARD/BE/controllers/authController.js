@@ -5,16 +5,89 @@ const nodemailer = require('nodemailer'); // Add nodemailer for email sending
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto'); // Ensure this is required at the top
+// Put this at the top of your controller file or in a separate module
+const otpStore = new Map(); // email => { otp, otpExpire }
 
 
 // Secret key for JWT signing
 const JWT_SECRET = 'your_jwt_secret_key'; // Ideally, store this in an environment variable
 // Send OTP to email
 
+exports.sendRegistrationOtp = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    // Generate OTP (6-digit)
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    const otpExpire = Date.now() + 10 * 60 * 1000; // 10 minutes expiry
+
+    // Save OTP and expiry keyed by email in otpStore
+    otpStore.set(email, { otp, otpExpire });
+
+    // Configure nodemailer transporter (Gmail example)
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,    // your email address
+        pass: process.env.EMAIL_PASS,    // your email password or app password
+      },
+    });
+
+    // Prepare email options
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Your OTP for Registration',
+      text: `Your OTP for registration is: ${otp}. It will expire in 10 minutes.`,
+    };
+
+    // Send the email
     await transporter.sendMail(mailOptions);
 
     res.status(200).json({ success: true, message: 'OTP sent successfully to your email' });
   } catch (err) {
+    console.error('Error sending registration OTP:', err);
+    res.status(500).json({ message: 'Error sending OTP. Please try again later.' });
+  }
+};
+exports.verifyRegistrationOtp = (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ message: "Email and OTP are required." });
+    }
+
+    const record = otpStore.get(email);
+    if (!record) {
+      return res.status(400).json({ message: "No OTP found for this email." });
+    }
+
+    if (Date.now() > record.otpExpire) {
+      otpStore.delete(email);
+      return res.status(400).json({ message: "OTP has expired." });
+    }
+
+    if (String(record.otp) !== String(otp)) {
+      return res.status(400).json({ message: "Invalid OTP." });
+    }
+
+    // OTP verified successfully, remove it from the store
+    otpStore.delete(email);
+
+    return res.status(200).json({ success: true, message: "OTP verified successfully." });
+  } catch (error) {
+    console.error("Error verifying OTP:", error);
+    return res.status(500).json({ message: "Server error during OTP verification." });
+  }
+};
+
+
+
+
+
+
+
 
 exports.sendOtp = async (req, res) => {
   const { email } = req.body;
@@ -253,3 +326,4 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: 'Server error.', error: error.message });
   }
 };
+
