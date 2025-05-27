@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Issue = require('../models/Issue');
 const nodemailer = require('nodemailer');
+const verifySuperAdminToken = require('../middleware/authMiddleware'); // Import your token middleware
 
 // Configure nodemailer (use Gmail or SMTP provider)
 const transporter = nodemailer.createTransport({
@@ -36,6 +37,9 @@ const sendStatusUpdateEmail = async (issue) => {
     console.error('❌ Failed to send email:', error);
   }
 };
+
+// Protect all routes below with token middleware
+router.use(verifySuperAdminToken);
 
 // GET /api/issues
 router.get('/', async (req, res) => {

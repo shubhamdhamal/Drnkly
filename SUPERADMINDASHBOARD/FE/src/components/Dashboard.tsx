@@ -27,30 +27,38 @@ function Dashboard() {
 
   const [recentApplications, setRecentApplications] = useState<VendorApplication[]>([]);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await axios.get('https://admin.peghouse.in/api/dashboard-stats');
-        setStats(res.data);
-      } catch (error) {
-        console.error('Failed to load dashboard stats', error);
-      }
-    };
+useEffect(() => {
+  const fetchStats = async () => {
+    try {
+      const token = localStorage.getItem('superadminToken');
+      const res = await axios.get('https://admin.peghouse.in/api/dashboard-stats', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setStats(res.data);
+    } catch (error) {
+      console.error('Failed to load dashboard stats', error);
+      // Optionally handle token expiry here, e.g. redirect to login
+    }
+  };
 
-    const fetchVendors = async () => {
-      try {
-        const res = await axios.get('https://admin.peghouse.in/api/recent-vendors');
-        setRecentApplications(Array.isArray(res.data.vendors) ? res.data.vendors : []);
-      } catch (error) {
-        console.error('Failed to load recent vendor applications', error);
-        setRecentApplications([]); // fallback to avoid undefined
-      }
-    };
-    
+  const fetchVendors = async () => {
+    try {
+      const token = localStorage.getItem('superadminToken');
+      const res = await axios.get('https://admin.peghouse.in/api/recent-vendors', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setRecentApplications(Array.isArray(res.data.vendors) ? res.data.vendors : []);
+    } catch (error) {
+      console.error('Failed to load recent vendor applications', error);
+      setRecentApplications([]); // fallback to avoid undefined
+      // Optionally handle token expiry here
+    }
+  };
 
-    fetchStats();
-    fetchVendors();
-  }, []);
+  fetchStats();
+  fetchVendors();
+}, []);
+
 
   return (
     <div className="p-6">
