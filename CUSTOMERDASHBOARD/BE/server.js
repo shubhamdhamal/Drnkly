@@ -10,13 +10,6 @@ connectDB(); // Call the DB connection
 
 const app = express();
 
- app.use(cors({
- origin: 'http://localhost:5000', 
- credentials: true
- }));
-
-
-app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/userRoutes')); // ✅ Use router, not direct function

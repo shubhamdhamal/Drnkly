@@ -28,27 +28,32 @@ function CustomerMonitoring() {
   const [showModal, setShowModal] = useState(false);
   const [showMap, setShowMap] = useState(false);
 
-  useEffect(() => {
-    const fetchCustomers = async () => {
-      try {
-        const res = await axios.get('https://admin.peghouse.in/api/customers');
-        const formatted = res.data.customers.map((user: any) => ({
-          id: user._id,
-          name: user.name,
-          location: user.address || 'Unknown',
-          coordinates: [18.5204, 73.8567], // Placeholder coordinates
-          performance: 'Good',
-          status: user.status || 'Pending',
-          idProof: user.idProof, // Add the file path here
-        }));
-        setCustomers(formatted);
-      } catch (err) {
-        console.error('Failed to fetch customers:', err);
-      }
-    };
+ useEffect(() => {
+  const fetchCustomers = async () => {
+    try {
+      const token = localStorage.getItem('superadminToken'); // get the JWT token
+      const res = await axios.get('https://admin.peghouse.in/api/customers', {
+        headers: {
+          Authorization: `Bearer ${token}`, // send token in header
+        },
+      });
+      const formatted = res.data.customers.map((user: any) => ({
+        id: user._id,
+        name: user.name,
+        location: user.address || 'Unknown',
+        coordinates: [18.5204, 73.8567], // Placeholder coordinates
+        performance: 'Good',
+        status: user.status || 'Pending',
+        idProof: user.idProof, // Add the file path here
+      }));
+      setCustomers(formatted);
+    } catch (err) {
+      console.error('Failed to fetch customers:', err);
+    }
+  };
 
-    fetchCustomers();
-  }, []);
+  fetchCustomers();
+}, []);
 
   const handleViewDetails = (customer: Customer) => {
     setSelectedCustomer(customer);
@@ -70,28 +75,42 @@ function CustomerMonitoring() {
   };
 
   const handleAccept = async (customerId: string) => {
-    try {
-      const response = await axios.put(`https://admin.peghouse.in/api/customers/accept/${customerId}`);
-      alert(response.data.message); // Show success message
-      setCustomers(customers.map((customer) =>
-        customer.id === customerId ? { ...customer, status: 'Verified' } : customer
-      ));
-    } catch (error) {
-      console.error('Error accepting verification:', error);
-    }
-  };
+  try {
+    const token = localStorage.getItem('superadminToken');
+    const response = await axios.put(
+      `https://admin.peghouse.in/api/customers/accept/${customerId}`,
+      {},
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    alert(response.data.message); // Show success message
+    setCustomers(customers.map((customer) =>
+      customer.id === customerId ? { ...customer, status: 'Verified' } : customer
+    ));
+  } catch (error) {
+    console.error('Error accepting verification:', error);
+  }
+};
 
-  const handleReject = async (customerId: string) => {
-    try {
-      const response = await axios.put(`https://admin.peghouse.in/api/customers/reject/${customerId}`);
-      alert(response.data.message); // Show success message
-      setCustomers(customers.map((customer) =>
-        customer.id === customerId ? { ...customer, status: 'Rejected' } : customer
-      ));
-    } catch (error) {
-      console.error('Error rejecting verification:', error);
-    }
-  };
+const handleReject = async (customerId: string) => {
+  try {
+    const token = localStorage.getItem('superadminToken');
+    const response = await axios.put(
+      `https://admin.peghouse.in/api/customers/reject/${customerId}`,
+      {},
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    alert(response.data.message); // Show success message
+    setCustomers(customers.map((customer) =>
+      customer.id === customerId ? { ...customer, status: 'Rejected' } : customer
+    ));
+  } catch (error) {
+    console.error('Error rejecting verification:', error);
+  }
+};
 
   return (
     <div className="p-6">

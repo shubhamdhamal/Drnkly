@@ -116,19 +116,7 @@ const Cart = () => {
     setIsLoading(prev => ({ ...prev, [productId]: true }));
     
     try {
-      // If quantity is 0 or less, show delete confirmation
-      if (quantity <= 0) {
-        setItemToDelete(productId);
-        setShowDeleteConfirm(true);
-        setIsLoading(prev => ({ ...prev, [productId]: false }));
-        return;
-      }
 
-      const res = await axios.put('https://peghouse.in/api/cart/update', {
-        userId,
-        productId,
-        quantity,
-      });
 
       const updatedItems = res.data.cart.items.map((item: any) => ({
         ...item,
@@ -175,61 +163,6 @@ const Cart = () => {
   };
 
 
-  // Remove item from cart
-  const removeFromCart = async (productId: string) => {
-    // Close confirmation modal if open
-    setShowDeleteConfirm(false);
-    
-    // Set loading state for this specific item
-    setIsLoading(prev => ({ ...prev, [productId]: true }));
-    
-    try {
-      const res = await axios.delete('https://peghouse.in/api/cart/remove', {
-        data: { userId, productId },
-      });
-      
-      const updatedItems = res.data.cart.items.map((item: any) => ({
-        ...item,
-        category: item.productId?.category || null,
-        name: item.productId?.name || item.name,
-        image: item.productId?.image || item.image,
-        price: item.productId?.price || item.price,
-        productId: item.productId?._id || item.productId,
-        quantity: item.quantity
-      }));
-      
-      setItems(updatedItems);
-      
-      // Update the cart context with the updated items
-      const contextItems = res.data.cart.items.map((item: any) => ({
-        id: item.productId?._id || item.productId,
-        productId: item.productId?._id || item.productId,
-        name: item.productId?.name || item.name,
-        price: Number(item.productId?.price || item.price),
-        image: item.productId?.image || item.image,
-        category: item.productId?.category || null,
-        quantity: Number(item.quantity)
-      }));
-      setContextItems(contextItems);
-      
-      // Track Remove from Cart event for Facebook Pixel
-      if (window && (window as any).fbq) {
-        (window as any).fbq('track', 'RemoveFromCart', {
-          content_type: 'product',
-          content_ids: [productId],
-          currency: 'INR'
-        });
-      }
-      
-      toast.success('Item removed');
-    } catch (error) {
-      toast.error('Failed to remove item');
-      console.error('Error removing item:', error);
-    } finally {
-      // Clear loading state for this item
-      setIsLoading(prev => ({ ...prev, [productId]: false }));
-    }
-  };
 
   // Cancel delete confirmation
   const cancelDelete = () => {
@@ -326,72 +259,7 @@ const Cart = () => {
               </div>
             ) : (
               items.map((item: any) => {
-                const itemId = item.productId?._id || item.productId;
-                const itemLoading = isLoading[itemId] || false;
-                
-                return (
-                  <div key={itemId} className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-6 mb-6">
-                    <div className="flex items-center space-x-4">
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-24 h-24 object-cover rounded-md"
-                      />
-                      <div>
-                        <h3 className="text-lg font-medium text-gray-900">{item.name}</h3>
-                        <p className="text-sm text-gray-500 capitalize">
-                          Category: {item.category || 'N/A'}
-                        </p>
-                        <p className="text-lg font-semibold text-gray-900 mt-1">
-                          ₹{(Number(item.price) * Number(item.quantity)).toFixed(2)}
-                        </p>
 
-                        {item.category === 'Drinks' && (
-                          <p className="text-sm text-red-600 mt-1">
-                            + ₹{(Number(item.price) * Number(item.quantity) * 0.35).toFixed(2)} Service Fee (35%)
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center mt-4 sm:mt-0 justify-between sm:justify-end sm:space-x-6">
-                      <div className="flex items-center">
-                        <button
-                          className="p-2 rounded-l-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50 border border-gray-300"
-                          onClick={() => updateQuantity(itemId, Number(item.quantity) - 1)}
-                          disabled={itemLoading}
-                          aria-label="Decrease quantity"
-                        >
-                          <Minus className="h-5 w-5 text-gray-700" />
-                        </button>
-                        <span className="px-4 py-2 font-medium text-center bg-white border-t border-b border-gray-300 min-w-[40px]">
-                          {itemLoading ? '...' : item.quantity}
-                        </span>
-                        <button
-                          className="p-2 rounded-r-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50 border border-gray-300"
-                          onClick={() => updateQuantity(itemId, Number(item.quantity) + 1)}
-                          disabled={itemLoading}
-                          aria-label="Increase quantity"
-                        >
-                          <Plus className="h-5 w-5 text-gray-700" />
-                        </button>
-                      </div>
-                      <button
-                        className="flex items-center px-3 py-2 bg-red-100 text-red-600 rounded-md hover:bg-red-200 disabled:opacity-50 transition-colors ml-4"
-                        onClick={() => {
-                          setItemToDelete(itemId);
-                          setShowDeleteConfirm(true);
-                        }}
-                        disabled={itemLoading}
-                        aria-label="Remove item"
-                      >
-                        <Trash2 className="h-5 w-5 mr-1" />
-                        <span className="text-sm font-medium">Remove</span>
-                      </button>
-                    </div>
-                  </div>
-                );
-              })
             )}
           </div>
 

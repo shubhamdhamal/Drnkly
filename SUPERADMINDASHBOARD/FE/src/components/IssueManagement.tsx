@@ -25,23 +25,48 @@ const IssueManagement: React.FC = () => {
     fetchIssues();
   }, []);
 
-  const fetchIssues = async () => {
-    try {
-      const res = await axios.get('https://admin.peghouse.in/api/issues');
-      setIssues(res.data);
-    } catch (err) {
-      console.error('Error fetching issues:', err);
+const fetchIssues = async () => {
+  try {
+    const token = localStorage.getItem('superadminToken');
+    if (!token) {
+      console.error('No auth token found');
+      // Optionally redirect to login or show a message
+      return;
     }
-  };
+    const res = await axios.get('https://admin.peghouse.in/api/issues', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    setIssues(res.data);
+  } catch (err) {
+    console.error('Error fetching issues:', err);
+  }
+};
 
-  const updateStatus = async (id: string, status: 'resolved' | 'escalated') => {
-    try {
-      const res = await axios.put(`https://admin.peghouse.in/api/issues/${id}/status`, { status });
-      setIssues(prev => prev.map(issue => (issue._id === id ? res.data : issue)));
-    } catch (error) {
+
+const updateStatus = async (id: string, status: 'resolved' | 'escalated') => {
+  try {
+    const token = localStorage.getItem('superadminToken');
+    if (!token) {
+      console.error('No auth token found');
+      return;
+    }
+    const res = await axios.put(
+      `https://admin.peghouse.in/api/issues/${id}/status`,
+      { status },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    setIssues(prev => prev.map(issue => (issue._id === id ? res.data : issue)));
+  } catch (error: any) {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      console.warn('Token expired or invalid. Redirect to login.');
+      // handle logout or redirect
+    } else {
       console.error('Error updating status:', error);
     }
-  };
+  }
+};
+
+
 
   const handleResolve = (id: string) => {
     updateStatus(id, 'resolved');

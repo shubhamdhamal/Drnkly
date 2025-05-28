@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const SuperAdmin = require('../models/SuperAdmin');
 
 exports.superAdminLogin = async (req, res) => {
@@ -18,11 +19,20 @@ exports.superAdminLogin = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
+    // Generate JWT token with only admin ID
+    const token = jwt.sign(
+      { id: admin._id },  // No role included
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '2h' }
+    );
+
     res.status(200).json({
       message: 'Login successful',
+      token,
       admin: {
         id: admin._id,
-        email: admin.email
+        email: admin.email,
+        mobile: admin.mobile
       }
     });
   } catch (err) {

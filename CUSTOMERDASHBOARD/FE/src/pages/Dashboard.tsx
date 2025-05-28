@@ -235,7 +235,7 @@ const banners = [
     image: "https://images.unsplash.com/photo-1616527546362-77e70524262d?q=80&w=2070&auto=format&fit=crop",
     title: "Weekend Special Offers",
     description: "Up to 20% off on premium liquor brands and free delivery on orders above ₹999",
-    type: "special", // Special banner with enhanced styling
+    type: "special",
     theme: "cocktail"
   },
   {
@@ -255,6 +255,7 @@ const banners = [
     theme: "wine"
   }
 ];
+
 
 // Old Monk Promotional Popup Component
 const OldMonkPromotion = ({ isOpen, onClose, onGetOffer }: { isOpen: boolean, onClose: () => void, onGetOffer: () => void }) => {
