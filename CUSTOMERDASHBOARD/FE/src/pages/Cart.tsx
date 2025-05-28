@@ -326,71 +326,72 @@ const Cart = () => {
               </div>
             ) : (
               items.map((item: any) => {
-                const itemId = item.productId._id || item.productId;
+                const itemId = item.productId?._id || item.productId;
                 const itemLoading = isLoading[itemId] || false;
                 
                 return (
-                <div key={itemId} className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-6 mb-6">
-                  <div className="flex items-center space-x-4">
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-24 h-24 object-cover rounded-md"
-                    />
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-900">{item.name}</h3>
-                      <p className="text-sm text-gray-500 capitalize">
-                        Category: {item.category || 'N/A'}
-                      </p>
-                      <p className="text-lg font-semibold text-gray-900 mt-1">
-                        ₹{(Number(item.price) * Number(item.quantity)).toFixed(2)}
-                      </p>
-
-                      {item.category === 'Drinks' && (
-                        <p className="text-sm text-red-600 mt-1">
-                          + ₹{(Number(item.price) * Number(item.quantity) * 0.35).toFixed(2)} Service Fee (35%)
+                  <div key={itemId} className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-6 mb-6">
+                    <div className="flex items-center space-x-4">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-24 h-24 object-cover rounded-md"
+                      />
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-900">{item.name}</h3>
+                        <p className="text-sm text-gray-500 capitalize">
+                          Category: {item.category || 'N/A'}
                         </p>
-                      )}
-                    </div>
-                  </div>
+                        <p className="text-lg font-semibold text-gray-900 mt-1">
+                          ₹{(Number(item.price) * Number(item.quantity)).toFixed(2)}
+                        </p>
 
-                  <div className="flex items-center mt-4 sm:mt-0 justify-between sm:justify-end sm:space-x-6">
-                    <div className="flex items-center">
+                        {item.category === 'Drinks' && (
+                          <p className="text-sm text-red-600 mt-1">
+                            + ₹{(Number(item.price) * Number(item.quantity) * 0.35).toFixed(2)} Service Fee (35%)
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center mt-4 sm:mt-0 justify-between sm:justify-end sm:space-x-6">
+                      <div className="flex items-center">
+                        <button
+                          className="p-2 rounded-l-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50 border border-gray-300"
+                          onClick={() => updateQuantity(itemId, Number(item.quantity) - 1)}
+                          disabled={itemLoading}
+                          aria-label="Decrease quantity"
+                        >
+                          <Minus className="h-5 w-5 text-gray-700" />
+                        </button>
+                        <span className="px-4 py-2 font-medium text-center bg-white border-t border-b border-gray-300 min-w-[40px]">
+                          {itemLoading ? '...' : item.quantity}
+                        </span>
+                        <button
+                          className="p-2 rounded-r-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50 border border-gray-300"
+                          onClick={() => updateQuantity(itemId, Number(item.quantity) + 1)}
+                          disabled={itemLoading}
+                          aria-label="Increase quantity"
+                        >
+                          <Plus className="h-5 w-5 text-gray-700" />
+                        </button>
+                      </div>
                       <button
-                        className="p-2 rounded-l-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50 border border-gray-300"
-                        onClick={() => updateQuantity(itemId, Number(item.quantity) - 1)}
+                        className="flex items-center px-3 py-2 bg-red-100 text-red-600 rounded-md hover:bg-red-200 disabled:opacity-50 transition-colors ml-4"
+                        onClick={() => {
+                          setItemToDelete(itemId);
+                          setShowDeleteConfirm(true);
+                        }}
                         disabled={itemLoading}
-                        aria-label="Decrease quantity"
+                        aria-label="Remove item"
                       >
-                        <Minus className="h-5 w-5 text-gray-700" />
-                      </button>
-                      <span className="px-4 py-2 font-medium text-center bg-white border-t border-b border-gray-300 min-w-[40px]">
-                        {itemLoading ? '...' : item.quantity}
-                      </span>
-                      <button
-                        className="p-2 rounded-r-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50 border border-gray-300"
-                        onClick={() => updateQuantity(itemId, Number(item.quantity) + 1)}
-                        disabled={itemLoading}
-                        aria-label="Increase quantity"
-                      >
-                        <Plus className="h-5 w-5 text-gray-700" />
+                        <Trash2 className="h-5 w-5 mr-1" />
+                        <span className="text-sm font-medium">Remove</span>
                       </button>
                     </div>
-                    <button
-                      className="flex items-center px-3 py-2 bg-red-100 text-red-600 rounded-md hover:bg-red-200 disabled:opacity-50 transition-colors ml-4"
-                      onClick={() => {
-                        setItemToDelete(itemId);
-                        setShowDeleteConfirm(true);
-                      }}
-                      disabled={itemLoading}
-                      aria-label="Remove item"
-                    >
-                      <Trash2 className="h-5 w-5 mr-1" />
-                      <span className="text-sm font-medium">Remove</span>
-                    </button>
                   </div>
-                </div>
-              )})
+                );
+              })
             )}
           </div>
 
