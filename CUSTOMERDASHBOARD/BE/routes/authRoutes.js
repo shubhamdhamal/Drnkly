@@ -6,9 +6,13 @@ const multer = require('multer');
 const upload = multer({ dest: 'uploads/idproofs/' }); // Set up file storage for ID Proof
 
 const { sendOtp, verifyOtp, resetPassword } = require('../controllers/authController');
-// POST request to send OTP
-router.post('/send-otp', sendOtp);
-router.post('/verify-otp', verifyOtp);
+const { sendRegistrationOtp,  verifyRegistrationOtp} = require('../controllers/authController');
+
+router.post('/send-registration-otp', sendRegistrationOtp);
+
+// Verify registration OTP (optional, if implemented)
+router.post('/verify-registration-otp', verifyRegistrationOtp);
+
 // Send OTP to email
 router.post('/send-email-otp', sendOtp);
 

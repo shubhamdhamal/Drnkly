@@ -15,14 +15,21 @@ function VendorManagement() {
   const [showModal, setShowModal] = useState(false);
 
   // Fetch vendors from backend
-  const fetchVendors = async () => {
-    try {
-      const res = await axios.get('https://admin.peghouse.in/api/vendors');
-      setVendors(res.data.vendors);
-    } catch (err) {
-      console.error('Error fetching vendors:', err);
-    }
-  };
+const fetchVendors = async () => {
+  try {
+    const token = localStorage.getItem('superadminToken'); // get token from storage
+    const res = await axios.get('https://admin.peghouse.in/api/vendors', {
+      headers: {
+        Authorization: `Bearer ${token}`,  // send token in headers
+      },
+    });
+    setVendors(res.data.vendors);
+  } catch (err) {
+    console.error('Error fetching vendors:', err);
+    alert('Failed to fetch vendors. Please login again.');
+  }
+};
+
 
   // On component mount
   useEffect(() => {
@@ -30,19 +37,28 @@ function VendorManagement() {
   }, []);
 
   // Approve or reject vendor
-  const updateStatus = async (id: string, status: 'verified' | 'rejected') => {
-    try {
-      const res = await axios.put(`http://localhost:5000/api/vendor/${id}/status`, { status });
-      if (res.status === 200) {
-        fetchVendors(); // Refresh UI
-      } else {
-        alert('Status update failed');
+const updateStatus = async (id: string, status: 'verified' | 'rejected') => {
+  try {
+    const token = localStorage.getItem('superadminToken');
+    const res = await axios.put(
+      `https://admin.peghouse.in/api/vendor/${id}/status`, // corrected URL to admin domain
+      { status },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,  // send token
+        },
       }
-    } catch (err) {
-      console.error('Error updating status:', err);
-      alert('Server error occurred');
+    );
+    if (res.status === 200) {
+      fetchVendors(); // refresh after update
+    } else {
+      alert('Status update failed');
     }
-  };
+  } catch (err) {
+    console.error('Error updating status:', err);
+    alert('Server error occurred while updating status.');
+  }
+};
 
   const handleViewDetails = (vendor: Vendor) => {
     setSelectedVendor(vendor);
@@ -70,7 +86,7 @@ function VendorManagement() {
                   {/* Add the download link for the license file */}
                   {vendor.license && (
                     <a 
-                      href={`http://localhost:5000/uploads/${vendor.license}`} 
+                      href={`https://vendor.peghouse.in/uploads/${vendor.license}`} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       download
@@ -134,7 +150,7 @@ function VendorManagement() {
                 <p>
                   <strong>Download License:</strong> 
                   <a 
-                    href={`http://localhost:5000/uploads/${selectedVendor.license}`} 
+                    href={`https://vendor.peghouse.in/uploads/${selectedVendor.license}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     download

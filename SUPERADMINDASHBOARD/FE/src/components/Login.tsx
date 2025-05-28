@@ -37,37 +37,37 @@ function Login({ onLogin }: LoginProps) {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const emailError = validateEmail(email);
-    const passwordError = validatePassword(password);
+  const emailError = validateEmail(email);
+  const passwordError = validatePassword(password);
 
-    if (emailError || passwordError) {
-      setErrors({ email: emailError, password: passwordError });
-      return;
-    }
+  if (emailError || passwordError) {
+    setErrors({ email: emailError, password: passwordError });
+    return;
+  }
 
-    try {
-      const res = await axios.post('https://admin.peghouse.in/api/superadmin/login', {
-        emailOrMobile: email,
-        password,
-      });
+  try {
+    const res = await axios.post('https://admin.peghouse.in/api/superadmin/login', {
+      emailOrMobile: email,
+      password,
+    });
 
-      // Save user info in localStorage
-      localStorage.setItem('superadmin', JSON.stringify(res.data.admin));
+    // Store JWT token and admin info
+    localStorage.setItem('superadminToken', res.data.token);
+    localStorage.setItem('superadmin', JSON.stringify(res.data.admin));
 
-      // Clear form and errors
-      setEmail('');
-      setPassword('');
-      setErrors({});
+    setEmail('');
+    setPassword('');
+    setErrors({});
 
-      // Call parent component handler
-      onLogin();
-    } catch (err: any) {
-      const msg = err.response?.data?.message || 'Login failed. Please try again.';
-      setErrors({ general: msg });
-    }
-  };
+    onLogin();
+  } catch (err: any) {
+    const msg = err.response?.data?.message || 'Login failed. Please try again.';
+    setErrors({ general: msg });
+  }
+};
+
 
   return (
     <div className="login-container">

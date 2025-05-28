@@ -1,89 +1,69 @@
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 
+// ✅ Add to Cart
 exports.addToCart = async (req, res) => {
   const { userId, productId, name, price, image } = req.body;
 
   try {
-    let cart = await Cart.findOne({ userId }).populate('items.productId');
-    const newProduct = await Product.findById(productId);
-    if (!newProduct) {
+    // Fetch product details from DB to check volume and name
+    const product = await Product.findById(productId);
+    if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    const newLiquorType = newProduct.liquorType;
+    // Check if product is Old Monk 180 ml
+    const isOldMonk180 = product.name.toLowerCase().includes('old monk') && product.volume === 180;
+
+    let cart = await Cart.findOne({ userId });
 
     if (!cart) {
+      // Create new cart with this product
       const newCart = await Cart.create({
         userId,
         items: [{ productId, name, price, image, quantity: 1 }]
       });
-      return res.status(201).json({ message: 'Cart created', cart: newCart });
+
+      const populatedCart = await Cart.findOne({ userId }).populate({
+        path: 'items.productId',
+        model: 'Product',
+        select: 'category liquorType name price image volume'
+      });
+
+      return res.status(201).json({ message: 'Cart created', cart: populatedCart });
     }
 
-    let hardLiquorCount = 0;
-    let mildLiquorCount = 0;
-    let existingItem = null;
-
-    // Count current quantities (excluding the current product if already in cart)
-    cart.items.forEach(item => {
-      const type = item.productId.liquorType;
-      const qty = item.quantity;
-      const isSameProduct = item.productId._id.toString() === productId;
-
-      if (isSameProduct) {
-        existingItem = item;
-        return;
-      }
-
-      if (type === 'Hard Liquor') hardLiquorCount += qty;
-      if (type === 'Mild Liquor') mildLiquorCount += qty;
+    // Check if Old Monk 180ml is already in the cart (fresh from DB)
+    const oldMonkInCart = cart.items.some(item => {
+      const isOldMonkItem = item.productId.toString() === productId && isOldMonk180;
+      return isOldMonkItem;
     });
 
-    // Add +1 to respective type
-    const addQty = 1;
-    const futureHard = newLiquorType === 'Hard Liquor'
-      ? hardLiquorCount + addQty + (existingItem && existingItem.productId.liquorType === 'Hard Liquor' ? existingItem.quantity : 0)
-      : hardLiquorCount + (existingItem && existingItem.productId.liquorType === 'Hard Liquor' ? existingItem.quantity : 0);
-
-    const futureMild = newLiquorType === 'Mild Liquor'
-      ? mildLiquorCount + addQty + (existingItem && existingItem.productId.liquorType === 'Mild Liquor' ? existingItem.quantity : 0)
-      : mildLiquorCount + (existingItem && existingItem.productId.liquorType === 'Mild Liquor' ? existingItem.quantity : 0);
-
-    // ❌ BLOCKERS — BEFORE mutation
-    if (hardLiquorCount === 2 && newLiquorType === 'Mild Liquor') {
-      return res.status(400).json({ message: '❌ Cannot add Mild Liquor when 2 Hard Liquors already in cart.' });
+    if (isOldMonk180 && oldMonkInCart) {
+      // Prevent adding duplicate 180ml Old Monk
+      return res.status(400).json({ message: '180ml Old Monk can only be added once' });
     }
 
-    if (mildLiquorCount === 12 && newLiquorType === 'Hard Liquor') {
-      return res.status(400).json({ message: '❌ Cannot add Hard Liquor when 12 Mild Liquors already in cart.' });
-    }
+    // Check if the product already exists in the cart
+    const existingItem = cart.items.find(item => item.productId.toString() === productId);
 
-    if (futureHard > 2) {
-      return res.status(400).json({ message: '❌ Max 2 Hard Liquors allowed.' });
-    }
-
-    if (futureMild > 12) {
-      return res.status(400).json({ message: '❌ Max 12 Mild Liquors allowed.' });
-    }
-
-    if (futureHard === 1 && futureMild > 6) {
-      return res.status(400).json({ message: '❌ Only 1 Hard + up to 6 Mild allowed.' });
-    }
-
-    if (futureHard === 2 && futureMild > 0) {
-      return res.status(400).json({ message: '❌ Cannot mix 2 Hard with any Mild Liquor.' });
-    }
-
-    // ✅ PASS — Proceed to update cart
     if (existingItem) {
+      // For other products increment quantity normally
       existingItem.quantity += 1;
     } else {
+      // Add new product to cart
       cart.items.push({ productId, name, price, image, quantity: 1 });
     }
 
     await cart.save();
-    return res.status(200).json({ message: '✅ Cart updated', cart });
+
+    const updatedCart = await Cart.findOne({ userId }).populate({
+      path: 'items.productId',
+      model: 'Product',
+      select: 'category liquorType name price image volume'
+    });
+
+    return res.status(200).json({ message: '✅ Cart updated', cart: updatedCart });
 
   } catch (error) {
     console.error('Error adding to cart:', error);
@@ -93,17 +73,14 @@ exports.addToCart = async (req, res) => {
 
 
 
-
-
-
-// Get user's cart
+// ✅ Get User's Cart
 exports.getUserCart = async (req, res) => {
   const { userId } = req.params;
 
   try {
     const cart = await Cart.findOne({ userId }).populate({
       path: 'items.productId',
-      model: 'Product', // ✅ Ensure correct model name
+      model: 'Product',
       select: 'category liquorType name price image'
     });
 
@@ -114,68 +91,36 @@ exports.getUserCart = async (req, res) => {
   }
 };
 
-
-// Update quantity
-// Update quantity
+// ✅ Update Quantity
 exports.updateQuantity = async (req, res) => {
   const { userId, productId, quantity } = req.body;
 
   try {
-    const cart = await Cart.findOne({ userId }).populate('items.productId');
+    const product = await Product.findById(productId);
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+
+    const isOldMonk180 = product.name.toLowerCase().includes('old monk') && product.volume === 180;
+
+    if (isOldMonk180) {
+      return res.status(400).json({ message: 'Quantity for 180ml Old Monk cannot be updated' });
+    }
+
+    const cart = await Cart.findOne({ userId });
     if (!cart) return res.status(404).json({ message: 'Cart not found' });
 
-    const itemToUpdate = cart.items.find(item => item.productId._id.toString() === productId);
+    const itemToUpdate = cart.items.find(item => item.productId.toString() === productId);
     if (!itemToUpdate) return res.status(404).json({ message: 'Item not found in cart' });
 
-    const product = itemToUpdate.productId;
-    const currentQty = itemToUpdate.quantity;
-
-    if (quantity === currentQty) {
-      return res.status(200).json({ message: 'No change', cart });
-    }
-
-    // ✅ Skip restrictions for non-Drinks category
-    if (product.category !== 'Drinks') {
-      itemToUpdate.quantity = quantity;
-      await cart.save();
-      return res.status(200).json({ message: '✅ Quantity updated (non-Drinks)', cart });
-    }
-
-    // 🔒 Apply restrictions only for Drinks
-    const newLiquorType = product.liquorType;
-
-    let hardLiquorCount = 0;
-    let mildLiquorCount = 0;
-
-    cart.items.forEach(item => {
-      if (item.productId._id.toString() === productId) return;
-      if (item.productId.category !== 'Drinks') return; // skip non-Drinks
-      const type = item.productId.liquorType;
-      if (type === 'Hard Liquor') hardLiquorCount += item.quantity;
-      else if (type === 'Mild Liquor') mildLiquorCount += item.quantity;
-    });
-
-    const futureHard = newLiquorType === 'Hard Liquor' ? hardLiquorCount + quantity : hardLiquorCount;
-    const futureMild = newLiquorType === 'Mild Liquor' ? mildLiquorCount + quantity : mildLiquorCount;
-
-    // 🔒 Restrictions
-    if (futureHard > 2) {
-      return res.status(400).json({ message: '❌ Max 2 Hard Liquors allowed.' });
-    }
-    if (futureHard === 2 && futureMild > 0) {
-      return res.status(400).json({ message: '❌ Cannot mix Mild with 2 Hard Liquors.' });
-    }
-    if (futureHard === 1 && futureMild > 6) {
-      return res.status(400).json({ message: '❌ Only 1 Hard + up to 6 Mild allowed.' });
-    }
-    if (futureHard === 0 && futureMild > 12) {
-      return res.status(400).json({ message: '❌ Max 12 Mild Liquors allowed.' });
-    }
-
-    // ✅ Passed all checks
     itemToUpdate.quantity = quantity;
     await cart.save();
-    return res.status(200).json({ message: '✅ Quantity updated (Drinks)', cart });
+
+    const updatedCart = await Cart.findOne({ userId }).populate({
+      path: 'items.productId',
+      model: 'Product',
+      select: 'category liquorType name price image volume'
+    });
+
+    return res.status(200).json({ message: '✅ Quantity updated', cart: updatedCart });
 
   } catch (error) {
     console.error('Error updating quantity:', error);
@@ -184,10 +129,7 @@ exports.updateQuantity = async (req, res) => {
 };
 
 
-
-
-
-// Remove item
+// ✅ Remove from Cart
 exports.removeFromCart = async (req, res) => {
   const { userId, productId } = req.body;
 
@@ -198,13 +140,19 @@ exports.removeFromCart = async (req, res) => {
     cart.items = cart.items.filter(item => item.productId.toString() !== productId);
     await cart.save();
 
-    res.status(200).json({ message: 'Item removed', cart });
+    const updatedCart = await Cart.findOne({ userId }).populate({
+      path: 'items.productId',
+      model: 'Product',
+      select: 'category liquorType name price image'
+    });
+
+    res.status(200).json({ message: 'Item removed', cart: updatedCart });
   } catch (error) {
     res.status(500).json({ message: 'Error removing item', error: error.message });
   }
 };
 
-// Clear entire cart
+// ✅ Clear Entire Cart
 exports.clearCart = async (req, res) => {
   const { userId } = req.body;
 
