@@ -44,7 +44,13 @@ const Navbar: React.FC = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken'); // Remove the token
+    // Remove both auth token and skipped login flag
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('isSkippedLogin');
+    
+    // Dispatch a storage event to notify other components
+    window.dispatchEvent(new Event('storage'));
+    
     navigate('/login'); // Navigate to login page
   };
 
@@ -125,7 +131,7 @@ const Navbar: React.FC = () => {
               <User className="w-5 h-5" />
             </div>
             <div className="user-info">
-              <div className="user-name">{vendorData.businessName}</div>
+              <div className="user-name">{vendorData.businessName || 'Guest User'}</div>
             
             </div>
             <ChevronDown className="w-4 h-4" />

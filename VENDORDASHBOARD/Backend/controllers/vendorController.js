@@ -49,6 +49,7 @@ exports.registerVendor = async (req, res) => {
     await newVendor.save();
     
     // Send response with the vendor's data and vendorId
+    
     res.status(201).json({
       message: verificationMethod === 'otp' ? 'Registration completed successfully' : 'Registration submitted for admin approval',
       vendorId: newVendor._id,

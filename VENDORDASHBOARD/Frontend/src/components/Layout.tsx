@@ -8,9 +8,10 @@ import {
   Truck,
   Wallet,
   User,
-  AlertCircle
+  AlertCircle,
+  LogOut
 } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from './Navbar';
 import '../styles/Layout.css';
 
@@ -20,6 +21,7 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
 
   const menuItems = [
@@ -35,6 +37,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { icon: AlertCircle, label: 'Report Issue', path: '/issue-report' },
     { icon: AlertCircle, label: 'Track Issue', path: '/issue-tracking' }
   ];
+
+  const handleLogout = () => {
+    // Remove both auth token and skipped login flag
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('isSkippedLogin');
+    
+    // Dispatch a storage event to notify other components
+    window.dispatchEvent(new Event('storage'));
+    
+    navigate('/login'); // Navigate to login page
+  };
 
   return (
     <div className="layout">
@@ -87,6 +100,20 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </Link>
               );
             })}
+          </div>
+          
+          {/* Logout Button - Positioned at the bottom */}
+          <div className="sidebar-footer">
+            <button 
+              onClick={() => {
+                handleLogout();
+                setIsSidebarOpen(false);
+              }}
+              className="nav-link logout-button"
+            >
+              <LogOut />
+              <span>Logout</span>
+            </button>
           </div>
         </nav>
       </aside>

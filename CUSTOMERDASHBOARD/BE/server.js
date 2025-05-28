@@ -10,12 +10,12 @@ connectDB(); // Call the DB connection
 
 const app = express();
 
-// app.use(cors({
-//   origin: 'https://peghouse.in', 
-//   credentials: true
-// }));
+ app.use(cors({
+ origin: 'http://localhost:5000', 
+ credentials: true
+ }));
 
-app.use(cors());
+
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', require('./routes/authRoutes'));
@@ -38,10 +38,3 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });
-
-
-
-
-
-
-
