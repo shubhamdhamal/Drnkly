@@ -260,7 +260,8 @@ const Cart = () => {
             ) : (
               items.map((item: any) => {
 
-            )}
+            ); 
+              }
           </div>
 
           {items.length > 0 && (
