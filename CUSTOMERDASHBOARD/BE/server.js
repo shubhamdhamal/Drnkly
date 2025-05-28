@@ -10,16 +10,6 @@ connectDB(); // Call the DB connection
 
 const app = express();
 
-app.use(cors({
-origin: 'https://peghouse.in', 
-credentials: true
-}));
-
-app.use(cors());
-// Increase limits for JSON and urlencoded requests
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/userRoutes')); // ✅ Use router, not direct function
@@ -41,10 +31,3 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });
-
-
-
-
-
-
-

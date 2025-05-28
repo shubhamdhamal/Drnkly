@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Wine, Search, ShoppingCart, ChevronDown, ArrowLeft, ShoppingBag, X, ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
 import { useCart, CartItem } from '../context/CartContext';
+import CartCounter from '../components/CartCounter';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
@@ -191,6 +192,8 @@ function Products() {
   const [allBrands, setAllBrands] = useState<string[]>([]);
   const [searchResults, setSearchResults] = useState<{products: Product[], brands: string[]}>({products: [], brands: []});
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchResultsRef = useRef<HTMLDivElement>(null);
 
   // Check login status
   useEffect(() => {
@@ -239,6 +242,17 @@ function Products() {
 
     if (searchParam) {
       setSearchQuery(searchParam);
+      
+      // Focus the search input when coming from a search
+      setTimeout(() => {
+        if (searchInputRef.current) {
+          searchInputRef.current.focus();
+          // Also show search results if we have a query
+          if (searchParam.trim() !== '') {
+            handleSearch(searchParam);
+          }
+        }
+      }, 100);
       
       // Special handling for Old Monk promotion
       if (searchParam.toLowerCase().includes('old monk')) {
@@ -338,18 +352,41 @@ function Products() {
     setShowSearchResults(matchedProducts.length > 0 || matchedBrands.length > 0);
   };
 
+  // Handle search input change without updating URL
+  const handleSearchInputChange = (value: string) => {
+    handleSearch(value);
+    // Don't update URL as user types to prevent navigation loops
+  };
+
+  // Close search results when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        searchResultsRef.current && 
+        !searchResultsRef.current.contains(event.target as Node) &&
+        searchInputRef.current && 
+        !searchInputRef.current.contains(event.target as Node)
+      ) {
+        setShowSearchResults(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   // Handle brand selection from search results
   const handleBrandSelect = (brand: string) => {
     setSelectedBrand(brand);
     setSearchQuery('');
     setShowSearchResults(false);
-    setShowSubBrands(false);
   };
 
   // Handle product selection from search results
   const handleProductSelect = (product: Product) => {
-    // Navigate to product detail or just close the search results
-    setSearchQuery('');
+    // Just close the search results without clearing the query
     setShowSearchResults(false);
     // Optional: highlight the product somehow
   };
@@ -713,11 +750,7 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
             )}
             <div className="relative cursor-pointer" onClick={() => navigate('/cart')}>
               <ShoppingCart className="hover:text-[#cd6839] transition-colors" />
-              {items.length > 0 && (
-                <span className="absolute -top-2 -right-2 bg-[#cd6839] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                  {items.reduce((total, item) => total + item.quantity, 0)}
-                </span>
-              )}
+              <CartCounter size="small" />
             </div>
           </div>
         </div>
@@ -726,19 +759,29 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
         <div className="mt-4 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
           <input
+            ref={searchInputRef}
             type="text"
             placeholder="Search for products or brands..."
             value={searchQuery}
             onChange={(e) => {
               const value = e.target.value;
-              handleSearch(value);
+              handleSearchInputChange(value);
             }}
             className="w-full pl-10 pr-4 py-3 bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
+            autoComplete="off"
+            onFocus={() => {
+              if (searchQuery.trim() !== '') {
+                setShowSearchResults(true);
+              }
+            }}
           />
           
           {/* Search Results Dropdown */}
           {showSearchResults && searchQuery.trim() !== '' && (
-            <div className="absolute left-0 right-0 top-full mt-1 bg-white rounded-lg shadow-lg z-20 border border-gray-200 max-h-80 overflow-y-auto">
+            <div 
+              ref={searchResultsRef}
+              className="absolute left-0 right-0 top-full mt-1 bg-white rounded-lg shadow-lg z-20 border border-gray-200 max-h-80 overflow-y-auto"
+            >
               {/* Brand Results */}
               {searchResults.brands.length > 0 && (
                 <div className="p-2 border-b border-gray-200">
@@ -771,6 +814,10 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
                           src={product.image} 
                           alt={product.name}
                           className="w-full h-full object-contain"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = 'https://via.placeholder.com/150?text=' + product.name;
+                          }}
                         />
                       </div>
                       <div>

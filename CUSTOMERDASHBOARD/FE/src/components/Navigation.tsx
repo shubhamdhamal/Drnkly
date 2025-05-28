@@ -9,6 +9,7 @@ import {
   ChevronRight,
   BookOpen
 } from 'lucide-react';
+import CartCounter from './CartCounter';
 
 
 
@@ -79,7 +80,12 @@ const Navigation: React.FC<NavigationProps> = ({ isChatOpen, setIsChatOpen }) =>
             onClick={() => handleNavClick('/products')}
           />
           <NavButton
-            icon={<ShoppingCart size={24} />}
+            icon={
+              <div className="relative">
+                <ShoppingCart size={24} />
+                <CartCounter size="small" />
+              </div>
+            }
             label="Cart"
             isActive={isActive('/cart')}
             onClick={() => handleNavClick('/cart')}
