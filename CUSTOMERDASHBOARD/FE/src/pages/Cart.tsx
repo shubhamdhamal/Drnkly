@@ -258,10 +258,11 @@ const Cart = () => {
                 </button>
               </div>
             ) : (
-              items.map((item: any) => {
-
-            )}
-          </div>
+              items.map((item: any) => (
+                <div key={item.id}>
+                  {item.name}
+                </div>
+                ))
 
           {items.length > 0 && (
             <div className="bg-gray-50 p-6 rounded-b-lg">
