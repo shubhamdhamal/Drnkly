@@ -9,7 +9,7 @@ const app = express();
 const PORT = 5003;
 
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://admin.drnkly.in'], // make sure frontend URL matches
+  origin: ['http://localhost:5173', 'https://admin.peghouse.in'], // make sure frontend URL matches
   credentials: true
 }));
 
@@ -21,8 +21,10 @@ app.use('/api/superadmin', require('./routes/superAdminRoutes'));
 app.use('/api', require('./routes/vendorRoutes'));
 app.use('/api', require('./routes/userRoutes'));
 app.use('/api', require('./routes/orderRoutes'));
-app.use('/api', require('./routes/dashboardRoutes'));
+app.use('/api', require('./routes/dashboardRoutes')); // ✅ so /api/dashboard-stats works
 app.use('/api/issues', issueRoutes);
+app.use('/api/admin', require('./routes/sidebarRoutes'));
+
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {  // better to use env variable here

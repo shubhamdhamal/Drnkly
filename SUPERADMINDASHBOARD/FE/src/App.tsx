@@ -41,14 +41,57 @@ function App() {
     { id: 3, message: "Customer complaint resolved", unread: true }
   ]);
 
-  const [navStats, setNavStats] = useState<NavStats>({
-    vendors: 24,
-    customers: 156,
-    issues: 8,
-    orders: 42,
-    reports: 15,
-    payouts: 12
-  });
+const [navStats, setNavStats] = useState<NavStats>({
+  vendors: 0,
+  customers: 0,
+  issues: 0,
+  orders: 0,
+  reports: 0,
+  payouts: 0
+});
+
+
+
+useEffect(() => {
+  const fetchSidebarStats = async () => {
+    try {
+      const token = localStorage.getItem('superadminToken');
+
+      
+
+      const response = await fetch(`https://admin.peghouse.in/api/admin/sidebar-stats`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Sidebar stats fetch failed:', errorText);
+        return;
+      }
+
+      const data = await response.json();
+      
+      setNavStats({
+        vendors: data.vendors,
+        customers: data.customers,
+        issues: data.issues,
+        orders: data.orders,
+        reports: data.reports,
+        payouts: data.payouts
+      });
+    } catch (error) {
+      console.error('Error fetching sidebar stats:', error);
+    }
+  };
+
+  fetchSidebarStats();
+}, []);
+
+
 
   useEffect(() => {
     const handleClickOutsideSidebar = (event: MouseEvent) => {
