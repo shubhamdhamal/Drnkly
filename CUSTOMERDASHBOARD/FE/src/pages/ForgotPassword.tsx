@@ -43,7 +43,7 @@ function ForgotPassword() {
     setIsLoading(true);
 
     try {
-      const response = await axios.post('https://vendor.peghouse.in/api/auth/send-registration-otp', { email });
+      const response = await axios.post('https://peghouse.in/api/auth/send-registration-otp', { email });
       if (response.data.message === 'OTP sent to email successfully') {
         setSuccess('OTP sent successfully to your email address.');
         setStep('otp'); // Change the step to 'otp' to show the OTP verification form
@@ -121,7 +121,7 @@ const handleVerifyOTP = async (e: React.FormEvent) => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post('https://vendor.peghouse.in/api/auth/reset-password', {
+      const response = await axios.post('https://peghouse.in/api/auth/reset-password', {
         email,
         newPassword
       });
@@ -160,7 +160,7 @@ const handleVerifyOTP = async (e: React.FormEvent) => {
 
     setIsLoading(true);
     try {
-      const response = await axios.post('https://vendor.peghouse.in/api/auth/send-registration-otp', { email });
+      const response = await axios.post('https://peghouse.in/api/auth/send-registration-otp', { email });
       if (response.data.message === 'OTP sent to email successfully') {
         setSuccess('OTP resent successfully to your email address.');
       } else {
