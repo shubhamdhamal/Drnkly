@@ -29,7 +29,7 @@ app.use('/uploads', express.static('/var/www/Drnkly/images/uploads'));
 
 //✅ 3. Apply middlewares
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://vendor.drnkly.com'],
+  origin: ['http://localhost:5173', 'https://vendor.drnkly.com','https://vendor.peghouse.in'],
   credentials: true
 }));
 //app.use(cors());
