@@ -43,7 +43,7 @@ function ForgotPassword() {
     setIsLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/send-registration-otp', { email });
+      const response = await axios.post('https://vendor.peghouse.in/api/auth/send-registration-otp', { email });
       if (response.data.message === 'OTP sent to email successfully') {
         setSuccess('OTP sent successfully to your email address.');
         setStep('otp'); // Change the step to 'otp' to show the OTP verification form
