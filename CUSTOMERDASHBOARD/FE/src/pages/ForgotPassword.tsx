@@ -7,7 +7,6 @@ function ForgotPassword() {
   const navigate = useNavigate();
   const [step, setStep] = useState<'email' | 'otp' | 'newPassword'>('email');
   const [email, setEmail] = useState('');
-  const [mobile, setMobile] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -16,14 +15,6 @@ function ForgotPassword() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Handle mobile number change and restrict to 10 digits
-  const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (/^\d{0,10}$/.test(value)) {
-      setMobile(value);
-    }
-  };
 
   // Handle email input
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -52,8 +43,8 @@ function ForgotPassword() {
     setIsLoading(true);
 
     try {
-      const response = await axios.post('https://peghouse.in/api/auth/send-email-otp', { email });
-      if (response.data.success) {
+      const response = await axios.post('http://localhost:5000/api/auth/send-registration-otp', { email });
+      if (response.data.message === 'OTP sent to email successfully') {
         setSuccess('OTP sent successfully to your email address.');
         setStep('otp'); // Change the step to 'otp' to show the OTP verification form
       } else {
@@ -85,15 +76,15 @@ const handleVerifyOTP = async (e: React.FormEvent) => {
   setIsLoading(true);
 
   try {
-    const response = await axios.post('https://peghouse.in/api/auth/verify-email-otp', { 
+    const response = await axios.post('http://localhost:5000/api/auth/verify-registration-otp', { 
       email, 
       otp 
     });
 
-    // If OTP verification is successful
     if (response.data.message === 'OTP verified successfully') {
-      setSuccess('OTP verified successfully.');
-      setStep('newPassword');  // Move to the New Password form
+      setSuccess('OTP verified successfully!');
+      setStep('newPassword'); // Transition to 'newPassword' step
+      console.log('Step after OTP verification:', 'newPassword'); // Log to verify the state change
     } else {
       setError(response.data.message || 'Invalid OTP. Please try again.');
     }
@@ -106,94 +97,50 @@ const handleVerifyOTP = async (e: React.FormEvent) => {
 };
 
 
-
-
-
-  // Resend OTP
-  const handleResendOTP = async () => {
+  // Reset Password
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError('');
-    setSuccess('');
+    setSuccess(''); 
+
+    if (!newPassword || !confirmPassword) {
+      setError('Please fill in all the fields');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
 
     setIsLoading(true);
+
     try {
-      const response = await axios.post('https://peghouse.in/api/auth/send-email-otp', { email });
-      if (response.data.success) {
-        setSuccess('OTP resent successfully to your email address.');
+      const response = await axios.post('http://localhost:5000/api/auth/reset-password', {
+        email,
+        newPassword
+      });
+
+      if (response.data.message === 'Password updated successfully') {
+        setSuccess('Password updated successfully!');
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
       } else {
-        setError(response.data.message || 'Failed to resend OTP. Please try again.');
+        setError(response.data.message || 'Failed to reset password. Please try again.');
       }
     } catch (error: any) {
-      setError('Failed to resend OTP. Please try again.');
-      console.error('Resend OTP Error:', error);
+      setError('Failed to reset password. Please try again.');
+      console.error('Password Reset Error:', error);
     } finally {
       setIsLoading(false);
     }
   };
-
-const handleResetPassword = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setError('');
-  setSuccess('');
-
-  // Validate required fields
-  if (!mobile || !newPassword || !confirmPassword) {
-    setError('Please fill in all the fields');
-    return;
-  }
-
-  // Validate mobile number
-  if (mobile.length !== 10) {
-    setError('Mobile number must be exactly 10 digits.');
-    return;
-  }
-
-  // Validate passwords
-  if (!newPassword) {
-    setError('Please enter a new password.');
-    return;
-  }
-
-  if (newPassword.length < 6) {
-    setError('Password must be at least 6 characters long.');
-    return;
-  }
-
-  if (newPassword !== confirmPassword) {
-    setError('Passwords do not match.');
-    return;
-  }
-
-  setIsLoading(true);
-
-  try {
-    // Make API call to reset password using mobile number
-    const response = await axios.post('https://peghouse.in/api/auth/reset-password', {
-      mobile,       // Send mobile number
-      newPassword  // Send new password
-    });
-
-    if (response.data.message === 'Password updated successfully') {
-      setSuccess('Password updated successfully!');
-      setTimeout(() => {
-        navigate('/login');  // Redirect to login after success
-      }, 2000);
-    } else {
-      setError(response.data.message || 'Failed to reset password. Please try again.');
-    }
-  } catch (error: any) {
-    setError('Failed to reset password. Please try again.');
-    console.error('Password Reset Error:', error);
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-
-
-
-
-
-
 
   // Go back to previous step
   const handleBack = () => {
@@ -204,6 +151,27 @@ const handleResetPassword = async (e: React.FormEvent) => {
     }
     setError('');
     setSuccess('');
+  };
+
+  // Resend OTP
+  const handleResendOTP = async () => {
+    setError('');
+    setSuccess('');
+
+    setIsLoading(true);
+    try {
+      const response = await axios.post('http://localhost:5000/api/auth/send-registration-otp', { email });
+      if (response.data.message === 'OTP sent to email successfully') {
+        setSuccess('OTP resent successfully to your email address.');
+      } else {
+        setError(response.data.message || 'Failed to resend OTP. Please try again.');
+      }
+    } catch (error: any) {
+      setError('Failed to resend OTP. Please try again.');
+      console.error('Resend OTP Error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -284,7 +252,7 @@ const handleResetPassword = async (e: React.FormEvent) => {
                   <span>Back</span>
                 </button>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   OTP Verification
@@ -309,7 +277,7 @@ const handleResetPassword = async (e: React.FormEvent) => {
               >
                 {isLoading ? 'Verifying...' : 'Verify OTP'}
               </button>
-              
+
               <div className="text-center">
                 <button
                   type="button"
@@ -324,83 +292,71 @@ const handleResetPassword = async (e: React.FormEvent) => {
           )}
 
           {/* Step 3: New Password Form */}
-          {step === 'newPassword' && (
-            <form onSubmit={handleResetPassword} className="space-y-4">
-              <div className="mb-4">
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="flex items-center text-gray-600 hover:text-[#cd6839]"
-                >
-                  <ArrowLeft size={18} className="mr-1" />
-                  <span>Back</span>
-                </button>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Mobile Number
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
-                  placeholder="Enter your mobile number"
-                  value={mobile}
-                  onChange={handleMobileChange}
-                />
-              </div>
-              
-              <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  New Password
-                </label>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
-                  placeholder="Enter new password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-10 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  tabIndex={-1}
-                >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
-              
-              <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Confirm Password
-                </label>
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
-                  placeholder="Confirm new password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-4 top-10 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  tabIndex={-1}
-                >
-                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
+{step === 'newPassword' && (
+  <form onSubmit={handleResetPassword} className="space-y-4">
+    <div className="mb-4">
+      <button
+        type="button"
+        onClick={handleBack}
+        className="flex items-center text-gray-600 hover:text-[#cd6839]"
+      >
+        <ArrowLeft size={18} className="mr-1" />
+        <span>Back</span>
+      </button>
+    </div>
 
-              <button
-                type="submit"
-                className={`w-full bg-[#cd6839] text-white py-3 rounded-xl font-semibold hover:bg-[#b55a31] transition-colors ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                disabled={isLoading}
-              >
-                {isLoading ? 'Resetting Password...' : 'Reset Password'}
-              </button>
-            </form>
-          )}
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        New Password
+      </label>
+      <input
+        type={showPassword ? "text" : "password"}
+        className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
+        placeholder="Enter new password"
+        value={newPassword}
+        onChange={(e) => setNewPassword(e.target.value)}
+      />
+      <button
+        type="button"
+        onClick={() => setShowPassword(!showPassword)}
+        className="absolute right-4 top-10 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+        tabIndex={-1}
+      >
+        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+      </button>
+    </div>
+
+    <div className="relative">
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        Confirm Password
+      </label>
+      <input
+        type={showConfirmPassword ? "text" : "password"}
+        className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
+        placeholder="Confirm new password"
+        value={confirmPassword}
+        onChange={(e) => setConfirmPassword(e.target.value)}
+      />
+      <button
+        type="button"
+        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+        className="absolute right-4 top-10 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+        tabIndex={-1}
+      >
+        {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+      </button>
+    </div>
+
+    <button
+      type="submit"
+      className={`w-full bg-[#cd6839] text-white py-3 rounded-xl font-semibold hover:bg-[#b55a31] transition-colors ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+      disabled={isLoading}
+    >
+      {isLoading ? 'Resetting Password...' : 'Reset Password'}
+    </button>
+  </form>
+)}
+
 
           <p className="mt-6 text-center">
             Remember your password?{' '}
