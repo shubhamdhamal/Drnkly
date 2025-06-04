@@ -5,22 +5,29 @@ const path = require('path');
 const connectDB = require('./config/db');
 const cartRoutes = require('./routes/cartRoutes');
 const issueRoutes = require('./routes/issueRoutes');
-dotenv.config(); // Load environment variables from .env file
-connectDB(); // Call the DB connection
+
+dotenv.config();
+connectDB();
 
 const app = express();
 
+// ✅ Enable CORS before routes
+app.use(cors({
+  origin: ['http://localhost:5173', 'https://peghouse.in'], // whitelist frontend origins
+  credentials: true
+}));
+
+app.use(express.json()); // ✅ Add this if missing, needed to parse JSON
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads/issues', express.static('uploads/issues'));
+
 app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/users', require('./routes/userRoutes')); // ✅ Use router, not direct function
-// Mount the products routes
+app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/cart', cartRoutes);
-const orderRoutes = require('./routes/orderRoutes');
-app.use('/api', orderRoutes);
-app.use('/uploads/issues', express.static('uploads/issues'));
-// Routes
+app.use('/api', require('./routes/orderRoutes'));
 app.use('/api/issues', issueRoutes);
 
 app.get('/', (req, res) => {
