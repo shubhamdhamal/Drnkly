@@ -60,10 +60,20 @@ const updateStatus = async (id: string, status: 'verified' | 'rejected') => {
   }
 };
 
-  const handleViewDetails = (vendor: Vendor) => {
-    setSelectedVendor(vendor);
+const handleViewDetails = async (vendor: Vendor) => {
+  try {
+    const token = localStorage.getItem('superadminToken');
+    const res = await axios.get(`http://localhost:5003/api/vendors/${vendor._id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setSelectedVendor(res.data.vendor); // use full details
     setShowModal(true);
-  };
+  } catch (err) {
+    console.error('Failed to fetch vendor details:', err);
+    alert('Failed to load vendor details.');
+  }
+};
+
 
   return (
     <div>
@@ -139,37 +149,84 @@ const updateStatus = async (id: string, status: 'verified' | 'rejected') => {
 
       {/* View Modal */}
       {showModal && selectedVendor && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg w-96">
-            <h3 className="text-xl font-bold mb-4">Vendor Details</h3>
-            <div className="mb-4">
-              <p><strong>Shop Name:</strong> {selectedVendor.businessName}</p>
-              <p><strong>License:</strong> {selectedVendor.license}</p>
-              {/* Show the download link for the license file in the modal */}
-              {selectedVendor.license && (
-                <p>
-                  <strong>Download License:</strong> 
-                  <a 
-                    href={`https://vendor.peghouse.in/uploads/${selectedVendor.license}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    download
-                  >
-                    Download License File
-                  </a>
-                </p>
-              )}
-              <p><strong>Status:</strong> {selectedVendor.verificationStatus}</p>
-            </div>
-            <button
-              onClick={() => setShowModal(false)}
-              className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="bg-white p-6 rounded-lg w-[90vw] max-w-xl max-h-[90vh] overflow-y-auto">
+      <h3 className="text-xl font-bold mb-4">Vendor Details</h3>
+      <div className="mb-4 space-y-2">
+        <p><strong>Shop Name:</strong> {selectedVendor.businessName}</p>
+        <p><strong>Email:</strong> {selectedVendor.businessEmail}</p>
+        <p><strong>Phone:</strong> {selectedVendor.businessPhone}</p>
+        <p><strong>Status:</strong> {selectedVendor.verificationStatus}</p>
+
+        <p><strong>State:</strong> {selectedVendor.location?.state}</p>
+        <p><strong>City:</strong> {selectedVendor.location?.city}</p>
+        <p><strong>Postal Code:</strong> {selectedVendor.location?.postalCode}</p>
+        <p><strong>Address Line 1:</strong> {selectedVendor.location?.addressLine1}</p>
+        {selectedVendor.location?.addressLine2 && (
+          <p><strong>Address Line 2:</strong> {selectedVendor.location.addressLine2}</p>
+        )}
+
+        {selectedVendor.license && (
+          <p>
+            <strong>License:</strong> 
+            <a
+              href={`https://vendor.peghouse.in/uploads/${selectedVendor.license}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline"
+              download
             >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+              View License
+            </a>
+          </p>
+        )}
+
+        {selectedVendor.idProof && (
+          <p>
+            <strong>ID Proof:</strong> 
+            <a
+              href={`https://vendor.peghouse.in/uploads/${selectedVendor.idProof}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline"
+              download
+            >
+              View ID Proof
+            </a>
+          </p>
+        )}
+
+        {selectedVendor.qrCodeUrl && (
+          <p>
+            <strong>QR Code:</strong> 
+            <a
+              href={`https://vendor.peghouse.in/uploads/${selectedVendor.qrCodeUrl}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline"
+              download
+            >
+              View QR Code
+            </a>
+          </p>
+        )}
+
+        {selectedVendor.productCategories?.length > 0 && (
+          <p>
+            <strong>Categories:</strong> {selectedVendor.productCategories.join(', ')}
+          </p>
+        )}
+      </div>
+      <button
+        onClick={() => setShowModal(false)}
+        className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+)}
+
     </div>
   );
 }

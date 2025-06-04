@@ -59,7 +59,7 @@ useEffect(() => {
 
       
 
-      const response = await fetch(`https://admin.peghouse.in/api/admin/sidebar-stats`, {
+      const response = await fetch(`http://localhost:5003/api/admin/sidebar-stats`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -244,9 +244,9 @@ useEffect(() => {
           <nav className="h-full overflow-y-auto">
             <NavItem icon={<Home />} label="Dashboard" active={currentPage === 'dashboard'} onClick={() => handleNavigation('dashboard')} count={null} />
             <NavItem icon={<Users />} label="Vendors" active={currentPage === 'vendors'} onClick={() => handleNavigation('vendors')} count={navStats.vendors} />
-            <NavItem icon={<Users />} label="Customers" active={currentPage === 'customers'} onClick={() => handleNavigation('customers')} count={navStats.customers} />
             <NavItem icon={<AlertCircle />} label="Issues" active={currentPage === 'issues'} onClick={() => handleNavigation('issues')} count={navStats.issues} />
             <NavItem icon={<TruckDelivery />} label="Orders" active={currentPage === 'orders'} onClick={() => handleNavigation('orders')} count={navStats.orders} />
+            <NavItem icon={<Users />} label="Customers" active={currentPage === 'customers'} onClick={() => handleNavigation('customers')} count={navStats.customers} />
             <NavItem icon={<BarChart2 />} label="Analytics" active={currentPage === 'analytics'} onClick={() => handleNavigation('analytics')} count={null} />
             <NavItem icon={<FileText />} label="Reports" active={currentPage === 'reports'} onClick={() => handleNavigation('reports')} count={navStats.reports} />
             <NavItem icon={<DollarSign />} label="Payouts" active={currentPage === 'payouts'} onClick={() => handleNavigation('payouts')} count={navStats.payouts} />

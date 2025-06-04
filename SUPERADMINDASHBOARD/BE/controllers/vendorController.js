@@ -10,6 +10,18 @@ exports.getAllVendors = async (req, res) => {
   }
 };
 
+exports.getVendorById = async (req, res) => {
+  try {
+    const vendor = await Vendor.findById(req.params.id).lean();
+    if (!vendor) {
+      return res.status(404).json({ message: 'Vendor not found' });
+    }
+    res.status(200).json({ vendor });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching vendor details', error: error.message });
+  }
+};
+
 exports.updateVendorStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;

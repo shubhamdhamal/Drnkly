@@ -55,11 +55,25 @@ function CustomerMonitoring() {
   fetchCustomers();
 }, []);
 
-  const handleViewDetails = (customer: Customer) => {
-    setSelectedCustomer(customer);
+const handleViewDetails = async (customer: Customer) => {
+  try {
+    const token = localStorage.getItem('superadminToken');
+    const res = await axios.get(`http://localhost:5003/api/customers/${customer.id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    setSelectedCustomer({
+      ...customer,
+      ...res.data.customer
+    });
     setShowModal(true);
-    setShowMap(false);
-  };
+  } catch (err) {
+    console.error('Failed to fetch customer details:', err);
+  }
+};
+
 
   const handleLocationClick = (customer: Customer) => {
     setSelectedCustomer(customer);
@@ -246,18 +260,18 @@ const handleReject = async (customerId: string) => {
             <h3 className="text-xl font-bold mb-4">Customer Details</h3>
             <div className="mb-4">
               <p><strong>Name:</strong> {selectedCustomer.name}</p>
-              <p><strong>Location:</strong> {selectedCustomer.location}</p>
-              <p><strong>Performance:</strong> {selectedCustomer.performance}</p>
-              <p><strong>Status:</strong> {selectedCustomer.status}</p>
-              {/* Show the file link in the modal */}
-              {selectedCustomer.idProof && (
-                <p>
-                  <strong>ID Proof:</strong> 
-                  <a href={`https://admin.peghouse.in${selectedCustomer.idProof}`} target="_blank" rel="noopener noreferrer">
-                    View ID Proof
-                  </a>
-                </p>
-              )}
+<p><strong>Email:</strong> {selectedCustomer.email || 'N/A'}</p>
+<p><strong>Mobile:</strong> {selectedCustomer.mobile || 'N/A'}</p>
+<p><strong>Date of Birth:</strong> {new Date(selectedCustomer.dob).toLocaleDateString()}</p>
+<p><strong>State:</strong> {selectedCustomer.state}</p>
+<p><strong>City:</strong> {selectedCustomer.city}</p>
+<p><strong>Aadhaar No:</strong> {selectedCustomer.aadhaar}</p>
+<p><strong>Self Declaration:</strong> {selectedCustomer.selfDeclaration ? 'Yes' : 'No'}</p>
+<p><strong>Status:</strong> {selectedCustomer.status}</p>
+{selectedCustomer.idProof && (
+  <p><strong>ID Proof:</strong> <a href={`https://admin.peghouse.in${selectedCustomer.idProof}`} target="_blank" rel="noopener noreferrer">View</a></p>
+)}
+
             </div>
             <button
               onClick={() => setShowModal(false)}
