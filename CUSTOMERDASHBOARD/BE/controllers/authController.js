@@ -237,12 +237,11 @@ exports.signup = async (req, res) => {
       state, 
       city, 
       dob, 
-      aadhaar, 
-      selfDeclaration 
+      selfDeclaration // Remove aadhaar from here
     } = req.body;
 
     // Validate input fields
-    if (!name || (!email && !mobile) || !password || !state || !city || !dob || !aadhaar || !selfDeclaration) {
+    if (!name || (!email && !mobile) || !password || !state || !city || !dob || !selfDeclaration) {
       return res.status(400).json({ message: 'Please provide all necessary fields.' });
     }
 
@@ -261,7 +260,7 @@ exports.signup = async (req, res) => {
     // Create a new user with uploaded file
     const idProof = req.file ? path.join('/uploads/idproofs', req.file.filename) : null;
 
-    // Create user object
+    // Create user object without aadhaar field
     const user = new User({
       name,
       email,
@@ -270,7 +269,6 @@ exports.signup = async (req, res) => {
       state,
       city,
       dob,
-      aadhaar,
       idProof,  // Path to uploaded ID proof
       selfDeclaration
     });
