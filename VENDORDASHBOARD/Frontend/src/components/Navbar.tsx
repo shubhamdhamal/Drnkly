@@ -26,7 +26,7 @@ const Navbar: React.FC = () => {
       try {
         const token = localStorage.getItem('authToken'); // Get the auth token from localStorage
         if (token) {
-          const response = await axios.get('https://vendor.peghouse.in/api/vendor/profile', {
+          const response = await axios.get('http://localhost:5000/api/vendor/profile', {
             headers: {
               Authorization: `Bearer ${token}`, // Send token in Authorization header
             },

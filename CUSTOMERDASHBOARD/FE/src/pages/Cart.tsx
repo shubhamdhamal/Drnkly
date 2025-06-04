@@ -451,6 +451,11 @@ const Cart = () => {
             </div>
           )}
         </div>
+
+        {/* Add path for sound file in public folder */}
+        <p style={{ display: 'none' }}>
+          Sound file should be placed at: {process.env.PUBLIC_URL}/notification-sound.mp3
+        </p>
       </div>
     </div>
   );

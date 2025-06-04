@@ -13,7 +13,6 @@ const Login: React.FC = () => {
   const [error, setError] = React.useState<string | null>(null);
   const [rememberMe, setRememberMe] = React.useState(false);
   const [showPassword, setShowPassword] = React.useState(false);
-  const [isSkipped, setIsSkipped] = React.useState(false);
 
   // Session timeout in milliseconds (30 minutes)
   const SESSION_TIMEOUT = 30 * 60 * 1000;
@@ -52,12 +51,9 @@ const Login: React.FC = () => {
     
     // Initial session timer if user is already logged in
     const token = localStorage.getItem('authToken');
-    const isSkippedLogin = localStorage.getItem('isSkippedLogin');
     
     if (token) {
       resetSessionTimer();
-      navigate('/dashboard');
-    } else if (isSkippedLogin === 'true') {
       navigate('/dashboard');
     }
     
@@ -85,26 +81,6 @@ const Login: React.FC = () => {
   const isPhone = (input: string) => {
     const phoneRegex = /^\d{10}$/;
     return phoneRegex.test(input);
-  };
-
-  const handleSkipLogin = () => {
-    setIsSkipped(true);
-    
-    // Clear any existing auth tokens
-    localStorage.removeItem('authToken');
-    
-    // Set the skip login flag
-    localStorage.setItem('isSkippedLogin', 'true');
-    
-    console.log('Login skipped, localStorage updated:', { 
-      token: false, 
-      skipped: true 
-    });
-    
-    // Dispatch a storage event to notify other components
-    window.dispatchEvent(new Event('storage'));
-    
-    navigate('/dashboard'); // Navigate directly to dashboard without login
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -141,7 +117,7 @@ const Login: React.FC = () => {
     }
 
     try {
-      const response = await axios.post('https://vendor.peghouse.in/api/vendor/login', {
+      const response = await axios.post('http://localhost:5000/api/vendor/login', {
         emailOrPhone,
         password,
       });
@@ -149,9 +125,6 @@ const Login: React.FC = () => {
       const token = response.data.token;
 
       if (token) {
-        // Remove skipped login flag if it exists
-        localStorage.removeItem('isSkippedLogin');
-        
         localStorage.setItem('authToken', token);
         // Start the session timer
         resetSessionTimer();
@@ -240,19 +213,6 @@ const Login: React.FC = () => {
           >
             Sign in
           </Button>
-
-          {/* Skip Login Button */}
-          {!isSkipped && (
-            <div className="text-center mt-4">
-              <button
-                type="button"
-                onClick={handleSkipLogin}
-                className="text-blue-600 font-medium hover:text-blue-500 text-sm"
-              >
-                Skip Login and Proceed
-              </button>
-            </div>
-          )}
 
           <div className="text-center">
             <p className="text-sm text-gray-600">

@@ -1,12 +1,11 @@
 const mongoose = require('mongoose');
+const Counter = require('./Counter');
 
 const orderSchema = new mongoose.Schema({
   orderNumber: {
     type: String,
     unique: true,
-    default: function () {
-      return `ORD${Math.floor(100000 + Math.random() * 900000)}`;
-    }
+    required: true
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -69,6 +68,28 @@ const orderSchema = new mongoose.Schema({
       description: String,
     },
   ], 
+});
+
+// Pre-save middleware to generate sequential order number
+orderSchema.pre('save', async function(next) {
+  if (this.isNew) {
+    try {
+      // Get and increment the counter
+      const counter = await Counter.findOneAndUpdate(
+        { name: 'orderNumber' },
+        { $inc: { count: 1 } },
+        { new: true, upsert: true }
+      );
+      
+      // Generate the order number with the new count
+      this.orderNumber = `ORD${counter.count}`;
+      next();
+    } catch (error) {
+      next(error);
+    }
+  } else {
+    next();
+  }
 });
 
 module.exports = mongoose.model('Order', orderSchema);
