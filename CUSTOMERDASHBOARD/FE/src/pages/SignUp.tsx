@@ -24,7 +24,6 @@ function SignUp() {
     state: '',
     city: '',
     dob: '',
-    aadhaar: '',
     selfDeclaration: false,
   });
 
@@ -64,14 +63,7 @@ function SignUp() {
     'Jammu & Kashmir': ['Srinagar', 'Jammu'],
     'Ladakh': ['Leh', 'Kargil'],
   };
-   // Random number validation
-   const handleAadhaarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (/^\d{0,2}$/.test(value)) {
-      setExtraData({ ...extraData, aadhaar: value });
-      setErrorMessage('');
-    }
-  };
+   
    // Name validation for first and last name
    const validateNameWithoutSpace = (name: string) => {
     const nameParts = name.trim().split(' ');
@@ -98,13 +90,7 @@ function SignUp() {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
   
-  const handleAadhaarBlur = () => {
-    if (extraData.aadhaar.length < 2) {
-      setErrorMessage('Number should be 2 digits.');
-    } else {
-      setErrorMessage('');
-    }
-  };
+  
 
   // Validate password as it changes
   useEffect(() => {
@@ -129,11 +115,7 @@ function SignUp() {
       return;
     }
   
-    // Validate 2-digit number
-    if (!extraData.aadhaar || extraData.aadhaar.length !== 2) {
-      setError('Please enter a valid 2-digit random number');
-      return;
-    }
+    
   
   
     // Validate Name (First name and Last name together in one field)
@@ -279,7 +261,6 @@ function SignUp() {
                       setExtraData(prev => ({
                         ...prev,
                         dob: '',
-                        aadhaar: '',
                         idProof: null,
                         selfDeclaration: false
                       }));
@@ -287,19 +268,7 @@ function SignUp() {
                   }}
                 />
               </div>
-              <div>
-            <label>Any Random Number</label>
-            <input
-              type="text"
-              className="w-full border px-3 py-2 rounded"
-              placeholder="Enter any 2-digit number"
-              value={extraData.aadhaar}
-              onChange={handleAadhaarChange}
-              maxLength={2}
-              onBlur={handleAadhaarBlur}
-            />
-            {errorMessage && <p className="text-red-500">{errorMessage}</p>} {/* Display error message */}
-          </div>
+              
             </>
           )}
 
@@ -522,8 +491,8 @@ function SignUp() {
                }
              }
              if (step === 2) {
-               if (!extraData.dob || extraData.aadhaar.length !== 2) {
-                 setError('Please enter valid Date of Birth and 2-digit random number.');
+               if (!extraData.dob ) {
+                 setError('Please enter valid Date of Birth');
                  return;
                }
              }
