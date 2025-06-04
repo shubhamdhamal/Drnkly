@@ -76,7 +76,7 @@ const handleVerifyOTP = async (e: React.FormEvent) => {
   setIsLoading(true);
 
   try {
-    const response = await axios.post('http://localhost:5000/api/auth/verify-registration-otp', { 
+    const response = await axios.post('https://peghouse.in/api/auth/verify-registration-otp', { 
       email, 
       otp 
     });
@@ -121,7 +121,7 @@ const handleVerifyOTP = async (e: React.FormEvent) => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/reset-password', {
+      const response = await axios.post('https://vendor.peghouse.in/api/auth/reset-password', {
         email,
         newPassword
       });
@@ -160,7 +160,7 @@ const handleVerifyOTP = async (e: React.FormEvent) => {
 
     setIsLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/send-registration-otp', { email });
+      const response = await axios.post('https://vendor.peghouse.in/api/auth/send-registration-otp', { email });
       if (response.data.message === 'OTP sent to email successfully') {
         setSuccess('OTP resent successfully to your email address.');
       } else {
