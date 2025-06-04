@@ -117,7 +117,7 @@ const Login: React.FC = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/api/vendor/login', {
+      const response = await axios.post('https://vendor.peghouse.in/api/vendor/login', {
         emailOrPhone,
         password,
       });
