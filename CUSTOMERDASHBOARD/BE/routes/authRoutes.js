@@ -24,10 +24,6 @@ router.post('/reset-password', resetPassword);
 // User Signup Route
 router.post('/signup', upload.single('idProof'), signup);
 
-module.exports = router;
-
-const { login } = require('../controllers/authController');
-
 router.post('/login', login);
 
 module.exports = router;
