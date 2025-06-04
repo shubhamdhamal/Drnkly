@@ -4,9 +4,27 @@ import Button from '../components/Button';
 //import jsPDF from 'jspdf';
 import axios from 'axios';
 
+interface PayoutData {
+  id: string;
+  orderNumber?: string;
+  productName?: string;
+  amount: number;
+  date: string;
+  status: string;
+  commission: number;
+  customerName?: string;
+}
+
 const Payouts: React.FC = () => {
   const [qrPreview, setQrPreview] = useState('');
   const [uploadStatus, setUploadStatus] = useState('');
+  const [payouts, setPayouts] = useState<PayoutData[]>([]);
+  const [payoutStats, setPayoutStats] = useState({
+    totalEarnings: 0,
+    commission: 0,
+    pendingAmount: 0,
+    lastPayout: 0,
+  });
 
   // ✅ Fetch vendor's QR code on page load
   useEffect(() => {
@@ -26,37 +44,65 @@ const Payouts: React.FC = () => {
     };
 
     fetchQRCode();
+    loadPayoutsData();
   }, []);
 
-  const payoutStats = {
-    totalEarnings: 125430,
-    commission: 12543,
-    pendingAmount: 45670,
-    lastPayout: 67890,
-  };
+  // Load payouts data from localStorage and combine with existing data
+  const loadPayoutsData = () => {
+    // Default payouts if none exist yet
+    const defaultPayouts: PayoutData[] = [
+      {
+        id: 'PAY001',
+        amount: 67890,
+        date: '2024-03-10T10:00:00Z',
+        status: 'paid',
+        commission: 6789,
+      },
+      {
+        id: 'PAY002',
+        amount: 45670,
+        date: '2024-03-15T10:00:00Z',
+        status: 'pending',
+        commission: 4567,
+      },
+    ];
 
-  const payouts = [
-    {
-      id: 'PAY001',
-      amount: 67890,
-      date: '2024-03-10T10:00:00Z',
-      status: 'paid',
-      commission: 6789,
-    },
-    {
-      id: 'PAY002',
-      amount: 45670,
-      date: '2024-03-15T10:00:00Z',
-      status: 'pending',
-      commission: 4567,
-    },
-  ];
+    // Get any handed over orders from localStorage
+    const storedPayouts = JSON.parse(localStorage.getItem('payoutsData') || '[]');
+    
+    // Combine all payouts
+    const allPayouts = [...defaultPayouts, ...storedPayouts];
+    
+    // Sort by date (newest first)
+    allPayouts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    setPayouts(allPayouts);
+    
+    // Calculate stats
+    const totalEarnings = allPayouts.reduce((sum, payout) => sum + payout.amount, 0);
+    const totalCommission = allPayouts.reduce((sum, payout) => sum + payout.commission, 0);
+    const pendingAmount = allPayouts
+      .filter(payout => payout.status === 'pending')
+      .reduce((sum, payout) => sum + payout.amount, 0);
+    
+    const lastPaidPayout = allPayouts.find(payout => payout.status === 'paid');
+    
+    setPayoutStats({
+      totalEarnings,
+      commission: totalCommission,
+      pendingAmount,
+      lastPayout: lastPaidPayout ? lastPaidPayout.amount : 0,
+    });
+  };
 
   const handleDownloadReport = () => {
     const csvRows = [
-      ['Payout ID', 'Date', 'Amount', 'Commission', 'Status'],
+      ['Payout ID', 'Order Number', 'Product', 'Customer', 'Date', 'Amount', 'Commission', 'Status'],
       ...payouts.map(p => [
         p.id,
+        p.orderNumber || 'N/A',
+        p.productName || 'N/A',
+        p.customerName || 'N/A',
         new Date(p.date).toLocaleDateString(),
         `₹${p.amount}`,
         `₹${p.commission}`,
@@ -74,21 +120,27 @@ const Payouts: React.FC = () => {
     document.body.removeChild(link);
   };
 
-  const handleDownloadInvoice = (payout: any) => {
+  const handleDownloadInvoice = (payout: PayoutData) => {
+    alert('Invoice download functionality requires jsPDF which is commented out');
+    /* Uncomment when jsPDF is available
     const doc = new jsPDF();
     doc.setFontSize(18);
     doc.text('Payout Invoice', 14, 22);
 
     doc.setFontSize(12);
     doc.text(`Payout ID: ${payout.id}`, 14, 35);
-    doc.text(`Date: ${new Date(payout.date).toLocaleDateString()}`, 14, 43);
-    doc.text(`Amount: ₹${payout.amount}`, 14, 51);
-    doc.text(`Commission: ₹${payout.commission}`, 14, 59);
-    doc.text(`Status: ${payout.status}`, 14, 67);
+    if (payout.orderNumber) doc.text(`Order Number: ${payout.orderNumber}`, 14, 43);
+    if (payout.productName) doc.text(`Product: ${payout.productName}`, 14, 51);
+    if (payout.customerName) doc.text(`Customer: ${payout.customerName}`, 14, 59);
+    doc.text(`Date: ${new Date(payout.date).toLocaleDateString()}`, 14, 67);
+    doc.text(`Amount: ₹${payout.amount}`, 14, 75);
+    doc.text(`Commission: ₹${payout.commission}`, 14, 83);
+    doc.text(`Status: ${payout.status}`, 14, 91);
 
     doc.setFontSize(10);
-    doc.text('Thank you for using our platform!', 14, 80);
+    doc.text('Thank you for using our platform!', 14, 100);
     doc.save(`Invoice_${payout.id}.pdf`);
+    */
   };
 
   const handleQRUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -199,6 +251,15 @@ const Payouts: React.FC = () => {
                   Payout ID
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Order Number
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Product
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Customer
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Date
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -219,6 +280,9 @@ const Payouts: React.FC = () => {
               {payouts.map((payout) => (
                 <tr key={payout.id}>
                   <td className="px-6 py-4 whitespace-nowrap">{payout.id}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{payout.orderNumber || '-'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{payout.productName || '-'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{payout.customerName || '-'}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{new Date(payout.date).toLocaleDateString()}</td>
                   <td className="px-6 py-4 whitespace-nowrap">₹{payout.amount}</td>
                   <td className="px-6 py-4 whitespace-nowrap">₹{payout.commission}</td>

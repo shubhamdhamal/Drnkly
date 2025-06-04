@@ -42,7 +42,7 @@ const Products: React.FC = () => {
           return;
         }
   
-        const response = await axios.get('https://vendor.peghouse.in/api/products/vendor', {
+        const response = await axios.get('http://localhost:5000/api/products/vendor', {
           headers: {
             Authorization: `Bearer ${token}`,
           },

@@ -22,6 +22,7 @@ interface Offer {
   discountPercentage: number;
   isActive: boolean;
   appliedToProducts: string[];
+  couponCode?: string;
 }
 
 const Dashboard: React.FC = () => {
@@ -37,7 +38,8 @@ const Dashboard: React.FC = () => {
       description: '10% off on all premium whiskeys',
       discountPercentage: 10,
       isActive: true,
-      appliedToProducts: []
+      appliedToProducts: [],
+      couponCode: 'WEEKEND10'
     },
     { 
       id: '2', 
@@ -45,7 +47,8 @@ const Dashboard: React.FC = () => {
       description: '15% off on beer between 5-7 PM',
       discountPercentage: 15,
       isActive: false,
-      appliedToProducts: []
+      appliedToProducts: [],
+      couponCode: 'HAPPY15'
     },
     { 
       id: '3', 
@@ -53,7 +56,8 @@ const Dashboard: React.FC = () => {
       description: 'Special deal on wine purchases',
       discountPercentage: 33,
       isActive: false,
-      appliedToProducts: []
+      appliedToProducts: [],
+      couponCode: 'WINE2GET1'
     },
     { 
       id: '4', 
@@ -61,7 +65,8 @@ const Dashboard: React.FC = () => {
       description: '5% off on first order',
       discountPercentage: 5,
       isActive: true,
-      appliedToProducts: []
+      appliedToProducts: [],
+      couponCode: 'FIRST5'
     },
     { 
       id: '5', 
@@ -69,7 +74,8 @@ const Dashboard: React.FC = () => {
       description: '20% off on orders above ₹2000',
       discountPercentage: 20,
       isActive: false,
-      appliedToProducts: []
+      appliedToProducts: [],
+      couponCode: 'BULK20'
     },
     { 
       id: '6', 
@@ -77,7 +83,8 @@ const Dashboard: React.FC = () => {
       description: 'Special discounts for the holiday season',
       discountPercentage: 12,
       isActive: true,
-      appliedToProducts: []
+      appliedToProducts: [],
+      couponCode: 'FESTIVAL12'
     },
     { 
       id: '7', 
@@ -85,7 +92,8 @@ const Dashboard: React.FC = () => {
       description: 'Discounts on selected items to clear inventory',
       discountPercentage: 25,
       isActive: false,
-      appliedToProducts: []
+      appliedToProducts: [],
+      couponCode: 'CLEAR25'
     },
     { 
       id: '8', 
@@ -93,7 +101,8 @@ const Dashboard: React.FC = () => {
       description: 'Special pricing for loyalty members',
       discountPercentage: 8,
       isActive: true,
-      appliedToProducts: []
+      appliedToProducts: [],
+      couponCode: 'MEMBER8'
     },
     { 
       id: '9', 
@@ -101,7 +110,8 @@ const Dashboard: React.FC = () => {
       description: '15% off to celebrate the new year',
       discountPercentage: 15,
       isActive: false,
-      appliedToProducts: []
+      appliedToProducts: [],
+      couponCode: 'NEWYEAR15'
     },
     { 
       id: '10', 
@@ -109,7 +119,8 @@ const Dashboard: React.FC = () => {
       description: '10% off on premium spirits',
       discountPercentage: 10,
       isActive: true,
-      appliedToProducts: []
+      appliedToProducts: [],
+      couponCode: 'PREMIUM10'
     }
   ]);
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
@@ -122,7 +133,7 @@ const Dashboard: React.FC = () => {
       try {
         const token = localStorage.getItem('authToken');
         if (token) {
-          const response = await axios.get('https://vendor.peghouse.in/api/vendor/products', {
+          const response = await axios.get('http://localhost:5000/api/vendor/products', {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -161,15 +172,20 @@ const Dashboard: React.FC = () => {
   const applyOfferToProducts = () => {
     if (!selectedOffer) return;
 
-    // Update the offer with selected products
+    // If no products are selected, select all alcohol products
+    const productsToApply = selectedProducts.length > 0 
+      ? selectedProducts 
+      : alcoholProducts.map(p => p._id);
+
+    // Update the offer with selected products and set isActive to true
     const updatedOffers = offers.map(offer => 
       offer.id === selectedOffer.id 
-        ? { ...offer, appliedToProducts: selectedProducts, isActive: true } 
+        ? { ...offer, appliedToProducts: productsToApply, isActive: true } 
         : offer
     );
     
     setOffers(updatedOffers);
-    toast.success(`${selectedOffer.title} applied to ${selectedProducts.length} products`);
+    toast.success(`${selectedOffer.title} activated and applied to ${productsToApply.length} products`);
     setShowOfferModal(false);
     setSelectedOffer(null);
     setSelectedProducts([]);
@@ -178,19 +194,21 @@ const Dashboard: React.FC = () => {
   // Function to open offer modal with pre-selected offer
   const openOfferModal = (offer: Offer) => {
     setSelectedOffer(offer);
-    setSelectedProducts(offer.appliedToProducts);
+    setSelectedProducts(offer.appliedToProducts || []);
     setShowOfferModal(true);
   };
 
   // Function to create a new offer (this would usually involve an API call)
   const createNewOffer = () => {
+    const randomCode = 'OFFER' + Math.floor(Math.random() * 10000);
     const newOffer: Offer = {
       id: Date.now().toString(),
       title: "New Offer",
       description: "Description for new offer",
       discountPercentage: 10,
       isActive: false,
-      appliedToProducts: []
+      appliedToProducts: [],
+      couponCode: randomCode
     };
     
     setOffers(prev => [...prev, newOffer]);
@@ -481,12 +499,12 @@ const Dashboard: React.FC = () => {
         <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden transform transition-all duration-300 hover:translate-y-[-5px] hover:shadow-xl">
           <div className="p-5 md:p-6 border-b border-gray-100 bg-gradient-to-r from-white to-purple-50">
             <h2 className="text-lg font-semibold text-gray-800">Inactive Offers</h2>
-            <p className="text-sm text-gray-600 mt-1">Offers ready to be activated</p>
+            <p className="text-sm text-gray-600 mt-1">Offers with coupon codes ready to be activated</p>
           </div>
           <div className="divide-y divide-gray-100 max-h-[400px] overflow-y-auto">
-                  {offers
-                    .filter(offer => !offer.isActive)
-                    .map((offer) => (
+            {offers
+              .filter(offer => !offer.isActive)
+              .map((offer) => (
                 <div key={offer.id} className="p-5 md:p-6 hover:bg-gray-50 transition-colors">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
@@ -497,17 +515,41 @@ const Dashboard: React.FC = () => {
                         <p className="font-medium text-gray-800">{offer.title}</p>
                       </div>
                       <p className="text-sm text-gray-600 mt-2 ml-11">{offer.description}</p>
-                          </div>
+                      
+                      {/* Display coupon code */}
+                      {offer.couponCode && (
+                        <div className="mt-2 ml-11">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
+                            Coupon: <span className="font-bold ml-1">{offer.couponCode}</span>
+                          </span>
+                        </div>
+                      )}
+                    </div>
                     <div className="flex items-center gap-3">
                       <span className="font-medium text-gray-600 bg-gray-100 px-3 py-1 rounded-full text-sm">{offer.discountPercentage}% off</span>
-                          <button 
-                            onClick={() => openOfferModal(offer)}
+                      <button 
+                        onClick={() => {
+                          // Pre-select all alcohol products for this offer and directly apply it
+                          setSelectedOffer(offer);
+                          const allProductIds = alcoholProducts.map(p => p._id);
+                          setSelectedProducts(allProductIds);
+                          
+                          // Create updated offer with these products and active status
+                          const updatedOffers = offers.map(o => 
+                            o.id === offer.id 
+                              ? { ...o, appliedToProducts: allProductIds, isActive: true } 
+                              : o
+                          );
+                          
+                          setOffers(updatedOffers);
+                          toast.success(`${offer.title} activated and applied to all ${allProductIds.length} products`);
+                        }}
                         className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors shadow-sm"
-                          >
-                            Activate
-                          </button>
-                        </div>
-                      </div>
+                      >
+                        Activate
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ))}
 
@@ -571,6 +613,16 @@ const Dashboard: React.FC = () => {
                     value={selectedOffer.discountPercentage}
                     onChange={(e) => setSelectedOffer({...selectedOffer, discountPercentage: parseInt(e.target.value) || 0})}
                     className="w-full px-3 py-2 border rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Coupon Code</label>
+                  <input 
+                    type="text" 
+                    value={selectedOffer.couponCode || ''}
+                    onChange={(e) => setSelectedOffer({...selectedOffer, couponCode: e.target.value})}
+                    className="w-full px-3 py-2 border rounded-lg uppercase"
+                    placeholder="e.g. SUMMER20"
                   />
                 </div>
               </div>
