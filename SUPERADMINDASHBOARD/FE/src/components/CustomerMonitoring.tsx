@@ -58,7 +58,7 @@ function CustomerMonitoring() {
 const handleViewDetails = async (customer: Customer) => {
   try {
     const token = localStorage.getItem('superadminToken');
-    const res = await axios.get(`http://localhost:5003/api/customers/${customer.id}`, {
+    const res = await axios.get(`https://admin.peghouse.in/api/customers/${customer.id}`, {
       headers: {
         Authorization: `Bearer ${token}`
       }

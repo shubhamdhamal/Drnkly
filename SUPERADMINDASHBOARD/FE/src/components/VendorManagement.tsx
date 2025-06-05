@@ -63,7 +63,7 @@ const updateStatus = async (id: string, status: 'verified' | 'rejected') => {
 const handleViewDetails = async (vendor: Vendor) => {
   try {
     const token = localStorage.getItem('superadminToken');
-    const res = await axios.get(`http://localhost:5003/api/vendors/${vendor._id}`, {
+    const res = await axios.get(`https://admin.peghouse.in/api/vendors/${vendor._id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     setSelectedVendor(res.data.vendor); // use full details

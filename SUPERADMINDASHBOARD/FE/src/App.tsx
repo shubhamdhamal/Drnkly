@@ -59,7 +59,7 @@ useEffect(() => {
 
       
 
-      const response = await fetch(`http://localhost:5003/api/admin/sidebar-stats`, {
+      const response = await fetch(`https://admin.peghouse.in/api/admin/sidebar-stats`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
