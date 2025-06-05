@@ -23,41 +23,34 @@ const Login: React.FC = () => {
     if (sessionTimer) {
       window.clearTimeout(sessionTimer);
     }
-    
+
     sessionTimer = window.setTimeout(() => {
-      // Clear auth token and redirect to login
       localStorage.removeItem('authToken');
       navigate('/login');
       alert('Your session has expired. Please login again.');
     }, SESSION_TIMEOUT);
   };
 
-  // Setup activity listeners
   React.useEffect(() => {
     const activityEvents = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
-    
-    // Event handler to reset timer on user activity
+
     const handleUserActivity = () => {
       const token = localStorage.getItem('authToken');
       if (token) {
         resetSessionTimer();
       }
     };
-    
-    // Add event listeners
+
     activityEvents.forEach(event => {
       window.addEventListener(event, handleUserActivity);
     });
-    
-    // Initial session timer if user is already logged in
+
     const token = localStorage.getItem('authToken');
-    
     if (token) {
       resetSessionTimer();
       navigate('/dashboard');
     }
-    
-    // Cleanup function
+
     return () => {
       if (sessionTimer) {
         window.clearTimeout(sessionTimer);
@@ -69,19 +62,11 @@ const Login: React.FC = () => {
   }, [navigate]);
 
   const handleEmailOrPhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setEmailOrPhone(value);
+    setEmailOrPhone(e.target.value);
   };
 
-  const isEmail = (input: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(input);
-  };
-
-  const isPhone = (input: string) => {
-    const phoneRegex = /^\d{10}$/;
-    return phoneRegex.test(input);
-  };
+  const isEmail = (input: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input);
+  const isPhone = (input: string) => /^\d{10}$/.test(input);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,14 +80,12 @@ const Login: React.FC = () => {
     }
 
     if (/^\d+$/.test(emailOrPhone)) {
-      // Only numbers entered => validate as mobile number
       if (!isPhone(emailOrPhone)) {
         setError('Please enter a valid 10-digit mobile number.');
         setIsLoading(false);
         return;
       }
     } else {
-      // Contains text/symbols => validate as email
       if (!isEmail(emailOrPhone)) {
         setError('Please enter a valid email address.');
         setIsLoading(false);
@@ -126,16 +109,16 @@ const Login: React.FC = () => {
 
       if (token) {
         localStorage.setItem('authToken', token);
-        // Start the session timer
         resetSessionTimer();
         navigate('/dashboard');
       } else {
         setError('Invalid credentials.');
       }
+
       setIsLoading(false);
     } catch (err: any) {
       setIsLoading(false);
-      if (err.response && err.response.data) {
+      if (err.response) {
         setError(err.response.data.error || 'An error occurred.');
       } else {
         setError('An error occurred.');
@@ -154,7 +137,6 @@ const Login: React.FC = () => {
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {/* Email or Phone Input */}
           <Input
             label="Email address"
             type="text"
@@ -164,7 +146,6 @@ const Login: React.FC = () => {
             onChange={handleEmailOrPhoneChange}
           />
 
-          {/* Password Input */}
           <div className="relative">
             <Input
               label="Password"
@@ -184,7 +165,6 @@ const Login: React.FC = () => {
             </button>
           </div>
 
-          {/* Error message */}
           {error && <p className="text-red-500 text-center">{error}</p>}
 
           <div className="flex items-center justify-between">
@@ -201,10 +181,8 @@ const Login: React.FC = () => {
                 Remember me
               </label>
             </div>
-            {/* Session management is active but message is hidden */}
           </div>
 
-          {/* Submit Button */}
           <Button
             type="submit"
             isLoading={isLoading}
