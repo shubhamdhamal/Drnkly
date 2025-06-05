@@ -108,7 +108,7 @@ const Pickup: React.FC = () => {
   const fetchPickupOrders = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const res = await axios.get('http://localhost:5000/api/vendor/ready-for-pickup', {
+      const res = await axios.get('https://vendor.peghouse.in/api/vendor/ready-for-pickup', {
         headers: { Authorization: `Bearer ${token}` },
       });
       
@@ -136,7 +136,7 @@ const Pickup: React.FC = () => {
       
       const handoverPromises = groupedOrder.items.map(item => 
         axios.put(
-          `http://localhost:5000/api/vendor/orders/handover`,
+          `https://vendor.peghouse.in/api/vendor/orders/handover`,
           { 
             productId: item.productId, 
             orderNumber: item.orderNumber 
