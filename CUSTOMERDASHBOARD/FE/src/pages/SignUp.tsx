@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wine, ArrowRight, AlertCircle, Eye, EyeOff, Check, X } from 'lucide-react';
+import { Wine, ArrowRight, AlertCircle, Eye, EyeOff, Check, X, Mail } from 'lucide-react';
 import axios from 'axios';
 
 function SignUp() {
@@ -173,6 +173,15 @@ function SignUp() {
     }
   };
   
+  const handleGoogleSignUp = async () => {
+    try {
+      // Redirect to Google OAuth endpoint
+      window.location.href = 'http://localhost:5000/api/auth/google';
+    } catch (error) {
+      console.error('Google signup error:', error);
+      setError('Failed to sign up with Google. Please try again.');
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">
@@ -190,6 +199,31 @@ function SignUp() {
             <AlertCircle className="mr-2" /> <span>{error}</span>
           </div>
         )}
+
+        {/* Add Google Sign-Up Button before the form */}
+        <div className="mb-6">
+          <button
+            type="button"
+            onClick={handleGoogleSignUp}
+            className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 text-gray-700 py-3 px-4 rounded-xl font-medium hover:bg-gray-50 transition-colors shadow-sm"
+          >
+            <img 
+              src="https://www.google.com/favicon.ico" 
+              alt="Google" 
+              className="w-5 h-5"
+            />
+            Sign up with Google
+          </button>
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-gray-50 text-gray-500">Or sign up with email</span>
+            </div>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {step === 1 && (

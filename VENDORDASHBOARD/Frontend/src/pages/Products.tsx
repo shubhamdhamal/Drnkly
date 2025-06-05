@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Wine, Edit, Trash2, X } from 'lucide-react';
+import { Plus, Search, Wine, Edit, Trash2, X, ChevronRight } from 'lucide-react';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import FileUpload from '../components/FileUpload';
@@ -31,6 +31,30 @@ const Products: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  // Add debounce for search
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300); // 300ms delay
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Add useEffect to check for search query in localStorage
+  useEffect(() => {
+    const storedQuery = localStorage.getItem('productSearchQuery');
+    if (storedQuery) {
+      setSearchQuery(storedQuery);
+      // Clear the stored query after using it
+      localStorage.removeItem('productSearchQuery');
+    }
+  }, []);
 
   // Fetch products and categories when the component mounts
   useEffect(() => {
@@ -179,13 +203,63 @@ const handleAddProduct = async (e: React.FormEvent) => {
     }
   };
 
+  // Improved search filter function
   const filteredProducts = products.filter((product) => {
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.brand.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+    const searchTerms = debouncedSearchQuery.toLowerCase().trim().split(/\s+/);
+    
+    // Search in multiple fields
+    const searchableText = [
+      product.name,
+      product.brand,
+      product.category,
+      product.description
+    ].map(text => text?.toLowerCase() || '').join(' ');
+
+    // Check if all search terms are found in any of the searchable fields
+    const matchesSearch = searchTerms.every(term => 
+      searchableText.includes(term)
+    );
+
+    // Category filter
+    const matchesCategory = selectedCategory === 'all' || 
+      product.category.toLowerCase() === selectedCategory.toLowerCase();
+
     return matchesSearch && matchesCategory;
   });
+
+  // Get immediate search results for dropdown
+  const getSearchResults = (query: string) => {
+    if (!query.trim()) return [];
+    
+    const searchTerms = query.toLowerCase().trim().split(/\s+/);
+    return products.filter(product => {
+      const searchableText = [
+        product.name,
+        product.brand,
+        product.category,
+        product.description
+      ].map(text => text?.toLowerCase() || '').join(' ');
+
+      return searchTerms.every(term => searchableText.includes(term));
+    }).slice(0, 5); // Show only top 5 results in dropdown
+  };
+
+  // Handle product click from search dropdown
+  const handleProductClick = (product: Product) => {
+    setSelectedProduct(product);
+    setSearchQuery('');
+    setShowSearchDropdown(false);
+    // Scroll to the product in the grid
+    const element = document.getElementById(`product-${product._id}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Add highlight animation
+      element.classList.add('highlight-product');
+      setTimeout(() => {
+        element.classList.remove('highlight-product');
+      }, 2000);
+    }
+  };
 
   const ProductForm = ({
     product,
@@ -283,16 +357,66 @@ const handleAddProduct = async (e: React.FormEvent) => {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1">
+        <div className="flex-1 relative">
           <Input
-            placeholder="Search products..."
+            placeholder="Search by name, brand, category..."
             icon={<Search className="w-5 h-5 text-gray-400" />}
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setShowSearchDropdown(true);
+            }}
+            onFocus={() => setShowSearchDropdown(true)}
+            className="w-full"
           />
+          {searchQuery && (
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setShowSearchDropdown(false);
+              }}
+              className="absolute right-10 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full"
+            >
+              <X className="w-4 h-4 text-gray-400" />
+            </button>
+          )}
+          
+          {/* Search Dropdown */}
+          {showSearchDropdown && searchQuery && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg z-50 max-h-[300px] overflow-y-auto">
+              {getSearchResults(searchQuery).map(product => (
+                <div
+                  key={product._id}
+                  onClick={() => handleProductClick(product)}
+                  className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 flex items-center gap-3"
+                >
+                  <div className="w-10 h-10 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">{product.name}</p>
+                    <p className="text-xs text-gray-600 truncate">{product.brand}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-[#cd6839]">₹{product.price}</span>
+                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                  </div>
+                </div>
+              ))}
+              {getSearchResults(searchQuery).length === 0 && (
+                <div className="p-4 text-center text-gray-500">
+                  No products found matching "{searchQuery}"
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <select
-          className="px-4 py-2 border rounded-lg bg-white"
+          className="px-4 py-2 border rounded-lg bg-white min-w-[200px]"
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
         >
@@ -308,6 +432,7 @@ const handleAddProduct = async (e: React.FormEvent) => {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
         {filteredProducts.map((product) => (
           <div 
+            id={`product-${product._id}`}
             key={product._id} 
             className="product-card bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all"
             style={{
@@ -396,9 +521,19 @@ const handleAddProduct = async (e: React.FormEvent) => {
         ))}
       </div>
 
-      {/* Add hover effects styles */}
+      {/* Add styles for highlight animation */}
       <style>
         {`
+          @keyframes highlight {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(205, 104, 57, 0.3); }
+          }
+          
+          .highlight-product {
+            animation: highlight 1s ease-in-out;
+            border-color: #cd6839;
+          }
+          
           .product-card {
             border: 1px solid #f0f0f0;
           }

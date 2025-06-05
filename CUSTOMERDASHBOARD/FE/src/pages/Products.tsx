@@ -195,6 +195,27 @@ function Products() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchResultsRef = useRef<HTMLDivElement>(null);
 
+  // Enhanced search function with debouncing
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // Debounce search query
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery]);
+
   // Check login status
   useEffect(() => {
     const token = localStorage.getItem('authToken');
@@ -256,7 +277,7 @@ function Products() {
       
       // Special handling for Old Monk promotion
       if (searchParam.toLowerCase().includes('old monk')) {
-        console.log('Old Monk search detected:', searchParam);
+        console.log('Old Monk  search detected:', searchParam);
         
         // Set category to drinks
         setSelectedCategory('drinks');
@@ -325,37 +346,91 @@ function Products() {
 
   // Enhanced search function that handles both products and brands
   const handleSearch = (query: string) => {
+    const trimmedQuery = query.trim().toLowerCase();
     setSearchQuery(query);
     
-    if (query.trim() === '') {
+    if (!trimmedQuery) {
       setShowSearchResults(false);
+      setSearchResults({ products: [], brands: [] });
       return;
     }
     
-    const lowerQuery = query.toLowerCase();
-    
-    // Search products
-    const matchedProducts = products.filter(product =>
-      product.name.toLowerCase().includes(lowerQuery)
-    );
-    
-    // Search brands
-    const matchedBrands = allBrands.filter(brand => 
-      brand.toLowerCase().includes(lowerQuery)
-    );
-    
-    setSearchResults({
-      products: matchedProducts.slice(0, 5), // Limit to 5 product results
-      brands: matchedBrands.slice(0, 3)      // Limit to 3 brand results
+    // Search in products
+    const matchedProducts = products.filter(product => {
+      const searchableText = [
+        product.name,
+        product.brand,
+        product.category,
+        product.description || ''
+      ].map(text => text?.toLowerCase() || '').join(' ');
+      
+      return searchableText.includes(trimmedQuery);
     });
     
-    setShowSearchResults(matchedProducts.length > 0 || matchedBrands.length > 0);
+    // Search in brands
+    const matchedBrands = allBrands.filter(brand => 
+      brand.toLowerCase().includes(trimmedQuery)
+    );
+    
+    // Sort results by relevance
+    const sortedProducts = matchedProducts.sort((a, b) => {
+      const aName = a.name.toLowerCase();
+      const bName = b.name.toLowerCase();
+      
+      // Exact matches first
+      if (aName === trimmedQuery && bName !== trimmedQuery) return -1;
+      if (bName === trimmedQuery && aName !== trimmedQuery) return 1;
+      
+      // Starts with query
+      if (aName.startsWith(trimmedQuery) && !bName.startsWith(trimmedQuery)) return -1;
+      if (bName.startsWith(trimmedQuery) && !aName.startsWith(trimmedQuery)) return 1;
+      
+      // Contains query
+      return aName.indexOf(trimmedQuery) - bName.indexOf(trimmedQuery);
+    });
+    
+    setSearchResults({
+      products: sortedProducts.slice(0, 5), // Limit to 5 product results
+      brands: matchedBrands.slice(0, 3)     // Limit to 3 brand results
+    });
+    
+    setShowSearchResults(true);
   };
 
-  // Handle search input change without updating URL
+  // Handle search input change
   const handleSearchInputChange = (value: string) => {
     handleSearch(value);
-    // Don't update URL as user types to prevent navigation loops
+  };
+
+  // Handle product selection from search results
+  const handleProductSelect = (product: Product) => {
+    setSearchQuery(product.name);
+    setShowSearchResults(false);
+    
+    // Set the selected brand to show only this product
+    setSelectedBrand(product.brand);
+    setShowSubBrands(false);
+    
+    // Scroll to the product after a short delay to allow the filter to update
+    setTimeout(() => {
+      const element = document.getElementById(`product-${product._id}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Add highlight animation
+        element.classList.add('highlight-product');
+        setTimeout(() => {
+          element.classList.remove('highlight-product');
+        }, 2000);
+      }
+    }, 100);
+  };
+
+  // Handle brand selection from search results
+  const handleBrandSelect = (brand: string) => {
+    setSearchQuery(brand);
+    setSelectedBrand(brand);
+    setShowSearchResults(false);
+    setShowSubBrands(false);
   };
 
   // Close search results when clicking outside
@@ -376,20 +451,6 @@ function Products() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
-
-  // Handle brand selection from search results
-  const handleBrandSelect = (brand: string) => {
-    setSelectedBrand(brand);
-    setSearchQuery('');
-    setShowSearchResults(false);
-  };
-
-  // Handle product selection from search results
-  const handleProductSelect = (product: Product) => {
-    // Just close the search results without clearing the query
-    setShowSearchResults(false);
-    // Optional: highlight the product somehow
-  };
 
   // Get sub-brands for a specific category
   const getSubBrandsForCategory = (category: string) => {
@@ -458,12 +519,12 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
   }
 
   // Check if product is Old Monk 180 ml
-  const isOldMonk180 = product.name.toLowerCase().includes('old monk') && product.volume === 180;
+  const isOldMonk180 = product.name.toLowerCase().includes('Old Monk Rum Free') && product.volume === 180;
 
   if (isOldMonk180) {
     // Check if already in cart
     const alreadyInCart = items.some(item =>
-      item.name.toLowerCase().includes('old monk') &&
+      item.name.toLowerCase().includes('Old Monk Rum Free') &&
       item.volume === 180 &&
       item.quantity === 1
     );
@@ -755,32 +816,43 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
           </div>
         </div>
 
-        {/* Search Bar with enhanced dropdown */}
+        {/* Enhanced Search Bar */}
         <div className="mt-4 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-          <input
-            ref={searchInputRef}
-            type="text"
-            placeholder="Search for products or brands..."
-            value={searchQuery}
-            onChange={(e) => {
-              const value = e.target.value;
-              handleSearchInputChange(value);
-            }}
-            className="w-full pl-10 pr-4 py-3 bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
-            autoComplete="off"
-            onFocus={() => {
-              if (searchQuery.trim() !== '') {
-                setShowSearchResults(true);
-              }
-            }}
-          />
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Search for products, brands, or categories..."
+              value={searchQuery}
+              onChange={(e) => handleSearchInputChange(e.target.value)}
+              className="w-full pl-10 pr-10 py-3 bg-white rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#cd6839] focus:border-transparent transition-all"
+              autoComplete="off"
+              onFocus={() => {
+                if (searchQuery.trim() !== '') {
+                  setShowSearchResults(true);
+                }
+              }}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setShowSearchResults(false);
+                  setSearchResults({ products: [], brands: [] });
+                }}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X size={20} />
+              </button>
+            )}
+          </div>
           
-          {/* Search Results Dropdown */}
+          {/* Enhanced Search Results Dropdown */}
           {showSearchResults && searchQuery.trim() !== '' && (
             <div 
               ref={searchResultsRef}
-              className="absolute left-0 right-0 top-full mt-1 bg-white rounded-lg shadow-lg z-20 border border-gray-200 max-h-80 overflow-y-auto"
+              className="absolute left-0 right-0 top-full mt-1 bg-white rounded-lg shadow-lg z-20 border border-gray-200 max-h-[60vh] overflow-y-auto"
             >
               {/* Brand Results */}
               {searchResults.brands.length > 0 && (
@@ -789,11 +861,11 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
                   {searchResults.brands.map(brand => (
                     <div 
                       key={brand} 
-                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                      className="px-3 py-2 hover:bg-gray-50 cursor-pointer flex items-center transition-colors"
                       onClick={() => handleBrandSelect(brand)}
                     >
                       <Wine size={16} className="mr-2 text-[#cd6839]" />
-                      <span>{brand}</span>
+                      <span className="font-medium">{brand}</span>
                     </div>
                   ))}
                 </div>
@@ -806,10 +878,10 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
                   {searchResults.products.map(product => (
                     <div 
                       key={product._id} 
-                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                      className="px-3 py-2 hover:bg-gray-50 cursor-pointer flex items-center transition-colors group"
                       onClick={() => handleProductSelect(product)}
                     >
-                      <div className="w-10 h-10 mr-3 bg-gray-100 rounded overflow-hidden">
+                      <div className="w-12 h-12 mr-3 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                         <img 
                           src={product.image} 
                           alt={product.name}
@@ -820,9 +892,19 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
                           }}
                         />
                       </div>
-                      <div>
-                        <div className="font-medium">{product.name}</div>
-                        <div className="text-sm text-gray-600">₹{product.price} • {product.brand}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm truncate group-hover:text-[#cd6839] transition-colors">
+                          {product.name}
+                        </div>
+                        <div className="text-xs text-gray-600 truncate">
+                          {product.brand} • {product.category}
+                        </div>
+                        <div className="text-sm font-semibold text-[#cd6839] mt-1">
+                          ₹{product.price}
+                        </div>
+                      </div>
+                      <div className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <ChevronRight size={16} className="text-[#cd6839]" />
                       </div>
                     </div>
                   ))}
@@ -832,7 +914,8 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
               {/* No Results */}
               {searchResults.products.length === 0 && searchResults.brands.length === 0 && (
                 <div className="p-4 text-center text-gray-500">
-                  No results found for "{searchQuery}"
+                  <p>No results found for "{searchQuery}"</p>
+                  <p className="text-sm mt-1">Try different keywords or browse categories</p>
                 </div>
               )}
             </div>
@@ -1071,11 +1154,14 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
           {filterProducts().map((product) => (
             <div
               key={product._id}
+              id={`product-${product._id}`}
               className="product-card"
-              style={productCardStyle}
-              onClick={() => {
-                // Navigate to product detail page if needed
-                // navigate(`/product/${product._id}`);
+              style={{
+                ...productCardStyle,
+                transition: 'all 0.3s ease',
+                border: '1px solid #e5e7eb',
+                borderRadius: '12px',
+                overflow: 'hidden'
               }}
             >
               <div> {/* Content wrapper */}
@@ -1133,6 +1219,22 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
         items={items}
         onViewCart={handleViewCart}
       />
+
+      {/* Add highlight animation styles */}
+      <style>
+        {`
+          @keyframes highlightProduct {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(205, 104, 57, 0); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(205, 104, 57, 0.2); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(205, 104, 57, 0); }
+          }
+          
+          .highlight-product {
+            animation: highlightProduct 2s ease-out;
+            border: 2px solid #cd6839;
+          }
+        `}
+      </style>
     </div>
   );
 }
