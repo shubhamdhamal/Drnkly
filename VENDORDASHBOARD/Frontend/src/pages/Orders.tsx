@@ -54,7 +54,7 @@ const Orders: React.FC = () => {
     const fetchOrders = async () => {
       try {
     const token = localStorage.getItem('authToken');
-        const res = await axios.get('http://localhost:5000/api/vendor/orders', {
+        const res = await axios.get('https://vendor.peghouse.in/api/vendor/orders', {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -141,7 +141,7 @@ const Orders: React.FC = () => {
 
       // Update the status
       const response = await axios.put(
-        `http://localhost:5000/api/vendor/orders/${orderId}/status`,
+        `https://vendor.peghouse.in/api/vendor/orders/${orderId}/status`,
         { productId, status },
         {
           headers: {
