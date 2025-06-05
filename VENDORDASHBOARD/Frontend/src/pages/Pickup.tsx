@@ -69,7 +69,7 @@ const Pickup: React.FC = () => {
   };
 
   useEffect(() => {
-    wsRef.current = new WebSocket('ws://vendor.peghouse.in/ws/pickup');
+    wsRef.current = new WebSocket('ws://localhost:5000/ws/pickup');
     
     wsRef.current.onmessage = (event) => {
       const updatedOrder = JSON.parse(event.data);
