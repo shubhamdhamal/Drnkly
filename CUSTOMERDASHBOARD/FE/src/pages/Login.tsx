@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wine, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Wine, AlertCircle, Eye, EyeOff, Mail } from 'lucide-react';
 import axios from 'axios';
 
 function Login() {
@@ -181,6 +181,17 @@ function Login() {
     
     navigate('/dashboard'); // Navigate directly to dashboard without login
   };
+
+  const handleGoogleLogin = async () => {
+    try {
+      // Redirect to Google OAuth endpoint
+      window.location.href = 'http://localhost:5000/api/auth/google';
+    } catch (error) {
+      console.error('Google login error:', error);
+      setError('Failed to login with Google. Please try again.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <div className="flex-1 flex flex-col items-center justify-center p-4">
@@ -276,6 +287,29 @@ function Login() {
               className="w-full bg-[#cd6839] text-white py-3 rounded-xl font-semibold hover:bg-[#b55a31] transition-colors"
             >
               Login
+            </button>
+
+            {/* Add Google Sign-In Button */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-gray-50 text-gray-500">Or continue with</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 text-gray-700 py-3 px-4 rounded-xl font-medium hover:bg-gray-50 transition-colors shadow-sm"
+            >
+              <img 
+                src="https://www.google.com/favicon.ico" 
+                alt="Google" 
+                className="w-5 h-5"
+              />
+              Sign in with Google
             </button>
           </form>
 {/* Skip Login Button */}

@@ -111,7 +111,7 @@ const Pickup: React.FC = () => {
       const res = await axios.get('http://localhost:5000/api/vendor/ready-for-pickup', {
         headers: { Authorization: `Bearer ${token}` },
       });
-
+      
       const filteredOrders = res.data.orders.filter((order: PickupOrder) => 
         order.handoverStatus !== 'handedOver'
       );
@@ -121,7 +121,7 @@ const Pickup: React.FC = () => {
         const timeB = b.acceptedAt ? new Date(b.acceptedAt).getTime() : new Date(b.readyTime).getTime();
         return timeB - timeA;
       });
-
+      
       setOrders(sortedOrders);
       setGroupedOrders(groupOrdersByCustomer(sortedOrders));
     } catch (err) {
@@ -159,7 +159,7 @@ const Pickup: React.FC = () => {
       ));
       
       toast.success('Order group handed over to delivery successfully!');
-
+        
     } catch (err) {
       console.error('Error handing over order group', err);
       toast.error('Failed to hand over the order group');
@@ -189,7 +189,7 @@ const Pickup: React.FC = () => {
                 position: 'relative'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                  <div>
+                <div>
                     <h3 style={{ 
                       margin: '0 0 8px 0', 
                       display: 'flex', 
@@ -259,21 +259,21 @@ const Pickup: React.FC = () => {
                       </span>
                     </div>
                   ))}
-                </div>
+              </div>
 
                 {group.handoverStatus !== 'handedOver' && (
                   <div style={{ marginTop: '16px' }}>
-                    <Button
+                <Button
                       icon={<Truck className="w-4 h-4" />}
-                      className="w-full"
+                  className="w-full"
                       onClick={() => handleGroupHandover(group)}
-                    >
+                >
                       Hand Over All Items to Delivery
-                    </Button>
-                  </div>
-                )}
-              </div>
-            ))}
+                </Button>
+                </div>
+              )}
+            </div>
+          ))}
           </div>
         </div>
       )}

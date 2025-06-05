@@ -5,185 +5,23 @@ import axios from 'axios';
 import oldMonkImage from './pop.jpeg';
 import CartCounter from '../components/CartCounter';
 
-// Banner animations CSS
+// Simplified banner animations CSS
 const bannerAnimations = `
-  @keyframes float {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
-    100% { transform: translateY(0px); }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
   
-  @keyframes pulse {
-    0% { opacity: 0.6; }
-    50% { opacity: 1; }
-    100% { opacity: 0.6; }
+  .banner-fade {
+    animation: fadeIn 0.5s ease-out;
   }
   
-  @keyframes shimmer {
-    0% { background-position: -1000px 0; }
-    100% { background-position: 1000px 0; }
+  .banner-content {
+    transition: transform 0.3s ease;
   }
   
-  @keyframes rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-  
-  @keyframes fadeInSlideUp {
-    0% { 
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    100% { 
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  /* Rain animation */
-  @keyframes rain {
-    0% {
-      background-position: 0px 0px;
-    }
-    100% {
-      background-position: 500px 1000px;
-    }
-  }
-  
-  /* Bubble animation */
-  @keyframes bubble {
-    0% {
-      transform: translateY(100%) scale(0);
-      opacity: 0;
-    }
-    50% {
-      opacity: 0.8;
-    }
-    100% {
-      transform: translateY(-100vh) scale(1);
-      opacity: 0;
-    }
-  }
-  
-  /* Glass reflection effect */
-  @keyframes glassReflection {
-    0% { transform: translateX(-100%) rotate(30deg); }
-    100% { transform: translateX(200%) rotate(30deg); }
-  }
-  
-  /* 3D tilt effect */
-  @keyframes tilt {
-    0% { transform: perspective(1000px) rotateY(0deg); }
-    25% { transform: perspective(1000px) rotateY(3deg); }
-    75% { transform: perspective(1000px) rotateY(-3deg); }
-    100% { transform: perspective(1000px) rotateY(0deg); }
-  }
-  
-  .banner-3d {
-    transition: transform 0.5s ease;
-    transform-style: preserve-3d;
-    animation: tilt 8s infinite ease-in-out;
-    box-shadow: 0 20px 30px rgba(0,0,0,0.3);
-  }
-  
-  .banner-3d:hover {
-    transform: perspective(1000px) rotateY(5deg) scale(1.02);
-  }
-  
-  .glass-reflection {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 200%;
-    height: 100%;
-    background: linear-gradient(
-      90deg,
-      rgba(255,255,255,0) 0%,
-      rgba(255,255,255,0.2) 50%,
-      rgba(255,255,255,0) 100%
-    );
-    transform: translateX(-100%) rotate(30deg);
-    animation: glassReflection 5s infinite;
-    pointer-events: none;
-    z-index: 15;
-  }
-  
-  .bubble {
-    position: absolute;
-    bottom: 0;
-    background: rgba(255,255,255,0.3);
-    border-radius: 50%;
-    pointer-events: none;
-  }
-  
-  .rain-animation {
-    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAMAAAAECAYAAABLLYUHAAAAGElEQVQYV2NkYGD4z8DAwMgAI0AMdM5/ACRwAgMsRgU3AAAAAElFTkSuQmCC');
-    width: 100%;
-    height: 100%;
-    animation: rain 10s linear infinite;
-    opacity: 0.5;
-  }
-  
-  .banner-element {
-    animation: float 6s ease-in-out infinite;
-  }
-  
-  .banner-pulse {
-    animation: pulse 3s ease-in-out infinite;
-  }
-  
-  .banner-shimmer {
-    background: linear-gradient(100deg, 
-      rgba(255,255,255,0) 20%, 
-      rgba(255,255,255,0.5) 50%, 
-      rgba(255,255,255,0) 80%);
-    background-size: 200% 100%;
-    animation: shimmer 3s infinite;
-  }
-  
-  .banner-rotate {
-    animation: rotate 15s linear infinite;
-  }
-  
-  .banner-appear {
-    animation: fadeInSlideUp 0.8s ease-out forwards;
-  }
-  
-  .banner-appear-delay-1 {
-    animation: fadeInSlideUp 0.8s ease-out 0.2s forwards;
-    opacity: 0;
-  }
-  
-  .banner-appear-delay-2 {
-    animation: fadeInSlideUp 0.8s ease-out 0.4s forwards;
-    opacity: 0;
-  }
-  
-  .banner-particle {
-    position: absolute;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: rgba(255,255,255,0.6);
-    pointer-events: none;
-  }
-  
-  @keyframes flashingText {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
-  
-  .free-tag {
-    animation: flashingText 1.5s infinite;
-  }
-  
-  @keyframes glowEffect {
-    0%, 100% { box-shadow: 0 0 5px rgba(255, 255, 255, 0.8), 0 0 10px rgba(255, 215, 0, 0.5); }
-    50% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 0 30px rgba(255, 215, 0, 0.8); }
-  }
-  
-  .glow-effect {
-    animation: glowEffect 2s infinite;
+  .banner-content:hover {
+    transform: translateY(-5px);
   }
 `;
 
@@ -360,7 +198,7 @@ function Dashboard() {
     console.log('Navigating to Old Monk products page...');
     
     // Navigate to Old Monk product in Products page - search ONLY for "Old Monk" (without 180ml)
-    navigate('/products?search=Old%20Monk');
+    navigate('/products?search=Old%20Monk%20Rum%20Free');
     
     // Set a flag to mark the offer as shown to this user
     localStorage.setItem('oldMonkOfferShown', 'true');
@@ -548,7 +386,7 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Add animation styles */}
+      {/* Add simplified animation styles */}
       <style>{bannerAnimations}</style>
 
       {/* Old Monk Promotional Popup */}
@@ -636,50 +474,17 @@ function Dashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
-        {/* Hero Banner Carousel - Updated with 3D effects */}
-        <div className="relative mb-6 sm:mb-8 rounded-2xl overflow-hidden shadow-lg cursor-pointer group h-48 sm:h-64 md:h-72 banner-3d">
-          {/* Glass reflection effect */}
-          <div className="glass-reflection"></div>
-          
-          {/* Sparkle elements */}
-          {sparkles.map((sparkle, index) => (
-            <div
-              key={index}
-              className="banner-particle banner-pulse"
-              style={{
-                left: `${sparkle.x}%`,
-                top: `${sparkle.y}%`,
-                width: `${sparkle.size}px`,
-                height: `${sparkle.size}px`,
-                animationDelay: `${sparkle.delay}s`
-              }}
-            />
-          ))}
-          
-          {/* Beer bubbles - only shown for beer theme */}
-          {banners[currentBanner]?.theme === 'beer' && bubbles.map((bubble, index) => (
-            <div
-              key={`bubble-${index}`}
-              className="bubble"
-              style={{
-                left: bubble.left,
-                width: `${bubble.size}px`,
-                height: `${bubble.size}px`,
-                animationDelay: `${bubble.delay}s`,
-                animation: `bubble ${bubble.duration}s linear infinite ${bubble.delay}s`
-              }}
-            />
-          ))}
-          
+        {/* Simplified Hero Banner Carousel */}
+        <div className="relative mb-6 sm:mb-8 rounded-2xl overflow-hidden shadow-lg h-48 sm:h-64 md:h-72">
           {/* Carousel indicators */}
-          <div className="absolute bottom-3 sm:bottom-4 left-0 right-0 z-20 flex justify-center space-x-2">
+          <div className="absolute bottom-3 left-0 right-0 z-20 flex justify-center space-x-2">
             {banners.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentBanner(index)}
-                className={`w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full transition-all duration-300 ${
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
                   currentBanner === index 
-                    ? "bg-white w-6 sm:w-8" 
+                    ? "bg-white w-6" 
                     : "bg-white/50 hover:bg-white/80"
                 }`}
                 aria-label={`Go to slide ${index + 1}`}
@@ -687,16 +492,16 @@ function Dashboard() {
             ))}
           </div>
 
-          {/* Carousel navigation buttons - Made more visible on mobile */}
+          {/* Carousel navigation buttons */}
           <button 
             onClick={(e) => {
               e.stopPropagation();
               prevBanner();
             }}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-black/30 hover:bg-black/50 text-white rounded-full p-1 sm:p-1.5 backdrop-blur-sm transition-all duration-300 opacity-90"
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-black/30 hover:bg-black/50 text-white rounded-full p-2 backdrop-blur-sm transition-colors"
             aria-label="Previous banner"
           >
-            <ChevronLeft size={18} />
+            <ChevronLeft size={20} />
           </button>
           
           <button 
@@ -704,18 +509,18 @@ function Dashboard() {
               e.stopPropagation();
               nextBanner();
             }}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-black/30 hover:bg-black/50 text-white rounded-full p-1 sm:p-1.5 backdrop-blur-sm transition-all duration-300 opacity-90"
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-black/30 hover:bg-black/50 text-white rounded-full p-2 backdrop-blur-sm transition-colors"
             aria-label="Next banner"
           >
-            <ChevronRight size={18} />
+            <ChevronRight size={20} />
           </button>
 
           {/* Banner slides */}
-          <div className="relative w-full h-full transition-all duration-500">
+          <div className="relative w-full h-full">
             {banners.map((banner, index) => (
               <div 
                 key={banner.id}
-                className={`absolute inset-0 transition-opacity duration-1000 ${
+                className={`absolute inset-0 transition-opacity duration-500 ${
                   currentBanner === index ? "opacity-100 z-10" : "opacity-0 z-0"
                 }`}
                 onClick={() => {
@@ -726,153 +531,41 @@ function Dashboard() {
                   }
                 }}
               >
-                {/* Special banner with enhanced design */}
-                {banner.type === "special" && currentBanner === index && (
-                  <>
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#0f1b4c]/80 to-transparent z-10"></div>
-                    
-                    {/* Animated elements for special banner */}
-                    <div className="absolute right-[20%] top-[20%] w-12 sm:w-16 h-12 sm:h-16 rounded-full bg-yellow-300/30 banner-element" style={{animationDelay: '0.5s'}}></div>
-                    <div className="absolute right-[30%] bottom-[30%] w-8 sm:w-12 h-8 sm:h-12 rounded-full bg-blue-400/20 banner-element" style={{animationDelay: '1s'}}></div>
-                    <div className="absolute left-[70%] top-[50%] w-6 sm:w-8 h-6 sm:h-8 rounded-full bg-white/20 banner-element" style={{animationDelay: '1.5s'}}></div>
-                    
-                    {/* Cocktail glass icon for cocktail theme */}
-                    {banner.theme === 'cocktail' && (
-                      <div className="absolute right-[15%] top-[40%] text-3xl sm:text-5xl banner-element opacity-70" style={{animationDelay: '1.2s'}}>
-                        🍸
+                {/* Banner content */}
+                <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/30 z-10 flex flex-col justify-center p-6 md:p-10">
+                  <div className="max-w-lg">
+                    {/* Special banner badge */}
+                    {banner.type === "special" && (
+                      <div className="inline-block bg-yellow-400 text-blue-900 font-bold px-3 py-1 rounded-full text-sm mb-3">
+                        Weekend Special!
                       </div>
                     )}
                     
-                    {/* Circular discount badge - Now visible on mobile */}
-                    <div className="absolute right-3 top-3 sm:right-4 sm:top-4 z-30 w-14 h-14 sm:w-16 sm:h-16 md:w-24 md:h-24 rounded-full bg-yellow-400 flex items-center justify-center banner-rotate flex glow-effect">
-                      <div className="text-center">
-                        <div className="text-blue-900 font-bold text-sm sm:text-base md:text-xl">20%</div>
-                        <div className="text-blue-900 font-bold text-xs md:text-sm">OFF</div>
-                      </div>
-                    </div>
-                    
-                    <div className="absolute inset-0 flex flex-col justify-center p-3 sm:p-4 md:p-10 z-20">
-                      <div className="flex items-center">
-                        <div className="bg-yellow-400 text-blue-900 font-bold px-2 py-0.5 md:px-3 md:py-1 rounded-full text-xs md:text-base banner-pulse">
-                          This Weekend Only!
-                        </div>
-                      </div>
-                      <h2 className="text-white text-lg sm:text-xl md:text-4xl font-bold mt-1 sm:mt-2 mb-1 md:mt-3 md:mb-2 banner-appear">
-                        {banner.title}
-                      </h2>
-                      <p className="text-white/90 text-xs sm:text-sm md:text-lg max-w-md mb-1 sm:mb-2 md:mb-4 banner-appear-delay-1 line-clamp-2 md:line-clamp-none">
-                        {banner.description}
-                      </p>
-                      <div className="banner-appear-delay-2">
-                        <button className="bg-white text-[#0f1b4c] hover:bg-white/90 font-bold py-1 px-3 sm:py-1.5 sm:px-4 md:py-2 md:px-5 rounded-lg w-fit flex items-center gap-1 sm:gap-2 group-hover:shadow-lg transition-all duration-300 relative overflow-hidden text-xs sm:text-sm md:text-base">
-                          <span className="relative z-10">Explore Offers</span>
-                          <span className="inline-block transition-transform group-hover:translate-x-1 relative z-10">→</span>
-                          <div className="absolute left-0 top-0 w-full h-full banner-shimmer opacity-50"></div>
-                        </button>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {/* Featured banner for Premium Drinks Delivered */}
-                {banner.type === "featured" && currentBanner === index && (
-                  <>
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/30 z-10 flex flex-col justify-center p-3 sm:p-4 md:p-6">
-                      <div className="max-w-lg mx-auto text-center">
-                        <div className="inline-block bg-[#cd6839]/20 backdrop-blur-sm px-3 py-1 rounded-full mb-2 border border-[#cd6839]/30">
-                          <span className="text-white text-xs sm:text-sm font-medium flex items-center justify-center">
-                            <span className="mr-1 text-yellow-400">★</span> Most Popular
-                          </span>
-                        </div>
-                        
-                        <h1 className="text-white text-xl sm:text-3xl md:text-4xl font-bold mb-2 md:mb-3 banner-appear relative">
-                          {banner.title}
-                          <div className="absolute -right-4 -top-4 banner-element opacity-70">
-                            <span className="text-xl sm:text-2xl md:text-3xl">✨</span>
-                          </div>
-                        </h1>
-                        
-                        <p className="text-white/90 text-sm sm:text-base md:text-lg banner-appear-delay-1 relative mx-auto mb-3 md:mb-4">
-                          {banner.description}
-                          <span className="absolute left-1/4 right-1/4 bottom-0 h-0.5 banner-shimmer"></span>
-                        </p>
-                        
-                        <div className="banner-appear-delay-2">
-                          <button className="bg-[#cd6839] hover:bg-[#b55a31] text-white px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl group text-sm sm:text-base md:text-lg font-medium">
-                            Order Now
-                            <span className="inline-block ml-2 transition-transform group-hover:translate-x-1">→</span>
-                          </button>
-                        </div>
-                      </div>
-                      
-                      {/* Whiskey theme icon */}
-                      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 md:top-8 md:right-8 transform rotate-12 banner-element">
-                        <div className="bg-amber-700/90 backdrop-blur-sm px-2 py-1 sm:px-4 sm:py-2 rounded-lg shadow-lg">
-                          <span className="text-white font-bold flex items-center text-xs sm:text-sm">Premium Drinks 🥃</span>
-                        </div>
-                      </div>
-                      
-                      {/* Decorative elements */}
-                      <div className="absolute left-4 bottom-4 sm:left-6 sm:bottom-6 md:left-8 md:bottom-8 w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-[#cd6839]/20 backdrop-blur-sm flex items-center justify-center banner-rotate">
-                        <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-[#cd6839]/40"></div>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {/* Regular banner design with theme-specific elements */}
-                {banner.type === "regular" && currentBanner === index && (
-                  <>
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/20 z-10 flex flex-col justify-end p-3 sm:p-4 md:p-6">
-                      <h1 className="text-white text-base sm:text-lg md:text-3xl font-bold mb-1 md:mb-2 banner-appear relative">
-                        {banner.title}
-                        <div className="absolute -right-4 -top-4 banner-element opacity-70">
-                          <span className="text-lg sm:text-xl md:text-2xl">✨</span>
-                        </div>
-                      </h1>
-                      <p className="text-white/90 text-xs sm:text-sm md:text-base md:max-w-md banner-appear-delay-1 relative line-clamp-2 md:line-clamp-none">
-                        {banner.description}
-                        <span className="absolute left-0 bottom-0 w-full h-0.5 banner-shimmer"></span>
-                      </p>
-                      <div className="mt-2 sm:mt-3 md:mt-4 banner-appear-delay-2">
-                        <button className="bg-[#cd6839] hover:bg-[#b55a31] text-white px-2 py-1 sm:px-3 sm:py-1.5 md:px-4 md:py-2 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl group text-xs sm:text-sm md:text-base">
-                          Order Now
-                          <span className="inline-block ml-1 sm:ml-2 transition-transform group-hover:translate-x-1">→</span>
-                        </button>
-                      </div>
-                    </div>
-                    
-                    {/* Theme-specific icons - now visible on mobile */}
-                    {banner.theme === 'beer' && (
-                      <div className="absolute top-8 right-8 sm:top-10 sm:right-10 md:top-16 md:right-16 transform rotate-12 banner-element">
-                        <div className="bg-amber-500/90 backdrop-blur-sm px-2 py-1 sm:px-4 sm:py-2 rounded-lg shadow-lg">
-                          <span className="text-white font-bold flex items-center text-xs sm:text-sm">Craft Beer 🍺</span>
-                        </div>
+                    {/* Featured banner badge */}
+                    {banner.type === "featured" && (
+                      <div className="inline-block bg-[#cd6839]/20 text-white font-bold px-3 py-1 rounded-full text-sm mb-3">
+                        Most Popular
                       </div>
                     )}
                     
-                    {banner.theme === 'wine' && (
-                      <div className="absolute top-8 right-8 sm:top-10 sm:right-10 md:top-16 md:right-16 transform rotate-12 banner-element">
-                        <div className="bg-purple-800/90 backdrop-blur-sm px-2 py-1 sm:px-4 sm:py-2 rounded-lg shadow-lg">
-                          <span className="text-white font-bold flex items-center text-xs sm:text-sm">Premium Selection 🍷</span>
-                        </div>
-                      </div>
-                    )}
+                    <h1 className="text-white text-2xl md:text-4xl font-bold mb-2 md:mb-3 banner-fade">
+                      {banner.title}
+                    </h1>
                     
-                    {banner.theme === 'whiskey' && (
-                      <div className="absolute top-8 right-8 sm:top-10 sm:right-10 md:top-16 md:right-16 transform rotate-12 banner-element">
-                        <div className="bg-amber-700/90 backdrop-blur-sm px-2 py-1 sm:px-4 sm:py-2 rounded-lg shadow-lg">
-                          <span className="text-white font-bold flex items-center text-xs sm:text-sm">Premium Drinks 🥃</span>
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
+                    <p className="text-white/90 text-sm md:text-lg mb-4 md:mb-6 banner-fade">
+                      {banner.description}
+                    </p>
+                    
+                    <button className="bg-[#cd6839] hover:bg-[#b55a31] text-white px-4 py-2 md:px-6 md:py-3 rounded-lg transition-colors shadow-lg hover:shadow-xl text-sm md:text-base font-medium banner-content">
+                      Order Now →
+                    </button>
+                  </div>
+                </div>
                 
                 <img
                   src={banner.image}
                   alt={banner.title}
-                  className={`w-full h-full object-cover object-center transition-all duration-1000 ease-in-out ${banner.type === "featured" ? "scale-105 filter brightness-75" : "scale-100 group-hover:scale-105"}`}
+                  className="w-full h-full object-cover"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.onerror = null;

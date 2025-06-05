@@ -239,6 +239,7 @@ const Dashboard: React.FC = () => {
       changeType: 'neutral',
       description: 'total in inventory',
       path: '/products',
+      searchQuery: 'Old Monk Rum Free',
       bgGradient: 'from-green-50 to-green-100',
       iconColor: 'text-green-600',
       badgeColor: 'bg-green-100 text-green-700'
@@ -294,13 +295,14 @@ const Dashboard: React.FC = () => {
                 overflow-hidden relative ${stat.path ? 'cursor-pointer' : ''}`}
               onClick={() => {
                 if (stat.title === 'Completed Orders') {
-                  // Special handling for completed orders
                   localStorage.setItem('showPastOrders', 'true');
                   navigate('/orders');
                 } else if (stat.title === 'Total Sales') {
-                  // Navigate to payouts page
                   navigate('/payouts');
                 } else if (stat.path) {
+                  if (stat.searchQuery) {
+                    localStorage.setItem('productSearchQuery', stat.searchQuery);
+                  }
                   navigate(stat.path);
                 }
               }}
