@@ -13,48 +13,47 @@ const otpStore = new Map(); // email => { otp, otpExpire }
 const JWT_SECRET = 'your_jwt_secret_key'; // Ideally, store this in an environment variable
 // Send OTP to email
 
-// Send OTP function
-exports.handleSendOtp = async (req, res) => {
+exports.sendRegistrationOtp = async (req, res) => {
   const { email } = req.body;
 
   try {
-    // Generate OTP
+    // Generate OTP (6-digit)
     const otp = Math.floor(100000 + Math.random() * 900000);
-    const otpExpire = Date.now() + 10 * 60 * 1000;  // OTP expiration time
+    const otpExpire = Date.now() + 10 * 60 * 1000; // 10 minutes expiry
 
-    // Save OTP in memory
+    // Save OTP and expiry keyed by email in otpStore
     otpStore.set(email, { otp, otpExpire });
 
-    // Send OTP email using Nodemailer
+    // Configure nodemailer transporter (Gmail example)
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user: process.env.EMAIL_USER,    // your email address
+        pass: process.env.EMAIL_PASS,    // your email password or app password
       },
     });
 
+    // Prepare email options
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
       subject: 'Your OTP for Registration',
-      text: `Your OTP is: ${otp}. It will expire in 10 minutes.`,
+      text: `Your OTP for registration is: ${otp}. It will expire in 10 minutes.`,
     };
 
+    // Send the email
     await transporter.sendMail(mailOptions);
 
     res.status(200).json({ success: true, message: 'OTP sent successfully to your email' });
   } catch (err) {
-    console.error('Error sending OTP:', err);
+    console.error('Error sending registration OTP:', err);
     res.status(500).json({ message: 'Error sending OTP. Please try again later.' });
   }
 };
-
-// Verify OTP function
-exports.handleVerifyOtp = (req, res) => {
-  const { email, otp } = req.body;
-
+exports.verifyRegistrationOtp = (req, res) => {
   try {
+    const { email, otp } = req.body;
+
     if (!email || !otp) {
       return res.status(400).json({ message: "Email and OTP are required." });
     }
@@ -73,13 +72,16 @@ exports.handleVerifyOtp = (req, res) => {
       return res.status(400).json({ message: "Invalid OTP." });
     }
 
-    otpStore.delete(email);  // OTP verified successfully
-    res.status(200).json({ success: true, message: "OTP verified successfully." });
+    // OTP verified successfully, remove it from the store
+    otpStore.delete(email);
+
+    return res.status(200).json({ success: true, message: "OTP verified successfully." });
   } catch (error) {
     console.error("Error verifying OTP:", error);
-    res.status(500).json({ message: "Error verifying OTP." });
+    return res.status(500).json({ message: "Server error during OTP verification." });
   }
 };
+
 
 
 
@@ -299,7 +301,14 @@ exports.login = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Remove the status check part, so it skips checking account status (Pending/Rejected)
+    // ✅ CHECK STATUS before password
+    if (user.status === 'Pending') {
+      return res.status(403).json({ message: 'Your account is pending verification. Please wait for approval.' });
+    }
+
+    if (user.status === 'Rejected') {
+      return res.status(403).json({ message: 'Your account has been rejected due to government regulations.' });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
 
@@ -307,15 +316,13 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // Generate a JWT token for the user
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
 
     return res.status(200).json({ message: 'Login successful', token, user });
 
   } catch (error) {
-    console.error('Login error:', error); // ✅ Show error in logs
-    res.status(500).json({ message: 'Server error.', error: error.message });
-  }
+  console.error('Login error:', error); // ✅ Show error in logs
+  res.status(500).json({ message: 'Server error.', error: error.message });
+}
+
 };
-
-
