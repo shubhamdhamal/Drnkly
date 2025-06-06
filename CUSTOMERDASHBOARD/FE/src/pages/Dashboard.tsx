@@ -62,16 +62,15 @@ const stores = [
 const banners = [
   {
     id: 1,
-    image: "/banner.png",
-    title: "Get 180ml OLD MONK Quarter Free!",
-    description: "On Your First Order",
-    description: "Delivered in 45 min",
+    image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=2070&auto=format&fit=crop",
+    title: "Premium Drinks Delivered",
+    description: "Fast delivery in 45 minutes or less. Order now!",
     type: "featured",
     theme: "whiskey"
   },
   {
     id: 2,
-    image: "/banner.png",
+    image: "https://images.unsplash.com/photo-1616527546362-77e70524262d?q=80&w=2070&auto=format&fit=crop",
     title: "Weekend Special Offers",
     description: "Up to 20% off on premium liquor brands and free delivery on orders above ₹999",
     type: "special",
@@ -79,7 +78,7 @@ const banners = [
   },
   {
     id: 3,
-    image: "/banner.png",
+    image: "https://images.unsplash.com/photo-1574807947927-2960b61a4dba?q=80&w=2070&auto=format&fit=crop",
     title: "Craft Beer Collection",
     description: "Discover our handpicked selection of local craft beers",
     type: "regular",
@@ -87,7 +86,7 @@ const banners = [
   },
   {
     id: 4,
-    image: "/banner.png",
+    image: "https://images.unsplash.com/photo-1528823872057-9c018a7a7553?q=80&w=2070&auto=format&fit=crop",
     title: "Premium Party Packages",
     description: "Everything you need for your weekend gathering in one order",
     type: "regular",
