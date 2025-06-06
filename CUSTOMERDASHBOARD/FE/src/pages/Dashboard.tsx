@@ -569,7 +569,7 @@ function Dashboard() {
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.onerror = null;
-                    target.src = "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=2070&auto=format&fit=crop";
+                    target.src = "website1.png";
                   }}
                 />
               </div>
