@@ -8,10 +8,7 @@ import { useCart } from '../context/CartContext';
 
 const Cart = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { setItems: setContextItems } = useCart(); // Get setItems from context
-  const [canGoBack, setCanGoBack] = useState(false);
-  const [canGoForward, setCanGoForward] = useState(false);
+
 
   interface CartItem {
     category: any;
@@ -74,9 +71,15 @@ const Cart = () => {
     };
   }, []);
 
+  // Fetch cart items and sync with context
   useEffect(() => {
     const fetchCart = async () => {
-      if (!userId) return toast.error('User not logged in');
+      if (!userId) {
+        toast.error('User not logged in');
+        clearContextCart(); // Clear context cart if user is not logged in
+        setItems([]); // Clear local items
+        return;
+      }
 
       try {
         const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
@@ -98,40 +101,30 @@ const Cart = () => {
         }));
         setContextItems(contextItems);
 
+        // If no items in cart, clear context
+        if (res.data.items.length === 0) {
+          clearContextCart();
+        }
+
         // Debug: Log each product's category
-        console.log('Fetched Cart Items:');
-        res.data.items.forEach((item: any, i: number) => {
-          console.log(`Item ${i + 1}:`, item.productId?.category || 'No category found');
-        });
+        console.log('Fetched Cart Items:', res.data.items.length);
       } catch (error) {
         toast.error('Failed to load cart');
         console.error(error);
+        // Clear both local and context cart on error
+        setItems([]);
+        clearContextCart();
       }
     };
 
     fetchCart();
-  }, [userId, setContextItems]);
 
-  // Check if we can go back/forward
-  useEffect(() => {
-    const handlePopState = () => {
-      setCanGoBack(window.history.state?.idx > 0);
-      setCanGoForward(window.history.state?.idx < window.history.length - 1);
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    handlePopState(); // Initial check
-
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
 
   // Update quantity in backend
   const updateQuantity = async (productId: string, quantity: number) => {
-    // Set loading state for this specific item
     setIsLoading(prev => ({ ...prev, [productId]: true }));
     
     try {
-      // If quantity is 0 or less, show delete confirmation
       if (quantity <= 0) {
         setItemToDelete(productId);
         setShowDeleteConfirm(true);
@@ -151,7 +144,7 @@ const Cart = () => {
         name: item.productId?.name || item.name,
         image: item.productId?.image || item.image,
         price: item.productId?.price || item.price,
-        productId: item.productId?._id || item.productId, // normalize
+        productId: item.productId?._id || item.productId,
         quantity: item.quantity
       }));
 
@@ -168,6 +161,11 @@ const Cart = () => {
         quantity: Number(item.quantity)
       }));
       setContextItems(contextItems);
+
+      // If no items left, clear context
+      if (res.data.cart.items.length === 0) {
+        clearContextCart();
+      }
       
       // Track Add/Remove from Cart events for Facebook Pixel
       if (window && (window as any).fbq) {
@@ -184,18 +182,13 @@ const Cart = () => {
       toast.error('Failed to update quantity');
       console.error('Error updating quantity:', error);
     } finally {
-      // Clear loading state for this item
       setIsLoading(prev => ({ ...prev, [productId]: false }));
     }
   };
 
-
   // Remove item from cart
   const removeFromCart = async (productId: string) => {
-    // Close confirmation modal if open
     setShowDeleteConfirm(false);
-    
-    // Set loading state for this specific item
     setIsLoading(prev => ({ ...prev, [productId]: true }));
     
     try {
@@ -226,6 +219,11 @@ const Cart = () => {
         quantity: Number(item.quantity)
       }));
       setContextItems(contextItems);
+
+      // If no items left, clear context
+      if (res.data.cart.items.length === 0) {
+        clearContextCart();
+      }
       
       // Track Remove from Cart event for Facebook Pixel
       if (window && (window as any).fbq) {
@@ -241,7 +239,6 @@ const Cart = () => {
       toast.error('Failed to remove item');
       console.error('Error removing item:', error);
     } finally {
-      // Clear loading state for this item
       setIsLoading(prev => ({ ...prev, [productId]: false }));
     }
   };
@@ -484,7 +481,6 @@ const Cart = () => {
             </div>
           )}
         </div>
-
 
       </div>
     </div>
