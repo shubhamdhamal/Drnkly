@@ -32,6 +32,10 @@ interface GroupedOrder {
   acceptedAt?: string;
 }
 
+interface ApiResponse {
+  orders: PickupOrder[];
+}
+
 const Pickup: React.FC = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<PickupOrder[]>([]);
@@ -87,6 +91,14 @@ const Pickup: React.FC = () => {
 
   const handleOrderUpdate = (updatedOrder: PickupOrder) => {
     setOrders(prev => {
+      if (updatedOrder.handoverStatus === 'handedOver') {
+        const filteredOrders = prev.filter(o => 
+          !(o.orderNumber === updatedOrder.orderNumber && o.productId === updatedOrder.productId)
+        );
+        setGroupedOrders(groupOrdersByCustomer(filteredOrders));
+        return filteredOrders;
+      }
+
       const updatedOrders = [...prev];
       const existingOrderIndex = updatedOrders.findIndex(o => 
         o.orderNumber === updatedOrder.orderNumber && 
@@ -100,7 +112,6 @@ const Pickup: React.FC = () => {
       }
       
       setGroupedOrders(groupOrdersByCustomer(updatedOrders));
-      
       return updatedOrders;
     });
   };
@@ -108,14 +119,28 @@ const Pickup: React.FC = () => {
   const fetchPickupOrders = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const res = await axios.get('https://vendor.peghouse.in/api/vendor/ready-for-pickup', {
+      const res = await axios.get<ApiResponse>('https://vendor.peghouse.in/api/vendor/ready-for-pickup', {
         headers: { Authorization: `Bearer ${token}` },
       });
       
-      const filteredOrders = res.data.orders.filter((order: PickupOrder) => 
-        order.handoverStatus !== 'handedOver'
-      );
+      // Get the list of handed over orders from localStorage
+      const handedOverOrders = JSON.parse(localStorage.getItem('handedOverOrders') || '[]');
       
+      // Filter out orders that are either handed over in the API response or in localStorage
+      const filteredOrders = res.data.orders.filter((order: PickupOrder) => {
+        // Check if order is handed over in API response
+        const isHandedOverInAPI = order.handoverStatus === 'handedOver';
+        
+        // Check if order is in localStorage (meaning it was handed over)
+        const isHandedOverInStorage = handedOverOrders.some((handedOver: any) => 
+          handedOver.orderNumber === order.orderNumber
+        );
+        
+        // Only show orders that are NOT handed over in either place
+        return !isHandedOverInAPI && !isHandedOverInStorage;
+      });
+      
+      // Sort orders by time
       const sortedOrders = filteredOrders.sort((a: PickupOrder, b: PickupOrder) => {
         const timeA = a.acceptedAt ? new Date(a.acceptedAt).getTime() : new Date(a.readyTime).getTime();
         const timeB = b.acceptedAt ? new Date(b.acceptedAt).getTime() : new Date(b.readyTime).getTime();
@@ -134,6 +159,19 @@ const Pickup: React.FC = () => {
     try {
       const token = localStorage.getItem('authToken');
       
+      // First remove the order from pickup page immediately
+      setOrders(prev => prev.filter(order => 
+        !groupedOrder.items.some(item => 
+          item.orderNumber === order.orderNumber && 
+          item.productId === order.productId
+        )
+      ));
+      
+      setGroupedOrders(prev => prev.filter(group => 
+        group.orderNumber !== groupedOrder.orderNumber
+      ));
+      
+      // Then update the order status to handed over
       const handoverPromises = groupedOrder.items.map(item => 
         axios.put(
           `https://vendor.peghouse.in/api/vendor/orders/handover`,
@@ -147,24 +185,86 @@ const Pickup: React.FC = () => {
 
       await Promise.all(handoverPromises);
       
-      setOrders(prev => prev.filter(order => 
-        !groupedOrder.items.some(item => 
-          item.orderNumber === order.orderNumber && 
-          item.productId === order.productId
-        )
-      ));
-      
-      setGroupedOrders(prev => prev.filter(group => 
-        group.orderNumber !== groupedOrder.orderNumber
-      ));
+      // Store handed over orders in localStorage for Orders page
+      const handedOverOrders = JSON.parse(localStorage.getItem('handedOverOrders') || '[]');
+      const newHandedOverOrders = [
+        ...handedOverOrders,
+        ...groupedOrder.items.map(item => ({
+          orderId: item.orderId,
+          orderNumber: item.orderNumber,
+          handedOverAt: new Date().toISOString(),
+          customerName: groupedOrder.customerName,
+          totalAmount: groupedOrder.totalAmount,
+          items: groupedOrder.items.map(orderItem => ({
+            productId: orderItem.productId,
+            name: orderItem.name,
+            quantity: orderItem.quantity,
+            price: orderItem.price,
+            status: 'handedOver'
+          }))
+        }))
+      ];
+      localStorage.setItem('handedOverOrders', JSON.stringify(newHandedOverOrders));
+
+      // Add to payouts tracking
+      try {
+        await axios.post(
+          'https://vendor.peghouse.in/api/vendor/payouts/track',
+          {
+            orderId: groupedOrder.items[0].orderId,
+            orderNumber: groupedOrder.orderNumber,
+            amount: groupedOrder.totalAmount,
+            customerName: groupedOrder.customerName,
+            items: groupedOrder.items.map(item => ({
+              productId: item.productId,
+              name: item.name,
+              quantity: item.quantity,
+              price: item.price
+            })),
+            status: 'completed',
+            handedOverAt: new Date().toISOString()
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } catch (payoutErr) {
+        console.error('Failed to track order in payouts:', payoutErr);
+      }
       
       toast.success('Order group handed over to delivery successfully!');
+      
+      // Navigate to Orders page and scroll to past orders section
+      navigate('/orders', { 
+        state: { 
+          scrollToPastOrders: true,
+          orderNumber: groupedOrder.orderNumber 
+        }
+      });
         
     } catch (err) {
       console.error('Error handing over order group', err);
       toast.error('Failed to hand over the order group');
     }
   };
+
+  // Add cleanup function to remove old handed over orders from localStorage
+  useEffect(() => {
+    const cleanupHandedOverOrders = () => {
+      const handedOverOrders = JSON.parse(localStorage.getItem('handedOverOrders') || '[]');
+      const oneDayAgo = new Date();
+      oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+      
+      const recentHandedOverOrders = handedOverOrders.filter((order: any) => 
+        new Date(order.handedOverAt) > oneDayAgo
+      );
+      
+      localStorage.setItem('handedOverOrders', JSON.stringify(recentHandedOverOrders));
+    };
+
+    // Clean up old handed over orders every hour
+    const cleanupInterval = setInterval(cleanupHandedOverOrders, 3600000);
+    
+    return () => clearInterval(cleanupInterval);
+  }, []);
 
   return (
     <div style={{ padding: '24px', fontFamily: 'sans-serif' }}>

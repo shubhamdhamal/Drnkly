@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, Trash2, Plus, Minus, AlertTriangle } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { ShoppingCart, Trash2, Plus, Minus, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -8,7 +8,7 @@ import { useCart } from '../context/CartContext';
 
 const Cart = () => {
   const navigate = useNavigate();
-  const { setItems: setContextItems, clearCart: clearContextCart } = useCart();
+
 
   interface CartItem {
     category: any;
@@ -118,7 +118,7 @@ const Cart = () => {
     };
 
     fetchCart();
-  }, [userId, setContextItems, clearContextCart]);
+
 
   // Update quantity in backend
   const updateQuantity = async (productId: string, quantity: number) => {
@@ -280,15 +280,33 @@ const Cart = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-1 py-1 sm:px-1 lg:px-1">
         <div className="flex justify-center mb-2">
-          <div
-            className="cursor-pointer inline-block"
-            onClick={() => navigate('/dashboard')}
-          >
-            <img
-              src="/finallogo.png"
-              alt="Drnkly Logo"
-              className="h-12 sm:h-16 md:h-20 lg:h-24 mx-auto object-contain"
-            />
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => navigate(-1)}
+              className={`p-2 rounded-full transition-colors ${canGoBack ? 'hover:bg-gray-100' : 'opacity-50 cursor-not-allowed'}`}
+              disabled={!canGoBack}
+              aria-label="Go back"
+            >
+              <ChevronLeft size={20} className="text-gray-700" />
+            </button>
+            <div
+              className="cursor-pointer inline-block"
+              onClick={() => navigate('/dashboard')}
+            >
+              <img
+                src="/finallogo.png"
+                alt="Drnkly Logo"
+                className="h-12 sm:h-16 md:h-20 lg:h-24 mx-auto object-contain"
+              />
+            </div>
+            <button
+              onClick={() => navigate(1)}
+              className={`p-2 rounded-full transition-colors ${canGoForward ? 'hover:bg-gray-100' : 'opacity-50 cursor-not-allowed'}`}
+              disabled={!canGoForward}
+              aria-label="Go forward"
+            >
+              <ChevronRight size={20} className="text-gray-700" />
+            </button>
           </div>
         </div>
 
@@ -464,9 +482,6 @@ const Cart = () => {
           )}
         </div>
 
-        {/* <p style={{ display: 'none' }}>
-          Sound file should be placed at: {process.env.PUBLIC_URL}/notification-sound.mp3
-        </p> */}
       </div>
     </div>
   );

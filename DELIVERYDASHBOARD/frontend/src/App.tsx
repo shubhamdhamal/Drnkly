@@ -17,15 +17,38 @@ interface DeliveryBoy {
   area: string;
 }
 
+interface OrderItem {
+  _id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  handoverStatus: string;
+  deliveryBoyStatus: 'pending' | 'accepted' | 'rejected';
+  deliveryStatus: 'pending' | 'delivered';
+}
+
+interface DeliveryAddress {
+  fullName: string;
+  street: string;
+  city: string;
+  pincode: string;
+  state: string;
+  phone: string;
+}
+
 interface Order {
+  _id: string;
   id: string;
+  orderNumber: string;
+  createdAt: string;
+  items: OrderItem[];
+  deliveryAddress: DeliveryAddress;
+  status: 'pending' | 'accepted' | 'delivering' | 'completed';
+  otp?: string;
   customerId: string;
   customerName: string;
-  address: string;
   amount: number;
-  status: 'pending' | 'accepted' | 'delivering' | 'completed';
   date: string;
-  otp?: string;
 }
 
 interface Notification {
@@ -202,8 +225,8 @@ function App() {
         const data = await res.json();
         if (res.ok) {
           // Check if there are new orders
-          const newOrderCount = data.filter(order => 
-            order.items.some(item => item.handoverStatus === 'handedOver')
+          const newOrderCount = (data as Order[]).filter((order: Order) => 
+            order.items.some((item: OrderItem) => item.handoverStatus === 'handedOver')
           ).length;
 
           if (previousOrderCount > 0 && newOrderCount > previousOrderCount) {
@@ -213,7 +236,7 @@ function App() {
           }
 
           setPreviousOrderCount(newOrderCount);
-          setOrders(data);
+          setOrders(data as Order[]);
         }
       } catch (err) {
         console.error('Error fetching orders:', err);
@@ -246,146 +269,137 @@ function App() {
       showToast('Invalid OTP. Please try again.');
     }
   };
-// Handle order actions (accept, decline, deliver)
-const handleItemAction = async (orderId: string, itemId: string, action: 'accept' | 'decline' | 'deliver' | 'reject') => {
-  if (action === 'accept') {
-    try {
-      const token = localStorage.getItem('authToken');
-      if (!token) return;
 
-      const res = await fetch(`https://delivery.peghouse.in/api/orders/${orderId}/items/${itemId}/accept`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
+  const handleItemAction = async (orderId: string, itemId: string, action: 'accept' | 'decline' | 'deliver' | 'reject') => {
+    if (action === 'accept') {
+      try {
+        const token = localStorage.getItem('authToken');
+        if (!token) return;
 
-      const data = await res.json();
+        const res = await fetch(`https://delivery.peghouse.in/api/orders/${orderId}/items/${itemId}/accept`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-      if (res.ok) {
-        setOrders(orders.map(order => {
-          if (order._id === orderId) {
-            return {
-              ...order,
-              items: order.items.map(item => {
-                if (item._id === itemId) {
-                  return {
-                    ...item,
-                    deliveryBoyStatus: 'accepted',
-                  };
-                }
-                return item;
-              }),
-            };
-          }
-          return order;
-        }));
-        showToast('Item accepted successfully!');
-      } else {
-        showToast(data.message || 'Failed to accept the item');
+        const data = await res.json();
+
+        if (res.ok) {
+          setOrders(orders.map((order: Order) => {
+            if (order._id === orderId) {
+              return {
+                ...order,
+                items: order.items.map((item: OrderItem) => {
+                  if (item._id === itemId) {
+                    return {
+                      ...item,
+                      deliveryBoyStatus: 'accepted',
+                    };
+                  }
+                  return item;
+                }),
+              };
+            }
+            return order;
+          }));
+          showToast('Item accepted successfully!');
+        } else {
+          showToast(data.message || 'Failed to accept the item');
+        }
+      } catch (error) {
+        console.error('Error accepting item:', error);
+        showToast('Error accepting item');
       }
-    } catch (error) {
-      console.error('Error accepting item:', error);
-      showToast('Error accepting item');
-    }
-  } else if (action === 'decline') {
-    setOrders(orders.filter(order => order._id !== orderId)); 
-    showToast('Item rejected');
-  } else if (action === 'reject') {
-    try {
-      const token = localStorage.getItem('authToken');
-      if (!token) return;
+    } else if (action === 'decline') {
+      setOrders(orders.filter((order: Order) => order._id !== orderId)); 
+      showToast('Item rejected');
+    } else if (action === 'reject') {
+      try {
+        const token = localStorage.getItem('authToken');
+        if (!token) return;
 
-      const res = await fetch(`https://delivery.peghouse.in/api/orders/${orderId}/items/${itemId}/reject`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
+        const res = await fetch(`https://delivery.peghouse.in/api/orders/${orderId}/items/${itemId}/reject`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-      const data = await res.json();
+        const data = await res.json();
 
-      if (res.ok) {
-        setOrders(orders.map(order => {
-          if (order._id === orderId) {
-            return {
-              ...order,
-              items: order.items.map(item => {
-                if (item._id === itemId) {
-                  return {
-                    ...item,
-                    deliveryBoyStatus: 'rejected',
-                  };
-                }
-                return item;
-              }),
-            };
-          }
-          return order;
-        }));
-        showToast('Item rejected successfully!');
-      } else {
-        showToast(data.message || 'Failed to reject the item');
+        if (res.ok) {
+          setOrders(orders.map((order: Order) => {
+            if (order._id === orderId) {
+              return {
+                ...order,
+                items: order.items.map((item: OrderItem) => {
+                  if (item._id === itemId) {
+                    return {
+                      ...item,
+                      deliveryBoyStatus: 'rejected',
+                    };
+                  }
+                  return item;
+                }),
+              };
+            }
+            return order;
+          }));
+          showToast('Item rejected successfully!');
+        } else {
+          showToast(data.message || 'Failed to reject the item');
+        }
+      } catch (error) {
+        console.error('Error rejecting item:', error);
+        showToast('Error rejecting item');
       }
-    } catch (error) {
-      console.error('Error rejecting item:', error);
-      showToast('Error rejecting item');
-    }
-  } else if (action === 'deliver') {
-    try {
-      const token = localStorage.getItem('authToken');
-      if (!token) return;
+    } else if (action === 'deliver') {
+      try {
+        const token = localStorage.getItem('authToken');
+        if (!token) return;
 
-      const res = await fetch(`https://delivery.peghouse.in/api/orders/${orderId}/items/${itemId}/deliver`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
+        const res = await fetch(`https://delivery.peghouse.in/api/orders/${orderId}/items/${itemId}/deliver`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-      const data = await res.json();
+        const data = await res.json();
 
-      if (res.ok) {
-        setOrders(orders.map(order => {
-          if (order._id === orderId) {
-            return {
-              ...order,
-              items: order.items.map(item => {
-                if (item._id === itemId) {
-                  return {
-                    ...item,
-                    deliveryStatus: 'delivered',
-                  };
-                }
-                return item;
-              }),
-            };
-          }
-          return order;
-        }));
-        showToast('Item delivered successfully!');
-      } else {
-        showToast(data.message || 'Failed to mark as delivered');
+        if (res.ok) {
+          setOrders(orders.map((order: Order) => {
+            if (order._id === orderId) {
+              return {
+                ...order,
+                items: order.items.map((item: OrderItem) => {
+                  if (item._id === itemId) {
+                    return {
+                      ...item,
+                      deliveryStatus: 'delivered',
+                    };
+                  }
+                  return item;
+                }),
+              };
+            }
+            return order;
+          }));
+          showToast('Item delivered successfully!');
+        } else {
+          showToast(data.message || 'Failed to mark as delivered');
+        }
+      } catch (error) {
+        console.error('Error marking item as delivered:', error);
+        showToast('Error marking item as delivered');
       }
-    } catch (error) {
-      console.error('Error marking item as delivered:', error);
-      showToast('Error marking item as delivered');
     }
-  }
-};
+  };
 
-
-  
-  
-  
-  
-  
-  
-  
-  
   const markNotificationsAsRead = () => {
     setNotifications(notifications.map(notif => ({ ...notif, read: true })));
   };
@@ -680,75 +694,93 @@ const handleItemAction = async (orderId: string, itemId: string, action: 'accept
       </button>
     </div>
 
-    {/* Filter and display orders with 'handoverStatus' of 'handedOver' */}
-    {orders.filter(order =>
-      order.items.some(item => item.handoverStatus === 'handedOver')
-    ).map(order => (
-      <div key={order._id} className="order-item">
-        <div className="order-header">
-          <span className="order-id">#{order.orderNumber}</span>
-        </div>
+    {orders
+      .filter((order: Order) =>
+        order.items.some((item: OrderItem) => item.handoverStatus === 'handedOver')
+      )
+      .sort((a: Order, b: Order) => {
+        // First sort by status (pending orders first)
+        const aStatus = a.items.some((item: OrderItem) => item.deliveryBoyStatus === 'pending') ? 0 : 1;
+        const bStatus = b.items.some((item: OrderItem) => item.deliveryBoyStatus === 'pending') ? 0 : 1;
+        if (aStatus !== bStatus) return aStatus - bStatus;
+        
+        // Then sort by timestamp (newest first)
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      })
+      .map((order: Order) => (
+        <div key={order._id} className="order-item">
+          <div className="order-header">
+            <span className="order-id">#{order.orderNumber}</span>
+            <span className="order-time">
+              {new Date(order.createdAt).toLocaleTimeString()}
+            </span>
+          </div>
 
-        <div>{order.deliveryAddress.fullName}</div>
-        <div>{order.deliveryAddress.street},{order.deliveryAddress.city}, {order.deliveryAddress.pincode},{order.deliveryAddress.state}, {order.deliveryAddress.phone}</div>
-
-        {/* Iterate over each item in the order and display its details */}
-        <div className="order-items">
-          {order.items.map((item, index) => (
-            <div key={index} className="order-item-details">
-              <div className="item-details">
-                <span className="item-name">{item.name}</span>
-                <span className="item-price">₹{item.price}</span>
-                <span className="item-quantity">x{item.quantity}</span>
-              </div>
-
-              <div className="order-actions">
-                {item.deliveryBoyStatus === 'accepted' ? (
-                  <>
-                    <button className="btn-accepted" disabled>
-                      Accepted
-                    </button>
-
-                    {item.deliveryStatus === 'pending' && (
-                      <button
-                        className="btn-delivered"
-                        onClick={() => handleItemAction(order._id, item._id, 'deliver')}
-                      >
-                        Mark as Delivered
-                      </button>
-                    )}
-                    {item.deliveryStatus === 'delivered' && (
-                      <button className="btn-delivered" disabled>
-                        Delivered
-                      </button>
-                    )}
-                  </>
-                ) : item.deliveryBoyStatus === 'rejected' ? (
-                  <button className="btn-rejected" disabled>
-                    Rejected
-                  </button>
-                ) : (
-                  <>
-                    <button
-                      className="btn-accept"
-                      onClick={() => handleItemAction(order._id, item._id, 'accept')}
-                    >
-                      Accept
-                    </button>
-                    <button
-                      className="btn-reject"
-                      onClick={() => handleItemAction(order._id, item._id, 'reject')}
-                    >
-                      Reject
-                    </button>
-                  </>
-                )}
-              </div>
+          <div className="order-customer">
+            <div className="customer-name">{order.deliveryAddress.fullName}</div>
+            <div className="customer-address">
+              {order.deliveryAddress.street}, {order.deliveryAddress.city}, 
+              {order.deliveryAddress.pincode}, {order.deliveryAddress.state}, 
+              {order.deliveryAddress.phone}
             </div>
-          ))}
+          </div>
+
+          <div className="order-items">
+            {order.items.map((item: OrderItem, index: number) => (
+              <div key={index} className="order-item-details">
+                <div className="item-details">
+                  <span className="item-name">{item.name}</span>
+                  <span className="item-price">₹{item.price}</span>
+                  <span className="item-quantity">x{item.quantity}</span>
+                </div>
+
+                <div className="order-actions">
+                  {item.deliveryBoyStatus === 'accepted' ? (
+                    <>
+                      <button className="btn-accepted" disabled>
+                        Accepted
+                      </button>
+
+                      {item.deliveryStatus === 'pending' && (
+                        <button
+                          className="btn-delivered"
+                          onClick={() => handleItemAction(order._id, item._id, 'deliver')}
+                        >
+                          Mark as Delivered
+                        </button>
+                      )}
+                      {item.deliveryStatus === 'delivered' && (
+                        <button className="btn-delivered" disabled>
+                          Delivered
+                        </button>
+                      )}
+                    </>
+                  ) : item.deliveryBoyStatus === 'rejected' ? (
+                    <button className="btn-rejected" disabled>
+                      Rejected
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        className="btn-accept"
+                        onClick={() => handleItemAction(order._id, item._id, 'accept')}
+                      >
+                        Accept
+                      </button>
+                      <button
+                        className="btn-reject"
+                        onClick={() => handleItemAction(order._id, item._id, 'reject')}
+                      >
+                        Reject
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-    ))}
+      ))}
   </div>
 )}
 

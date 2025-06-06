@@ -3,7 +3,7 @@ import { Eye, Check, X, Search, Bell, Truck } from 'lucide-react';
 import axios from 'axios';
 import Button from '../components/Button';
 import Input from '../components/Input';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 interface OrderItem {
@@ -27,8 +27,32 @@ interface Order {
   readyForPickup?: boolean;
 }
 
+interface ApiResponse {
+  orders: Array<{
+    orderId: string;
+    orderNumber: string;
+    deliveryAddress?: {
+      fullName: string;
+    };
+    items: Array<{
+      productId: string;
+      name: string;
+      quantity: number;
+      price: number;
+      status: 'pending' | 'accepted' | 'rejected' | 'handedOver';
+    }>;
+    totalAmount: number;
+    paymentStatus: 'pending' | 'paid';
+    transactionId?: string;
+    paymentProof?: string;
+    createdAt: string;
+    readyForPickup?: boolean;
+  }>;
+}
+
 const Orders: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('All Orders');
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
@@ -41,6 +65,40 @@ const Orders: React.FC = () => {
   const lastOrdersCountRef = useRef(0);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const pastOrdersRef = useRef<HTMLDivElement>(null);
+
+  const fetchOrders = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const res = await axios.get<ApiResponse>('https://vendor.peghouse.in/api/vendor/orders', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const fetchedOrders: Order[] = res.data.orders.map((order) => ({
+        id: order.orderId,
+        orderNumber: order.orderNumber,
+        customerName: order.deliveryAddress?.fullName || 'Customer',
+        items: order.items.map((item) => ({
+          productId: item.productId,
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          status: item.status,
+        })),
+        totalAmount: order.totalAmount || 0,
+        paymentStatus: order.paymentStatus || 'pending',
+        transactionId: order.transactionId || '',
+        paymentProof: order.paymentProof || '',
+        createdAt: order.createdAt,
+        readyForPickup: order.readyForPickup || false,
+      }));
+
+      setOrders(fetchedOrders);
+    } catch (err) {
+      console.error('Error fetching orders:', err);
+      toast.error('Failed to load orders');
+    }
+  };
 
   useEffect(() => {
     // Setup WebSocket connection for real-time updates
@@ -49,40 +107,6 @@ const Orders: React.FC = () => {
     wsRef.current.onmessage = (event) => {
       const newOrder = JSON.parse(event.data);
       handleNewOrder(newOrder);
-    };
-
-    const fetchOrders = async () => {
-      try {
-    const token = localStorage.getItem('authToken');
-        const res = await axios.get('https://vendor.peghouse.in/api/vendor/orders', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const fetchedOrders = res.data.orders.map((order: any) => ({
-          id: order.orderId,
-        orderNumber: order.orderNumber,
-          customerName: order.deliveryAddress?.fullName || 'Customer',
-          items: order.items.map((item: any) => ({
-          productId: item.productId,
-            name: item.name,
-            quantity: item.quantity,
-            price: item.price,
-            status: item.status || 'pending',
-          })),
-          totalAmount: order.totalAmount || 0,
-          paymentStatus: order.paymentStatus || 'pending',
-          transactionId: order.transactionId || '',
-          paymentProof: order.paymentProof || '',
-          createdAt: order.createdAt,
-          readyForPickup: order.readyForPickup || false,
-        }));
-
-        setOrders(fetchedOrders);
-        lastOrdersCountRef.current = fetchedOrders.length;
-      } catch (err) {
-        console.error('Error fetching orders:', err);
-        setError('Failed to load orders');
-      }
     };
 
     fetchOrders();
@@ -97,6 +121,29 @@ const Orders: React.FC = () => {
       }
     };
   }, []);
+
+  useEffect(() => {
+    // Handle navigation from pickup page
+    if (location.state?.scrollToPastOrders) {
+      // Wait for orders to load
+      setTimeout(() => {
+        if (pastOrdersRef.current) {
+          pastOrdersRef.current.scrollIntoView({ behavior: 'smooth' });
+          
+          // Highlight the specific order if orderNumber is provided
+          if (location.state.orderNumber) {
+            const orderElement = document.getElementById(`order-${location.state.orderNumber}`);
+            if (orderElement) {
+              orderElement.classList.add('highlight-order');
+              setTimeout(() => {
+                orderElement.classList.remove('highlight-order');
+              }, 2000);
+            }
+          }
+        }
+      }, 500);
+    }
+  }, [location.state, orders]);
 
   const handleNewOrder = (newOrder: Order) => {
     setOrders(prev => {
@@ -152,20 +199,27 @@ const Orders: React.FC = () => {
 
       if (response.status === 200) {
         // Update the order in the state
-        setOrders((prev) =>
-          prev.map((order) =>
+        setOrders((prev) => {
+          const updatedOrders = prev.map((order) =>
             order.id === orderId
               ? {
                   ...order,
                   items: order.items.map((item) =>
                     item.productId === productId ? { ...item, status } : item
                   ),
-                  // If this was the last pending item and it was accepted, mark as ready for pickup
                   readyForPickup: shouldRedirectToPickup ? true : order.readyForPickup
                 }
               : order
-          )
-        );
+          );
+
+          // If all items are now accepted, remove the order from the list
+          const updatedOrder = updatedOrders.find(o => o.id === orderId);
+          if (updatedOrder && updatedOrder.items.every(item => item.status === 'accepted')) {
+            return updatedOrders.filter(o => o.id !== orderId);
+          }
+
+          return updatedOrders;
+        });
 
         // If this was the last pending item and it was accepted, handle pickup
         if (shouldRedirectToPickup) {
@@ -236,11 +290,13 @@ const Orders: React.FC = () => {
   });
 
   const pastOrders = orders.filter(order => {
-    // Show orders that have any handed over items or are all rejected
+    // Show orders that have any handed over items
     const hasHandedOverItems = order.items.some(item => item.status === 'handedOver');
     const allItemsRejected = order.items.every(item => item.status === 'rejected');
+    const isHandedOverInStorage = JSON.parse(localStorage.getItem('handedOverOrders') || '[]')
+      .some((handedOver: any) => handedOver.orderId === order.id);
     
-    return hasHandedOverItems || allItemsRejected;
+    return hasHandedOverItems || allItemsRejected || isHandedOverInStorage;
   }).filter((order) => {
     const matchesSearch =
       order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -249,7 +305,24 @@ const Orders: React.FC = () => {
         item.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
     return matchesSearch;
-  }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }).sort((a, b) => {
+    // Get handed over timestamps from localStorage
+    const handedOverOrders = JSON.parse(localStorage.getItem('handedOverOrders') || '[]');
+    const aHandedOver = handedOverOrders.find((order: any) => order.orderId === a.id);
+    const bHandedOver = handedOverOrders.find((order: any) => order.orderId === b.id);
+    
+    // If both orders were handed over, sort by handed over time
+    if (aHandedOver && bHandedOver) {
+      return new Date(bHandedOver.handedOverAt).getTime() - new Date(aHandedOver.handedOverAt).getTime();
+    }
+    
+    // If only one order was handed over, put it first
+    if (aHandedOver) return -1;
+    if (bHandedOver) return 1;
+    
+    // If neither was handed over, sort by creation time
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
 
   // Show notification for new orders - improved notification message
   const showOrderNotification = (newOrders: Order[]) => {
@@ -369,12 +442,8 @@ const Orders: React.FC = () => {
       );
       
       if (response.status === 200) {
-        // Update local state to remove the order from live orders
-        setOrders(prev => prev.map(o => 
-          o.id === order.id 
-            ? { ...o, readyForPickup: true }
-            : o
-        ));
+        // Remove the order from the orders list since it's no longer a live order
+        setOrders(prev => prev.filter(o => o.id !== order.id));
         
         toast.success('Order accepted and ready for pickup!');
         
@@ -410,13 +479,102 @@ const Orders: React.FC = () => {
   // Function to handle handover of all items in an order
   const handleOrderHandover = async (order: Order) => {
     try {
+      const token = localStorage.getItem('authToken');
+      
       // Update all accepted items to handed over
       const updatePromises = order.items
         .filter(item => item.status === 'accepted')
-        .map(item => updateOrderStatus(order.id, item.productId, 'handedOver'));
+        .map(item => 
+          axios.put(
+            `https://vendor.peghouse.in/api/vendor/orders/${order.id}/status`,
+            { productId: item.productId, status: 'handedOver' },
+            { headers: { Authorization: `Bearer ${token}` } }
+          )
+        );
       
       await Promise.all(updatePromises);
+
+      // Add order to payouts tracking
+      try {
+        await axios.post(
+          'https://vendor.peghouse.in/api/vendor/payouts/track',
+          {
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+            amount: order.totalAmount,
+            customerName: order.customerName,
+            items: order.items.map(item => ({
+              productId: item.productId,
+              name: item.name,
+              quantity: item.quantity,
+              price: item.price
+            })),
+            status: 'completed',
+            handedOverAt: new Date().toISOString()
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } catch (payoutErr) {
+        console.error('Failed to track order in payouts:', payoutErr);
+      }
+
+      // Update the orders state to move the order to past orders
+      setOrders(prev => {
+        // First, update the order status in the current orders list
+        const updatedOrders = prev.map(o => {
+          if (o.id === order.id) {
+            return {
+              ...o,
+              items: o.items.map(item => ({
+                ...item,
+                status: item.status === 'accepted' ? 'handedOver' : item.status
+              }))
+            };
+          }
+          return o;
+        });
+
+        // Store the handed over order in localStorage
+        const handedOverOrders = JSON.parse(localStorage.getItem('handedOverOrders') || '[]');
+        const newHandedOverOrders = [
+          ...handedOverOrders,
+          {
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+            handedOverAt: new Date().toISOString(),
+            customerName: order.customerName,
+            totalAmount: order.totalAmount,
+            items: order.items.map(item => ({
+              productId: item.productId,
+              name: item.name,
+              quantity: item.quantity,
+              price: item.price,
+              status: 'handedOver'
+            }))
+          }
+        ];
+        localStorage.setItem('handedOverOrders', JSON.stringify(newHandedOverOrders));
+
+        // Ensure the order is in the list for past orders section
+        const orderExists = updatedOrders.some(o => o.id === order.id);
+        if (!orderExists) {
+          updatedOrders.push({
+            ...order,
+            items: order.items.map(item => ({
+              ...item,
+              status: 'handedOver'
+            }))
+          });
+        }
+
+        return updatedOrders;
+      });
+
+      // Show success message
       toast.success('Order handed over to delivery successfully!');
+      
+      // Refresh orders to ensure everything is in sync
+      fetchOrders();
     } catch (err) {
       console.error('Failed to hand over order', err);
       toast.error('Failed to hand over order');
@@ -952,12 +1110,15 @@ const Orders: React.FC = () => {
       </div>
 
       {/* Past Orders Section */}
-      <div style={{ 
-        background: '#fff',
-        borderRadius: '12px',
-        padding: '24px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
-      }}>
+      <div 
+        ref={pastOrdersRef}
+        style={{ 
+          background: '#fff',
+          borderRadius: '12px',
+          padding: '24px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+        }}
+      >
         <div style={{ 
           display: 'flex', 
           alignItems: 'center', 
