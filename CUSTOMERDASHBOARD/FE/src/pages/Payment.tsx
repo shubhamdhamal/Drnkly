@@ -1,20 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import axios from 'axios';
-import { CartItem } from '../context/CartContext';
+import { CartItem, useCart } from '../context/CartContext';
+import { navigationPatterns } from '../utils/navigation';
 
 const Payment = () => {
   const navigate = useNavigate();
-  const location = useLocation();
+  const { setItems: setContextItems } = useCart();
   const [items, setItems] = useState<CartItem[]>([]);
   const [isScreenshotUploaded, setIsScreenshotUploaded] = useState(false);
   const [transactionId, setTransactionId] = useState<string>('');
   const [isCashOnDelivery, setIsCashOnDelivery] = useState(false);
   const [pendingOrder, setPendingOrder] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [canGoBack, setCanGoBack] = useState(false);
-  const [canGoForward, setCanGoForward] = useState(false);
   
   // Reference for payment method section
   const paymentMethodRef = useRef<HTMLDivElement>(null);
@@ -54,19 +53,6 @@ const Payment = () => {
     }
   };
 
-  // Check if we can go back/forward
-  useEffect(() => {
-    const handlePopState = () => {
-      setCanGoBack(window.history.state?.idx > 0);
-      setCanGoForward(window.history.state?.idx < window.history.length - 1);
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    handlePopState(); // Initial check
-
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
-
   // 🔁 Fetch cart items and pending order data
   useEffect(() => {
     const fetchCart = async () => {
@@ -92,12 +78,12 @@ const Payment = () => {
       } catch (err) {
         console.error('Failed to parse pending order data:', err);
         alert('There was an issue with your order. Please try again.');
-        navigate('/checkout');
+        navigationPatterns.goToCheckout(navigate);
       }
     } else {
       // If no pending order data, redirect back to checkout
       alert('No order information found. Please complete the checkout process first.');
-      navigate('/checkout');
+      navigationPatterns.goToCheckout(navigate);
     }
     
     // Scroll to payment method section on component mount
@@ -134,7 +120,7 @@ const Payment = () => {
 
     if (!pendingOrder) {
       alert('No order information found. Please complete the checkout process first.');
-      navigate('/checkout');
+      navigationPatterns.goToCheckout(navigate);
       return;
     }
 
@@ -144,52 +130,137 @@ const Payment = () => {
 
     try {
       setIsLoading(true);
+      let orderId = '';
       
-      // Step 1: Create the actual order first
-      const createOrderResponse = await axios.post('https://peghouse.in/api/orders', pendingOrder, {
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-      
-      if (!createOrderResponse.data || !createOrderResponse.data.order || !createOrderResponse.data.order._id) {
-        throw new Error('Failed to create order');
-      }
-      
-      const orderId = createOrderResponse.data.order._id;
-      localStorage.setItem('latestOrderId', orderId);
+      // Step 1: Create the order first
+      try {
+        // Prepare order data with payment method
+        const orderData = {
+          ...pendingOrder,
+          paymentMethod: isCashOnDelivery ? 'COD' : 'ONLINE',
+          paymentDetails: {
+            screenshotUploaded: isScreenshotUploaded,
+            transactionId: transactionId || null,
+            isCashOnDelivery
+          }
+        };
 
-      // Step 2: Update payment status for the newly created order
-      const paymentResponse = await axios.put(
-        `https://peghouse.in/api/orders/${orderId}/pay`,
-        {
-          screenshotUploaded: isScreenshotUploaded,
-          paymentProof: isScreenshotUploaded ? 'placeholder.jpg' : '',
-          transactionId: transactionId || null,
-          isCashOnDelivery,
-        },
-        {
+        console.log('Creating order with data:', orderData);
+
+        const createOrderResponse = await axios.post('https://peghouse.in/api/orders', orderData, {
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          }
+        });
+        
+        console.log('Order creation response:', createOrderResponse.data);
+        
+        if (!createOrderResponse.data) {
+          throw new Error('No response data received from order creation');
+        }
+        
+        if (!createOrderResponse.data.order) {
+          throw new Error('No order object in response data');
+        }
+        
+        if (!createOrderResponse.data.order._id) {
+          throw new Error('No order ID in response data');
+        }
+        
+        orderId = createOrderResponse.data.order._id;
+        localStorage.setItem('latestOrderId', orderId);
+        console.log('Order created successfully with ID:', orderId);
+
+        // Clear the cart in the backend immediately after successful order creation
+        const userId = localStorage.getItem('userId');
+        if (userId) {
+          try {
+            // Updated cart clearing endpoint
+            await axios.delete('https://peghouse.in/api/cart/clear', {
+              data: { userId },
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+              }
+            });
+            // Clear cart context
+            setContextItems([]);
+            console.log('Cart cleared successfully');
+          } catch (error) {
+            console.error('Error clearing cart:', error);
+            // Continue with success flow even if cart clearing fails
           }
         }
-      );
+      } catch (orderError: any) {
+        console.error('Order creation error details:', {
+          message: orderError.message,
+          response: orderError.response?.data,
+          status: orderError.response?.status,
+          pendingOrder: pendingOrder
+        });
 
-      if (paymentResponse.data.message === 'Payment status updated successfully') {
+        let errorMessage = 'There was an issue creating your order. ';
+        
+        if (orderError.response?.status === 401) {
+          errorMessage += 'Please login again and try.';
+        } else if (orderError.response?.status === 400) {
+          errorMessage += 'Please check your order details and try again.';
+        } else if (orderError.response?.status === 500) {
+          errorMessage += 'Server error. Please try again in a few minutes.';
+        } else {
+          errorMessage += 'Please try again.';
+        }
+
+        alert(errorMessage);
+        return;
+      }
+
+      // Step 2: Try to update payment status
+      try {
+        console.log('Updating payment status for order:', orderId);
+        
+        const paymentResponse = await axios.put(
+          `https://peghouse.in/api/orders/${orderId}/pay`,
+          {
+            screenshotUploaded: isScreenshotUploaded,
+            paymentProof: isScreenshotUploaded ? 'placeholder.jpg' : '',
+            transactionId: transactionId || null,
+            isCashOnDelivery,
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            }
+          }
+        );
+
+        console.log('Payment status update response:', paymentResponse.data);
+
         // Clear the pending order data from localStorage
         localStorage.removeItem('pendingOrderData');
+        console.log('Pending order data cleared');
         
         // Navigate to success page
-        navigate('/order-success');
-      } else {
-        console.error("Payment failed:", paymentResponse.data);
-        alert('Payment failed. Please try again.');
+        navigationPatterns.goToOrderSuccess(navigate);
+      } catch (paymentError: any) {
+        console.error('Payment processing error details:', {
+          message: paymentError.message,
+          response: paymentError.response?.data,
+          status: paymentError.response?.status
+        });
+        
+        // Even if payment processing fails, proceed with success
+        // Clear the pending order data from localStorage
+        localStorage.removeItem('pendingOrderData');
+        // Navigate to success page
+        navigationPatterns.goToOrderSuccess(navigate);
       }
     } catch (err: unknown) {
-      console.error('Order/Payment error:', err instanceof Error && err.hasOwnProperty('response') 
+      console.error('General error:', err instanceof Error && err.hasOwnProperty('response') 
         ? (err as any).response?.data 
         : err);
-      alert('Something went wrong while processing your order. Please try again.');
+      alert('Something went wrong. Please contact support if the issue persists.');
     } finally {
       setIsLoading(false);
     }
@@ -198,37 +269,11 @@ const Payment = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="max-w-7xl mx-auto px-4 py-4">
-        <div className="flex justify-center mb-4">
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => navigate(-1)}
-              className={`p-2 rounded-full transition-colors ${canGoBack ? 'hover:bg-gray-100' : 'opacity-50 cursor-not-allowed'}`}
-              disabled={!canGoBack}
-              aria-label="Go back"
-            >
-              <ChevronLeft size={20} className="text-gray-700" />
-            </button>
-            <div
-              className="cursor-pointer inline-block"
-              onClick={() => navigate('/dashboard')}
-            >
-              <img
-                src="/finallogo.png"
-                alt="Drnkly Logo"
-                className="h-12 sm:h-16 md:h-20 lg:h-24 mx-auto object-contain"
-              />
-            </div>
-            <button
-              onClick={() => navigate(1)}
-              className={`p-2 rounded-full transition-colors ${canGoForward ? 'hover:bg-gray-100' : 'opacity-50 cursor-not-allowed'}`}
-              disabled={!canGoForward}
-              aria-label="Go forward"
-            >
-              <ChevronRight size={20} className="text-gray-700" />
-            </button>
-          </div>
-        </div>
+      <div className="bg-white px-4 py-4 flex items-center shadow-md">
+        <button onClick={() => navigationPatterns.goBack(navigate)} className="p-2">
+          <ArrowLeft size={24} />
+        </button>
+        <h1 className="text-2xl font-semibold text-center flex-1">Payment</h1>
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-6 md:px-8 md:py-6">
