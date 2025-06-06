@@ -3,22 +3,21 @@ const router = express.Router();
 const multer = require('multer');
 const upload = multer({ dest: 'uploads/idproofs/' });
 
-
-
 const {
   signup,
-
+  sendOtp,
+  verifyOtp,
   resetPassword,
+  sendRegistrationOtp,
+  verifyRegistrationOtp,
   login
 } = require('../controllers/authController');
 
-// Import controller functions
-const { handleSendOtp, handleVerifyOtp } = require('../controllers/authController');
-
-// OTP Routes
-router.post('/send-otp', handleSendOtp);  // Send OTP route
-router.post('/verify-otp', handleVerifyOtp);  // Verify OTP route
-
+// All routes together
+router.post('/send-registration-otp', sendRegistrationOtp);
+router.post('/verify-registration-otp', verifyRegistrationOtp);
+router.post('/send-email-otp', sendOtp);
+router.post('/verify-email-otp', verifyOtp);
 router.post('/reset-password', resetPassword);
 router.post('/signup', upload.single('idProof'), signup);
 router.post('/login', login); // ✅ Login route
