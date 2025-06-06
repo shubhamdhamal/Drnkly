@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, Search, ShoppingCart, X, User, Settings, LogOut, BookOpen, Clock, AlertTriangle, Sparkles, ChevronLeft, ChevronRight, Gift } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import oldMonkImage from './pop.jpeg';
 import CartCounter from '../components/CartCounter';
@@ -62,15 +62,16 @@ const stores = [
 const banners = [
   {
     id: 1,
-    image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=2070&auto=format&fit=crop",
-    title: "Premium Drinks Delivered",
-    description: "Fast delivery in 45 minutes or less. Order now!",
+    image: "/banner.png",
+    title: "Get 180ml OLD MONK Quarter Free!",
+    description: "On Your First Order",
+    description: "Delivered in 45 min",
     type: "featured",
     theme: "whiskey"
   },
   {
     id: 2,
-    image: "https://images.unsplash.com/photo-1616527546362-77e70524262d?q=80&w=2070&auto=format&fit=crop",
+    image: "/banner.png",
     title: "Weekend Special Offers",
     description: "Up to 20% off on premium liquor brands and free delivery on orders above ₹999",
     type: "special",
@@ -78,7 +79,7 @@ const banners = [
   },
   {
     id: 3,
-    image: "https://images.unsplash.com/photo-1574807947927-2960b61a4dba?q=80&w=2070&auto=format&fit=crop",
+    image: "/banner.png",
     title: "Craft Beer Collection",
     description: "Discover our handpicked selection of local craft beers",
     type: "regular",
@@ -86,7 +87,7 @@ const banners = [
   },
   {
     id: 4,
-    image: "https://images.unsplash.com/photo-1528823872057-9c018a7a7553?q=80&w=2070&auto=format&fit=crop",
+    image: "/banner.png",
     title: "Premium Party Packages",
     description: "Everything you need for your weekend gathering in one order",
     type: "regular",
@@ -125,7 +126,6 @@ const OldMonkPromotion = ({ isOpen, onClose, onGetOffer }: { isOpen: boolean, on
 
 function Dashboard() {
   const navigate = useNavigate();
-  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [sparklePosition, setSparklePosition] = useState({ x: 0, y: 0 });
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -139,10 +139,6 @@ function Dashboard() {
   
   // Old Monk promotion state
   const [showOldMonkPromo, setShowOldMonkPromo] = useState(false);
-
-  // Check if we can go back/forward
-  const [canGoBack, setCanGoBack] = useState(false);
-  const [canGoForward, setCanGoForward] = useState(false);
 
   // Initialize Facebook Pixel
   useEffect(() => {
@@ -389,19 +385,6 @@ function Dashboard() {
     }
   };
 
-  // Check if we can go back/forward
-  useEffect(() => {
-    const handlePopState = () => {
-      setCanGoBack(window.history.state?.idx > 0);
-      setCanGoForward(window.history.state?.idx < window.history.length - 1);
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    handlePopState(); // Initial check
-
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Add simplified animation styles */}
@@ -420,23 +403,13 @@ function Dashboard() {
       >
         <div className="max-w-7xl mx-auto px-2 sm:px-4 py-2">
           <div className="flex items-center justify-between h-14 sm:h-16">
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => navigate(-1)}
-                className={`p-2 rounded-full transition-colors ${canGoBack ? 'hover:bg-gray-100' : 'opacity-50 cursor-not-allowed'}`}
-                disabled={!canGoBack}
-                aria-label="Go back"
-              >
-                <ChevronLeft size={20} className="text-gray-700" />
-              </button>
-              <button
-                onClick={toggleMenu}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                aria-label="Open menu"
-              >
-                <Menu size={20} className="text-gray-700" />
-              </button>
-            </div>
+            <button
+              onClick={toggleMenu}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              aria-label="Open menu"
+            >
+              <Menu size={20} className="text-gray-700" />
+            </button>
 
             <div
               className="cursor-pointer inline-block"
@@ -450,14 +423,14 @@ function Dashboard() {
             </div>
 
             <div className="flex items-center space-x-2 sm:space-x-4">
+              {/* Facebook Pixel Button */}
               <button
-                onClick={() => navigate(1)}
-                className={`p-2 rounded-full transition-colors ${canGoForward ? 'hover:bg-gray-100' : 'opacity-50 cursor-not-allowed'}`}
-                disabled={!canGoForward}
-                aria-label="Go forward"
+                onClick={triggerFacebookPixelEvent}
+                className="bg-blue-600 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-full hover:bg-blue-700 transition-colors text-xs sm:text-sm font-medium shadow-sm"
               >
-                <ChevronRight size={20} className="text-gray-700" />
+                Track Event
               </button>
+              
               {isLoggedIn ? (
                 <button
                   onClick={handleLogout}
@@ -597,7 +570,7 @@ function Dashboard() {
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.onerror = null;
-                    target.src = "website1.png";
+                    target.src = "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=2070&auto=format&fit=crop";
                   }}
                 />
               </div>
