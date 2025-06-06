@@ -169,8 +169,6 @@ const CartPopup = ({
   );
 };
 
-
-
 function Products() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -194,6 +192,8 @@ function Products() {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchResultsRef = useRef<HTMLDivElement>(null);
+  const [canGoBack, setCanGoBack] = useState(false);
+  const [canGoForward, setCanGoForward] = useState(false);
 
   // Enhanced search function with debouncing
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
@@ -735,6 +735,19 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
     }
   `;
 
+  // Check if we can go back/forward
+  useEffect(() => {
+    const handlePopState = () => {
+      setCanGoBack(window.history.state?.idx > 0);
+      setCanGoForward(window.history.state?.idx < window.history.length - 1);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    handlePopState(); // Initial check
+
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   return (
     <div className="container mx-auto" style={{ 
       padding: '20px',
@@ -762,17 +775,35 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
       <div style={{ position: 'relative', zIndex: 1 }}>
         {/* Header */}
         <div className="flex justify-between items-center px-2 py-1">
-          <div
-            className="cursor-pointer"
-            onClick={() => navigate('/dashboard')}
-          >
-            <img
-              src="/finallogo.png"
-              alt="Drnkly Logo"
-              className="h-20 md:h-24 lg:h-26 object-contain"
-            />
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => navigate(-1)}
+              className={`p-2 rounded-full transition-colors ${canGoBack ? 'hover:bg-gray-100' : 'opacity-50 cursor-not-allowed'}`}
+              disabled={!canGoBack}
+              aria-label="Go back"
+            >
+              <ChevronLeft size={20} className="text-gray-700" />
+            </button>
+            <div
+              className="cursor-pointer"
+              onClick={() => navigate('/dashboard')}
+            >
+              <img
+                src="/finallogo.png"
+                alt="Drnkly Logo"
+                className="h-20 md:h-24 lg:h-26 object-contain"
+              />
+            </div>
           </div>
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate(1)}
+              className={`p-2 rounded-full transition-colors ${canGoForward ? 'hover:bg-gray-100' : 'opacity-50 cursor-not-allowed'}`}
+              disabled={!canGoForward}
+              aria-label="Go forward"
+            >
+              <ChevronRight size={20} className="text-gray-700" />
+            </button>
             {isLoggedIn ? (
               <button
                 onClick={handleLogout}
