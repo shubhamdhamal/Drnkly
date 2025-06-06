@@ -39,16 +39,6 @@ function SignUp() {
     special: false
   });
 
-  // Add new state for OTP
-  const [otp, setOtp] = useState('');
-  const [isOtpSent, setIsOtpSent] = useState(false);
-  const [isOtpVerified, setIsOtpVerified] = useState(false);
-  const [otpError, setOtpError] = useState('');
-  const [otpSuccess, setOtpSuccess] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpVerified, setOtpVerified] = useState(false);
-  const otpInputRef = React.useRef<HTMLInputElement>(null);
-
   const allowedAlcoholStates: Record<string, string[]> = {
     'Maharashtra': ['Mumbai', 'Pune', 'Nagpur'],
     'Goa': ['Panaji', 'Margao'],
@@ -186,82 +176,10 @@ function SignUp() {
   const handleGoogleSignUp = async () => {
     try {
       // Redirect to Google OAuth endpoint
-      window.location.href = 'https://peghouse.in/api/auth/google';
+      window.location.href = 'http://localhost:5000/api/auth/google';
     } catch (error) {
       console.error('Google signup error:', error);
       setError('Failed to sign up with Google. Please try again.');
-    }
-  };
-
-const handleSendOtp = async () => {
-  // Validate email format before sending OTP
-  if (!formData.email || !validateEmail(formData.email)) {
-    setError('Please enter a valid email address.');
-    return;
-  }
-
-  try {
-    setOtpSuccess('OTP sending...');
-
-    // API call to send OTP
-    const response = await axios.post('https://peghouse.in/api/auth/send-otp', {
-      email: formData.email
-    });
-
-    // Check if OTP was sent successfully
-    if (response.data.success) {
-      setIsOtpSent(true);
-      setOtpSent(true);
-      setError('');
-      setOtpSuccess('✅ OTP sent to your email!');
-      
-      // Focus on OTP input field after a slight delay
-      setTimeout(() => {
-        otpInputRef.current?.focus();
-      }, 100);
-    }
-  } catch (err) {
-    // Clear success message and set error message
-    setOtpSuccess('');
-    setError(err.response?.data?.message || 'Error sending OTP. Please try again.');
-  }
-};
-
-
-
-
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && otp.length > 0) {
-      handleVerifyOtp();
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    if (!otp) {
-      setOtpError('Please Enter OTP ');
-      return;
-    }
-
-    try {
-      setOtpSuccess('OTP Verified Successfully...');
-      const response = await axios.post('https://peghouse.in/api/auth/verify-otp', {
-        email: formData.email,
-        otp: otp
-      });
-      
-      if (response.data.success) {
-        setIsOtpVerified(true);
-        setOtpVerified(true);
-        setOtpError('');
-        setError('');
-        
-        setTimeout(() => {
-          setOtpSuccess('');
-        }, 3000);
-      }
-    } catch (err: any) {
-      setOtpError(err.response?.data?.message || 'Invalid Otp. Please Try Again');
-      setOtpSuccess('');
     }
   };
 
@@ -311,129 +229,41 @@ const handleSendOtp = async () => {
           {step === 1 && (
             <>
               <div>
-                <label>Email</label>
-                <div className="flex gap-2">
-                  <input
-                    type="email"
-                    className="w-full border px-3 py-2 rounded"
-                    placeholder="Email"
-                    value={formData.email}
-                    onChange={(e) => {
-                      setFormData({ ...formData, email: e.target.value });
-                      setIsOtpSent(false);
-                      setIsOtpVerified(false);
-                      setOtpSent(false);
-                      setOtpVerified(false);
-                      setOtp('');
-                      setOtpSuccess('');
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleSendOtp}
-                    disabled={!formData.email || !validateEmail(formData.email)}
-                    className={`px-4 py-2 rounded ${
-                      !formData.email || !validateEmail(formData.email)
-                        ? 'bg-gray-300 cursor-not-allowed'
-                        : 'bg-blue-500 text-white hover:bg-blue-600'
-                    }`}
-                  >
-                    Send OTP
-                  </button>
-                </div>
-                {formData.email && !validateEmail(formData.email) && (
-                  <p className="text-red-500 text-xs mt-1">Please Entered valid Email-id.</p>
-                )}
-                {otpSuccess && (
-                  <p className="text-green-600 text-sm mt-1">{otpSuccess}</p>
-                )}
+                <label>State</label>
+                <select
+                  className="w-full border px-3 py-2 rounded"
+                  value={extraData.state}
+                  onChange={(e) =>
+                    setExtraData({ ...extraData, state: e.target.value, city: '' })
+                  }
+                >
+                  <option value="">-- Select State --</option>
+                  {Object.keys(allowedAlcoholStates).map((state) => (
+                    <option key={state} value={state}>
+                      {state}
+                    </option>
+                  ))}
+                </select>
               </div>
-
-              {otpSent && (
-                <div className="mt-4">
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                    <div className="flex items-center">
-                      <Mail className="text-blue-500 mr-2" size={20} />
-                      <p className="text-blue-700 text-sm">
-                        Please Entered OTP sent to your email
-                      </p>
-                    </div>
-                  </div>
-                  <label>Enter OTP</label>
-                  <div className="flex gap-2">
-                    <input
-                      ref={otpInputRef}
-                      type="text"
-                      className="w-full border px-3 py-2 rounded"
-                      placeholder="Enter OTP"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      autoFocus
-                    />
-                    <button
-                      type="button"
-                      onClick={handleVerifyOtp}
-                      disabled={!otp}
-                      className={`px-4 py-2 rounded ${
-                        !otp
-                          ? 'bg-gray-300 cursor-not-allowed'
-                          : 'bg-green-500 text-white hover:bg-green-600'
-                      }`}
-                    >
-                      Verify OTP
-                    </button>
-                  </div>
-                  {otpError && (
-                    <p className="text-red-500 text-xs mt-1">{otpError}</p>
-                  )}
-                  {otpSuccess && (
-                    <p className="text-green-600 text-sm mt-1">{otpSuccess}</p>
-                  )}
-                </div>
-              )}
-
-              {/* Show state and city selection only after OTP verification */}
-              {isOtpVerified && (
-                <>
-                  <div className="mt-4">
-                    <label>State</label>
-                    <select
-                      className="w-full border px-3 py-2 rounded"
-                      value={extraData.state}
-                      onChange={(e) =>
-                        setExtraData({ ...extraData, state: e.target.value, city: '' })
-                      }
-                    >
-                      <option value="">-- Select State --</option>
-                      {Object.keys(allowedAlcoholStates).map((state) => (
-                        <option key={state} value={state}>
-                          {state}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="mt-4">
-                    <label>City</label>
-                    <select
-                      className="w-full border px-3 py-2 rounded"
-                      value={extraData.city}
-                      onChange={(e) =>
-                        setExtraData({ ...extraData, city: e.target.value })
-                      }
-                      disabled={!extraData.state}
-                    >
-                      <option value="">-- Select City --</option>
-                      {extraData.state &&
-                        allowedAlcoholStates[extraData.state].map((city) => (
-                          <option key={city} value={city}>
-                            {city}
-                          </option>
-                        ))}
-                    </select>
-                  </div>
-                </>
-              )}
+              <div>
+                <label>City</label>
+                <select
+                  className="w-full border px-3 py-2 rounded"
+                  value={extraData.city}
+                  onChange={(e) =>
+                    setExtraData({ ...extraData, city: e.target.value })
+                  }
+                  disabled={!extraData.state}
+                >
+                  <option value="">-- Select City --</option>
+                  {extraData.state &&
+                    allowedAlcoholStates[extraData.state].map((city) => (
+                      <option key={city} value={city}>
+                        {city}
+                      </option>
+                    ))}
+                </select>
+              </div>
             </>
           )}
 
@@ -502,7 +332,7 @@ const handleSendOtp = async () => {
             </>
           )}
 
-    {step === 4 && (
+        {step === 4 && (
   <>
             <div>
                 <label>Name</label>
