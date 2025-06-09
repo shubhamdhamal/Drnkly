@@ -21,11 +21,10 @@ import IssueTracking from './pages/IssueTracking';
 // Protected route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = localStorage.getItem('authToken') !== null;
-  const isSkippedLogin = localStorage.getItem('isSkippedLogin') === 'true';
   const location = useLocation();
 
-  if (!isAuthenticated && !isSkippedLogin) {
-    // Redirect to login if not authenticated and not skipped login
+  if (!isAuthenticated) {
+    // Always redirect to login if not authenticated
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

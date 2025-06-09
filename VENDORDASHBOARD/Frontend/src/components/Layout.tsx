@@ -39,14 +39,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   ];
 
   const handleLogout = () => {
-    // Remove both auth token and skipped login flag
+    // Clear all auth data
     localStorage.removeItem('authToken');
-    localStorage.removeItem('isSkippedLogin');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('user');
     
-    // Dispatch a storage event to notify other components
+    // Dispatch storage event
     window.dispatchEvent(new Event('storage'));
     
-    navigate('/login'); // Navigate to login page
+    // Navigate to login
+    navigate('/login');
   };
 
   return (

@@ -140,10 +140,6 @@ function Dashboard() {
   // Old Monk promotion state
   const [showOldMonkPromo, setShowOldMonkPromo] = useState(false);
 
-  // Check if we can go back/forward
-  const [canGoBack, setCanGoBack] = useState(false);
-  const [canGoForward, setCanGoForward] = useState(false);
-
   // Initialize Facebook Pixel
   useEffect(() => {
     // Add Facebook Pixel base code
@@ -389,19 +385,6 @@ function Dashboard() {
     }
   };
 
-  // Check if we can go back/forward
-  useEffect(() => {
-    const handlePopState = () => {
-      setCanGoBack(window.history.state?.idx > 0);
-      setCanGoForward(window.history.state?.idx < window.history.length - 1);
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    handlePopState(); // Initial check
-
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Add simplified animation styles */}
@@ -421,14 +404,6 @@ function Dashboard() {
         <div className="max-w-7xl mx-auto px-2 sm:px-4 py-2">
           <div className="flex items-center justify-between h-14 sm:h-16">
             <div className="flex items-center space-x-2">
-              <button
-                onClick={() => navigate(-1)}
-                className={`p-2 rounded-full transition-colors ${canGoBack ? 'hover:bg-gray-100' : 'opacity-50 cursor-not-allowed'}`}
-                disabled={!canGoBack}
-                aria-label="Go back"
-              >
-                <ChevronLeft size={20} className="text-gray-700" />
-              </button>
               <button
                 onClick={toggleMenu}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -450,14 +425,6 @@ function Dashboard() {
             </div>
 
             <div className="flex items-center space-x-2 sm:space-x-4">
-              <button
-                onClick={() => navigate(1)}
-                className={`p-2 rounded-full transition-colors ${canGoForward ? 'hover:bg-gray-100' : 'opacity-50 cursor-not-allowed'}`}
-                disabled={!canGoForward}
-                aria-label="Go forward"
-              >
-                <ChevronRight size={20} className="text-gray-700" />
-              </button>
               {isLoggedIn ? (
                 <button
                   onClick={handleLogout}

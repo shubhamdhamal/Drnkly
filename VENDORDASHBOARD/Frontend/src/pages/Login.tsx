@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { LogIn, Store, Eye, EyeOff } from 'lucide-react';
 import Input from '../components/Input';
 import Button from '../components/Button';
 import axios from 'axios';
+
+// Session timeout in milliseconds (30 minutes)
+const SESSION_TIMEOUT = 30 * 60 * 1000;
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -13,26 +16,58 @@ const Login: React.FC = () => {
   const [error, setError] = React.useState<string | null>(null);
   const [rememberMe, setRememberMe] = React.useState(false);
   const [showPassword, setShowPassword] = React.useState(false);
+  const [sessionTimer, setSessionTimer] = React.useState<NodeJS.Timeout | null>(null);
+  const [lastActivityTime, setLastActivityTime] = React.useState<number>(Date.now());
 
-  // Session timeout in milliseconds (30 minutes)
-  const SESSION_TIMEOUT = 30 * 60 * 1000;
-  let sessionTimer: number | undefined;
+  // Function to handle session timeout
+  const handleSessionTimeout = useCallback(() => {
+    // Clear all auth data
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('user');
+    localStorage.removeItem('sessionStartTime');
+    
+    // Show timeout message
+    alert('Your session has expired due to inactivity. Please login again.');
+    
+    // Redirect to login
+    navigate('/login');
+  }, [navigate]);
 
-  // Function to reset the session timer
-  const resetSessionTimer = () => {
+  // Function to reset session timer
+  const resetSessionTimer = useCallback(() => {
+    // Clear existing timer
     if (sessionTimer) {
-      window.clearTimeout(sessionTimer);
+      clearTimeout(sessionTimer);
     }
 
-    sessionTimer = window.setTimeout(() => {
-      localStorage.removeItem('authToken');
-      navigate('/login');
-      alert('Your session has expired. Please login again.');
-    }, SESSION_TIMEOUT);
-  };
+    // Update last activity time
+    setLastActivityTime(Date.now());
 
-  React.useEffect(() => {
-    const activityEvents = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
+    // Set new timer
+    const timer = setTimeout(() => {
+      const currentTime = Date.now();
+      const timeSinceLastActivity = currentTime - lastActivityTime;
+      
+      if (timeSinceLastActivity >= SESSION_TIMEOUT) {
+        handleSessionTimeout();
+      }
+    }, SESSION_TIMEOUT);
+
+    setSessionTimer(timer);
+  }, [sessionTimer, lastActivityTime, handleSessionTimeout]);
+
+  // Track user activity
+  useEffect(() => {
+    const activityEvents = [
+      'mousedown',
+      'mousemove',
+      'keydown',
+      'scroll',
+      'touchstart',
+      'click',
+      'keypress'
+    ];
 
     const handleUserActivity = () => {
       const token = localStorage.getItem('authToken');
@@ -41,25 +76,40 @@ const Login: React.FC = () => {
       }
     };
 
+    // Add event listeners
     activityEvents.forEach(event => {
       window.addEventListener(event, handleUserActivity);
     });
 
+    // Check for existing session
     const token = localStorage.getItem('authToken');
-    if (token) {
-      resetSessionTimer();
-      navigate('/dashboard');
+    const sessionStartTime = localStorage.getItem('sessionStartTime');
+    
+    if (token && sessionStartTime) {
+      const startTime = new Date(sessionStartTime).getTime();
+      const currentTime = Date.now();
+      const sessionAge = currentTime - startTime;
+
+      if (sessionAge >= SESSION_TIMEOUT) {
+        // Session has expired
+        handleSessionTimeout();
+      } else {
+        // Session is still valid, reset timer
+        resetSessionTimer();
+        navigate('/dashboard');
+      }
     }
 
+    // Cleanup function
     return () => {
       if (sessionTimer) {
-        window.clearTimeout(sessionTimer);
+        clearTimeout(sessionTimer);
       }
       activityEvents.forEach(event => {
         window.removeEventListener(event, handleUserActivity);
       });
     };
-  }, [navigate]);
+  }, [navigate, resetSessionTimer, handleSessionTimeout, sessionTimer]);
 
   const handleEmailOrPhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmailOrPhone(e.target.value);
@@ -108,8 +158,14 @@ const Login: React.FC = () => {
       const token = response.data.token;
 
       if (token) {
+        // Store auth data
         localStorage.setItem('authToken', token);
+        localStorage.setItem('sessionStartTime', new Date().toISOString());
+        
+        // Reset session timer
         resetSessionTimer();
+        
+        // Navigate to dashboard
         navigate('/dashboard');
       } else {
         setError('Invalid credentials.');
