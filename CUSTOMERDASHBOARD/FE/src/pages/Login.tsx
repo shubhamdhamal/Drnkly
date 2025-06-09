@@ -108,87 +108,70 @@ function Login() {
   }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-  
-    // Validation only for Terms agreement
-    if (!agreedToTerms) {
-      setError('Please agree to the Terms & Govt. Regulations.');
-      return;
-    }
-  
-    // Mobile number length validation
-    if (!mobile || mobile.length !== 10) {
-      setError('Mobile number must be exactly 10 digits.');
-      return;
-    }
-  
-    // Validate user input
-    if (!password) {
-      setError('Please enter your password.');
-      return;
-    }
-  
-    // Make the API call to login
-    try {
-      const response = await axios.post('https://peghouse.in/api/auth/login', { mobile, password });
-  
-      if (response.data.message === 'Login successful') {
-        // ✅ Status Check
-        const status = response.data.user.status;
-  
-        if (status === 'Pending') {
-          setError('🕒 Your account is pending verification. Please wait for admin approval.');
-          return;
-        } else if (status === 'Rejected') {
-          setError('❌ Your account has been rejected due to government rules.');
-          return;
-        }
-  
-        // Store JWT token and user data
-        localStorage.setItem('authToken', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        localStorage.setItem('userId', response.data.user._id);
-        
-        // Add session start time
-        localStorage.setItem('sessionStartTime', new Date().toISOString());
-        
-        // Remove skipped login flag
-        localStorage.removeItem('isSkippedLogin');
-        localStorage.removeItem('oldMonkOfferShown');
-        
-        console.log('Login successful, localStorage updated:', { 
-          token: true, 
-          userId: true, 
-          skipped: false,
-          sessionStartTime: new Date().toISOString()
-        });
-        
-        // Dispatch storage event
-        window.dispatchEvent(new Event('storage'));
-  
-        // ✅ Location check
-        if (localStorage.getItem('locationGranted') === 'true') {
-          navigate('/dashboard');
-        } else {
-          setShowLocationPopup(true);
-        }
-      }
-    } catch (error) {
-      const msg = (error as any).response?.data?.message;
-  
-      if (msg === 'User not found') {
-        setError('No account found with this mobile number.');
-      } else if (msg === 'Invalid credentials') {
-        setError('Incorrect mobile number or password.');
-      } else if (msg === 'Your account is pending verification. Please wait for approval.') {
-        setError('🕒 Your account is pending verification. Please wait for admin approval.');
-      } else if (msg === 'Your account has been rejected due to government regulations.') {
-        setError('❌ Your account has been rejected due to government rules.');
+  e.preventDefault();
+
+  // Validation only for Terms agreement
+  if (!agreedToTerms) {
+    setError('Please agree to the Terms & Govt. Regulations.');
+    return;
+  }
+
+  // Mobile number length validation
+  if (!mobile || mobile.length !== 10) {
+    setError('Mobile number must be exactly 10 digits.');
+    return;
+  }
+
+  // Validate user input
+  if (!password) {
+    setError('Please enter your password.');
+    return;
+  }
+
+  // Make the API call to login
+  try {
+    const response = await axios.post('https://peghouse.in/api/auth/login', { mobile, password });
+
+    if (response.data.message === 'Login successful') {
+      // Store JWT token
+      localStorage.setItem('authToken', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      localStorage.setItem('userId', response.data.user._id);
+
+      // Make sure to remove the skipped login flag if it exists
+      localStorage.removeItem('isSkippedLogin');
+
+      // Reset the Old Monk offer shown flag to ensure they see it on this login
+      localStorage.removeItem('oldMonkOfferShown');
+
+      console.log('Login successful, localStorage updated:', { 
+        token: true, 
+        userId: true, 
+        skipped: false 
+      });
+
+      // Dispatch a storage event to notify other components
+      window.dispatchEvent(new Event('storage'));
+
+      // ✅ Location check
+      if (localStorage.getItem('locationGranted') === 'true') {
+        navigate('/dashboard');
       } else {
-        setError('Something went wrong. Please try again.');
+        setShowLocationPopup(true);
       }
     }
-  };
+  } catch (error) {
+    const msg = (error as any).response?.data?.message;
+
+    if (msg === 'User not found') {
+      setError('No account found with this mobile number.');
+    } else if (msg === 'Invalid credentials') {
+      setError('Incorrect mobile number or password.');
+    } else {
+      setError('Something went wrong. Please try again.');
+    }
+  }
+};
   
   const handleLogout = () => {
     // Clear all auth data
