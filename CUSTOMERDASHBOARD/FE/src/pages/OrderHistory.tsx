@@ -99,27 +99,7 @@ const OrderHistory: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-80 px-3 py-">
       {/* Notification Popup */}
-      {showNotification && newOrder && (
-        <div className="fixed top-4 right-4 bg-green-500 text-white p-4 rounded-lg shadow-lg z-50 transform transition-all duration-300 ease-in-out translate-x-0 opacity-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-bold">New Order Received!</h3>
-              <p>Order #{orders.length} - {newOrder._id.slice(-5)}</p>
-              <p className="text-sm">
-  ₹{newOrder?.totalAmount && typeof newOrder.totalAmount === 'number' ? newOrder.totalAmount.toFixed(2) : '0.00'}
-</p>
-
-            </div>
-            <button 
-              onClick={() => setShowNotification(false)}
-              className="ml-4 text-white hover:text-gray-200 transition-colors duration-200"
-            >
-              <X size={20} />
-            </button>
-          </div>
-        </div>
-      )}
-
+      
       <div className="flex justify-center mb-6">
 
 <div 
