@@ -21,6 +21,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Use OTP Routes
 // ✅ Enable CORS before routes
 app.use(cors({
   origin: ['http://localhost:5173', 'https://peghouse.in'],
@@ -39,6 +40,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api', orderRoutes);         // General route (like /api/orders)
 app.use('/api/issues', issueRoutes);
+
 
 // ✅ Health check route
 app.get('/', (req, res) => {
