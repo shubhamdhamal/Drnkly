@@ -3,17 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import { CartItem } from '../context/CartContext';
-import { useCart } from '../context/CartContext';
 
 const Payment = () => {
   const navigate = useNavigate();
-
   const [items, setItems] = useState<CartItem[]>([]);
   const [isScreenshotUploaded, setIsScreenshotUploaded] = useState(false);
-  const [transactionId, setTransactionId] = useState<string>('');
-  const [isCashOnDelivery, setIsCashOnDelivery] = useState(false);
-  const [pendingOrder, setPendingOrder] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [transactionId, setTransactionId] = useState<string>(''); // New state for transaction ID
+  const [isCashOnDelivery, setIsCashOnDelivery] = useState(false); // New state for cash on delivery
   
   // Reference for payment method section
   const paymentMethodRef = useRef<HTMLDivElement>(null);
@@ -53,7 +49,7 @@ const Payment = () => {
     }
   };
 
-  // 🔁 Fetch cart items and pending order data
+  // 🔁 Fetch vendor cart items
   useEffect(() => {
     const fetchCart = async () => {
       const userId = localStorage.getItem('userId');
@@ -69,30 +65,13 @@ const Payment = () => {
 
     fetchCart();
     
-    // Get pending order data from localStorage
-    const pendingOrderData = localStorage.getItem('pendingOrderData');
-    if (pendingOrderData) {
-      try {
-        const orderData = JSON.parse(pendingOrderData);
-        setPendingOrder(orderData);
-      } catch (err) {
-        console.error('Failed to parse pending order data:', err);
-        alert('There was an issue with your order. Please try again.');
-        navigate('/checkout');
-      }
-    } else {
-      // If no pending order data, redirect back to checkout
-      alert('No order information found. Please complete the checkout process first.');
-      navigate('/checkout');
-    }
-    
     // Scroll to payment method section on component mount
     if (paymentMethodRef.current) {
       setTimeout(() => {
         paymentMethodRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 100);
     }
-  }, [navigate]);
+  }, []);
 
   const orderTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -118,41 +97,22 @@ const Payment = () => {
   const handlePaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!pendingOrder) {
-      alert('No order information found. Please complete the checkout process first.');
-      navigate('/checkout');
-      return;
-    }
+    const orderId = localStorage.getItem('latestOrderId');
+    if (!orderId) return alert('No order ID found. Please place an order first.');
 
     if (!isFormValid) {
       return alert('Please either provide payment details (transaction ID or screenshot) or select Cash on Delivery.');
     }
 
     try {
-      setIsLoading(true);
-      
-      // Step 1: Create the actual order first
-      const createOrderResponse = await axios.post('https://peghouse.in/api/orders', pendingOrder, {
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-      
-      if (!createOrderResponse.data || !createOrderResponse.data.order || !createOrderResponse.data.order._id) {
-        throw new Error('Failed to create order');
-      }
-      
-      const orderId = createOrderResponse.data.order._id;
-      localStorage.setItem('latestOrderId', orderId);
-
-      // Step 2: Update payment status for the newly created order
-      const paymentResponse = await axios.put(
+      // Send the request to backend
+      const res = await axios.put(
         `https://peghouse.in/api/orders/${orderId}/pay`,
         {
           screenshotUploaded: isScreenshotUploaded,
-          paymentProof: isScreenshotUploaded ? 'placeholder.jpg' : '',
+          paymentProof: isScreenshotUploaded ? 'placeholder.jpg' : '', // Send a dummy payment proof
           transactionId: transactionId || null,
-          isCashOnDelivery,
+          isCashOnDelivery, // Send the cash on delivery status
         },
         {
           headers: {
@@ -161,39 +121,17 @@ const Payment = () => {
         }
       );
 
-      if (paymentResponse.data.message === 'Payment status updated successfully') {
-        // Clear the pending order data from localStorage
-        localStorage.removeItem('pendingOrderData');
-        
-        // Clear the cart in backend
-        try {
-          const userId = localStorage.getItem('userId');
-          if (userId) {
-            await axios.delete('https://peghouse.in/api/cart/clear', {
-              data: { userId }
-            });
-          }
-        } catch (error) {
-          console.error('Error clearing cart:', error);
-          // Continue with success flow even if cart clearing fails
-        }
-        
-        // Clear the cart context
-        clearCart();
-        
-        // Navigate to success page
+      if (res.data.message === 'Payment status updated successfully') {
         navigate('/order-success');
       } else {
-        console.error("Payment failed:", paymentResponse.data);
+        console.error("Payment failed:", res.data);
         alert('Payment failed. Please try again.');
       }
     } catch (err: unknown) {
-      console.error('Order/Payment error:', err instanceof Error && err.hasOwnProperty('response') 
+      console.error('Payment error:', err instanceof Error && err.hasOwnProperty('response') 
         ? (err as any).response?.data 
         : err);
-      alert('Something went wrong while processing your order. Please try again.');
-    } finally {
-      setIsLoading(false);
+      alert('Something went wrong while submitting payment.');
     }
   };
 
@@ -350,14 +288,14 @@ const Payment = () => {
         {/* Pay Now Button */}
         <button
           onClick={handlePaymentSubmit}
-          disabled={!isFormValid || isLoading}
           className={`w-full py-4 rounded-xl font-semibold text-lg transition-colors ${
-            isFormValid && !isLoading
+            isFormValid 
               ? 'bg-blue-600 text-white hover:bg-blue-700' 
               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
           }`}
+          disabled={!isFormValid}
         >
-          {isLoading ? 'Processing...' : 'Place Order & Submit Payment'}
+          Submit Payment
         </button>
       </div>
     </div>
