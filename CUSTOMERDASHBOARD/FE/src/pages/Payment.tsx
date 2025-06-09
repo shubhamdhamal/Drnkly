@@ -1,22 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import { CartItem } from '../context/CartContext';
 import { useCart } from '../context/CartContext';
 
 const Payment = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { clearCart } = useCart();
+
   const [items, setItems] = useState<CartItem[]>([]);
   const [isScreenshotUploaded, setIsScreenshotUploaded] = useState(false);
   const [transactionId, setTransactionId] = useState<string>('');
   const [isCashOnDelivery, setIsCashOnDelivery] = useState(false);
   const [pendingOrder, setPendingOrder] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [canGoBack, setCanGoBack] = useState(false);
-  const [canGoForward, setCanGoForward] = useState(false);
   
   // Reference for payment method section
   const paymentMethodRef = useRef<HTMLDivElement>(null);
@@ -55,19 +52,6 @@ const Payment = () => {
       setIsCashOnDelivery(false);
     }
   };
-
-  // Check if we can go back/forward
-  useEffect(() => {
-    const handlePopState = () => {
-      setCanGoBack(window.history.state?.idx > 0);
-      setCanGoForward(window.history.state?.idx < window.history.length - 1);
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    handlePopState(); // Initial check
-
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
 
   // 🔁 Fetch cart items and pending order data
   useEffect(() => {
@@ -216,37 +200,11 @@ const Payment = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="max-w-7xl mx-auto px-4 py-4">
-        <div className="flex justify-center mb-4">
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => navigate(-1)}
-              className={`p-2 rounded-full transition-colors ${canGoBack ? 'hover:bg-gray-100' : 'opacity-50 cursor-not-allowed'}`}
-              disabled={!canGoBack}
-              aria-label="Go back"
-            >
-              <ChevronLeft size={20} className="text-gray-700" />
-            </button>
-            <div
-              className="cursor-pointer inline-block"
-              onClick={() => navigate('/dashboard')}
-            >
-              <img
-                src="/finallogo.png"
-                alt="Drnkly Logo"
-                className="h-12 sm:h-16 md:h-20 lg:h-24 mx-auto object-contain"
-              />
-            </div>
-            <button
-              onClick={() => navigate(1)}
-              className={`p-2 rounded-full transition-colors ${canGoForward ? 'hover:bg-gray-100' : 'opacity-50 cursor-not-allowed'}`}
-              disabled={!canGoForward}
-              aria-label="Go forward"
-            >
-              <ChevronRight size={20} className="text-gray-700" />
-            </button>
-          </div>
-        </div>
+      <div className="bg-white px-4 py-4 flex items-center shadow-md">
+        <button onClick={() => navigate('/checkout')} className="p-2">
+          <ArrowLeft size={24} />
+        </button>
+        <h1 className="text-2xl font-semibold text-center flex-1">Payment</h1>
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-6 md:px-8 md:py-6">

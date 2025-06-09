@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { MapPin, ChevronRight, ArrowLeft, ChevronLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { MapPin, ChevronRight, ArrowLeft } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import axios from 'axios';
 import { CartItem } from '../context/CartContext';
@@ -8,7 +8,6 @@ import { CartItem } from '../context/CartContext';
 
 function Checkout() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { items, setItems } = useCart(); // Ensure setItems is available in context
   const [address, setAddress] = useState({
     fullName: '',
@@ -21,21 +20,6 @@ function Checkout() {
   const [phoneError, setPhoneError] = useState('');
   const [formError, setFormError] = useState('');
   const userId = localStorage.getItem('userId');
-  const [canGoBack, setCanGoBack] = useState(false);
-  const [canGoForward, setCanGoForward] = useState(false);
-
-  // Check if we can go back/forward
-  useEffect(() => {
-    const handlePopState = () => {
-      setCanGoBack(window.history.state?.idx > 0);
-      setCanGoForward(window.history.state?.idx < window.history.length - 1);
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    handlePopState(); // Initial check
-
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
 
   // Fetch user profile information
   useEffect(() => {
@@ -257,198 +241,171 @@ setItems(populatedItems);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-4">
-        <div className="flex justify-center mb-4">
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => navigate(-1)}
-              className={`p-2 rounded-full transition-colors ${canGoBack ? 'hover:bg-gray-100' : 'opacity-50 cursor-not-allowed'}`}
-              disabled={!canGoBack}
-              aria-label="Go back"
-            >
-              <ChevronLeft size={20} className="text-gray-700" />
-            </button>
-            <div
-              className="cursor-pointer inline-block"
-              onClick={() => navigate('/dashboard')}
-            >
-              <img
-                src="/finallogo.png"
-                alt="Drnkly Logo"
-                className="h-12 sm:h-16 md:h-20 lg:h-24 mx-auto object-contain"
-              />
+      {/* Header */}
+      <div className="bg-white p-4 flex items-center">
+        <ArrowLeft className="cursor-pointer" onClick={() => navigate(-1)} />
+        <h1 className="text-xl font-semibold mx-auto">Checkout</h1>
+      </div>
+
+      <div className="max-w-3xl mx-auto p-4">
+        {/* Delivery Address */}
+        <div className="bg-white rounded-lg p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <MapPin className="text-gray-600 mr-2" />
+              <h2 className="text-lg font-semibold">Delivery Address</h2>
             </div>
-            <button
-              onClick={() => navigate(1)}
-              className={`p-2 rounded-full transition-colors ${canGoForward ? 'hover:bg-gray-100' : 'opacity-50 cursor-not-allowed'}`}
-              disabled={!canGoForward}
-              aria-label="Go forward"
-            >
-              <ChevronRight size={20} className="text-gray-700" />
-            </button>
           </div>
-        </div>
 
-        <div className="max-w-3xl mx-auto p-4">
-          {/* Delivery Address */}
-          <div className="bg-white rounded-lg p-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center">
-                <MapPin className="text-gray-600 mr-2" />
-                <h2 className="text-lg font-semibold">Delivery Address</h2>
-              </div>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                  <input
-                    type="text"
-                    value={address.fullName}
-                    onChange={(e) => setAddress({ ...address, fullName: e.target.value })}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                  <input
-                      type="tel"
-                      value={address.phone}
-                      onChange={(e) => {
-                        const phone = e.target.value;
-                        // Update phone and check if it's valid
-                        if (phone.length <= 10) {
-                          setAddress({ ...address, phone });
-                        }
-                      }}
-                      className={`w-full px-4 py-3 rounded-lg border ${address.phone.length !== 10 ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                      required
-                      maxLength={10}
-                      placeholder="Enter 10-digit phone number"
-                    />
-                      {address.phone.length !== 10 && address.phone.length > 0 && (
-                      <p className="text-red-500 text-sm">Phone number must be exactly 10 digits.</p>
-                    )}
-                </div>
-              </div>
-
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Street Address</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
                 <input
                   type="text"
-                  value={address.street}
-                  onChange={(e) => setAddress({ ...address, street: e.target.value })}
+                  value={address.fullName}
+                  onChange={(e) => setAddress({ ...address, fullName: e.target.value })}
                   className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
-                  <input
-                    type="text"
-                    value={address.city}
-                    readOnly
-                    className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:outline-none cursor-not-allowed"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
-                  <input
-                    type="text"
-                    value={address.state}
-                    readOnly
-                    className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:outline-none cursor-not-allowed"
-                  />
-                </div>
-              </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Pincode</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                <input
+                    type="tel"
+                    value={address.phone}
+                    onChange={(e) => {
+                      const phone = e.target.value;
+                      // Update phone and check if it's valid
+                      if (phone.length <= 10) {
+                        setAddress({ ...address, phone });
+                      }
+                    }}
+                    className={`w-full px-4 py-3 rounded-lg border ${address.phone.length !== 10 ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    required
+                    maxLength={10}
+                    placeholder="Enter 10-digit phone number"
+                  />
+                    {address.phone.length !== 10 && address.phone.length > 0 && (
+                    <p className="text-red-500 text-sm">Phone number must be exactly 10 digits.</p>
+                  )}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Street Address</label>
+              <input
+                type="text"
+                value={address.street}
+                onChange={(e) => setAddress({ ...address, street: e.target.value })}
+                className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
                 <input
                   type="text"
-                  value={address.pincode}
+                  value={address.city}
                   readOnly
                   className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:outline-none cursor-not-allowed"
                 />
               </div>
-            </form>
-          </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+                <input
+                  type="text"
+                  value={address.state}
+                  readOnly
+                  className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:outline-none cursor-not-allowed"
+                />
+              </div>
+            </div>
 
-          {/* Order Summary */}
-          <div className="bg-white rounded-lg p-6 mb-6">
-            <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
-            <div className="space-y-4">
-              {items.map((item, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <img 
-                      src={item.image} 
-                      alt={item.name}
-                      className="w-16 h-16 object-cover rounded-lg mr-4"
-                    />
-                    <div>
-                      <h3 className="font-medium">{item.name}</h3>
-                      <p className="text-gray-600">Quantity: {item.quantity}</p>
-                      {item.productId?.category === 'Drinks' && (
-                        <p className="text-sm text-red-600 mt-1">
-                          + ₹{(item.price * item.quantity * 0.35).toFixed(2)} Service Fee (35%)
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                  <p className="font-medium">₹{(item.price * item.quantity).toFixed(2)}</p>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Pincode</label>
+              <input
+                type="text"
+                value={address.pincode}
+                readOnly
+                className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:outline-none cursor-not-allowed"
+              />
+            </div>
+          </form>
+        </div>
+
+        {/* Order Summary */}
+        <div className="bg-white rounded-lg p-6 mb-6">
+          <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
+          <div className="space-y-4">
+            {items.map((item, index) => (
+              <div key={index} className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <img 
+                    src={item.image} 
+                    alt={item.name}
+                    className="w-16 h-16 object-cover rounded-lg mr-4"
+                  />
+                  <div>
+                    <h3 className="font-medium">{item.name}</h3>
+                    <p className="text-gray-600">Quantity: {item.quantity}</p>
                     {item.productId?.category === 'Drinks' && (
-                      <p className="text-xs text-gray-500">
-                        (₹{item.price.toFixed(2)} × {item.quantity})
+                      <p className="text-sm text-red-600 mt-1">
+                        + ₹{(item.price * item.quantity * 0.35).toFixed(2)} Service Fee (35%)
                       </p>
                     )}
                   </div>
                 </div>
-              ))}
-            </div>
-
-            <div className="border-t mt-4 pt-4 space-y-2">
-              <div className="flex justify-between text-gray-600">
-                <span>Subtotal</span>
-                <span>₹{orderTotal.toFixed(2)}</span>
+                <div className="text-right">
+                <p className="font-medium">₹{(item.price * item.quantity).toFixed(2)}</p>
+                  {item.productId?.category === 'Drinks' && (
+                    <p className="text-xs text-gray-500">
+                      (₹{item.price.toFixed(2)} × {item.quantity})
+                    </p>
+                  )}
+                </div>
               </div>
-              <div className="flex justify-between text-gray-600">
+            ))}
+          </div>
+
+          <div className="border-t mt-4 pt-4 space-y-2">
+            <div className="flex justify-between text-gray-600">
+              <span>Subtotal</span>
+              <span>₹{orderTotal.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-gray-600">
     <span>Drinks Service Fee (35%)</span>
     <span>₹{drinksFee.toFixed(2)}</span>
   </div>
-              <div className="flex justify-between text-gray-600">
-                <span>Delivery Fee</span>
-                <span>₹{deliveryCharges.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-gray-600">
-                <span>Platform Fee</span>
-                <span>₹{platform.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-gray-600">
-                <span>GST (18%)</span>
-                <span>₹{gstAmount.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between font-semibold text-lg pt-2">
-                <span>Total</span>
-                <span>₹{total.toFixed(2)}</span>
-              </div>
+            <div className="flex justify-between text-gray-600">
+              <span>Delivery Fee</span>
+              <span>₹{deliveryCharges.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-gray-600">
+              <span>Platform Fee</span>
+              <span>₹{platform.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-gray-600">
+              <span>GST (18%)</span>
+              <span>₹{gstAmount.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between font-semibold text-lg pt-2">
+              <span>Total</span>
+              <span>₹{total.toFixed(2)}</span>
             </div>
           </div>
-
-          {/* Proceed to Payment Button */}
-          <button
-            onClick={handleSubmit}
-            className="w-full bg-blue-600 text-white py-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center"
-          >
-            <span>Proceed to Payment</span>
-            <ChevronRight className="ml-2" />
-          </button>
         </div>
+
+        {/* Proceed to Payment Button */}
+        <button
+          onClick={handleSubmit}
+          className="w-full bg-blue-600 text-white py-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center"
+        >
+          <span>Proceed to Payment</span>
+          <ChevronRight className="ml-2" />
+        </button>
       </div>
     </div>
   );
