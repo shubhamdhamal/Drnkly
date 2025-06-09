@@ -1,10 +1,30 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Store, ArrowRight } from 'lucide-react';
 import Button from '../components/Button';
 
 const Welcome: React.FC = () => {
   const navigate = useNavigate();
+
+  // Check for existing authentication on component mount
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      // If already authenticated, redirect to dashboard
+      navigate('/dashboard');
+    }
+  }, [navigate]);
+
+  const handleGetStarted = () => {
+    // Clear any existing auth data
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('user');
+    localStorage.removeItem('isSkippedLogin');
+    
+    // Always navigate to login
+    navigate('/login');
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center p-4">
@@ -25,7 +45,7 @@ const Welcome: React.FC = () => {
           <Button
             className="text-lg px-8 py-3"
             icon={<ArrowRight className="w-6 h-6" />}
-            onClick={() => navigate('/login')}
+            onClick={handleGetStarted}
           >
             Get Started
           </Button>

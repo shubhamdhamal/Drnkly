@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Wine, AlertCircle, Eye, EyeOff, Mail } from 'lucide-react';
 import axios from 'axios';
+
+// Session timeout in milliseconds (1 hour)
+const SESSION_TIMEOUT = 60 * 60 * 1000;
 
 function Login() {
   const navigate = useNavigate();
@@ -29,6 +32,81 @@ function Login() {
       setMobile(value);
     }
   };
+
+  // Add session management
+  useEffect(() => {
+    let sessionTimer: NodeJS.Timeout;
+    let activityTimer: NodeJS.Timeout;
+
+    const resetSessionTimer = () => {
+      // Clear existing timer
+      if (sessionTimer) {
+        clearTimeout(sessionTimer);
+      }
+
+      // Set new timer for 1 hour
+      sessionTimer = setTimeout(() => {
+        handleAutoLogout();
+      }, SESSION_TIMEOUT);
+    };
+
+    const handleAutoLogout = () => {
+      // Clear all auth data
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('user');
+      
+      // Show logout message
+      alert('Your session has expired. Please login again.');
+      
+      // Redirect to login
+      navigate('/login');
+    };
+
+    // Function to track user activity
+    const trackUserActivity = () => {
+      // Clear existing activity timer
+      if (activityTimer) {
+        clearTimeout(activityTimer);
+      }
+
+      // Set new activity timer
+      activityTimer = setTimeout(() => {
+        // If no activity for 1 hour, logout
+        handleAutoLogout();
+      }, SESSION_TIMEOUT);
+    };
+
+    // Add event listeners for user activity
+    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    
+    activityEvents.forEach(event => {
+      window.addEventListener(event, () => {
+        resetSessionTimer();
+        trackUserActivity();
+      });
+    });
+
+    // Initial timer setup
+    if (localStorage.getItem('authToken')) {
+      resetSessionTimer();
+      trackUserActivity();
+    }
+
+    // Cleanup function
+    return () => {
+      if (sessionTimer) clearTimeout(sessionTimer);
+      if (activityTimer) clearTimeout(activityTimer);
+      
+      activityEvents.forEach(event => {
+        window.removeEventListener(event, () => {
+          resetSessionTimer();
+          trackUserActivity();
+        });
+      });
+    };
+  }, [navigate]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
   
@@ -66,24 +144,26 @@ function Login() {
           return;
         }
   
-        // Store JWT token
+        // Store JWT token and user data
         localStorage.setItem('authToken', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
         localStorage.setItem('userId', response.data.user._id);
         
-        // Make sure to remove the skipped login flag if it exists
-        localStorage.removeItem('isSkippedLogin');
+        // Add session start time
+        localStorage.setItem('sessionStartTime', new Date().toISOString());
         
-        // Reset the Old Monk offer shown flag to ensure they see it on this login
+        // Remove skipped login flag
+        localStorage.removeItem('isSkippedLogin');
         localStorage.removeItem('oldMonkOfferShown');
         
         console.log('Login successful, localStorage updated:', { 
           token: true, 
           userId: true, 
-          skipped: false 
+          skipped: false,
+          sessionStartTime: new Date().toISOString()
         });
         
-        // Dispatch a storage event to notify other components
+        // Dispatch storage event
         window.dispatchEvent(new Event('storage'));
   
         // ✅ Location check
@@ -110,7 +190,23 @@ function Login() {
     }
   };
   
-  
+  const handleLogout = () => {
+    // Clear all auth data
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('user');
+    localStorage.removeItem('sessionStartTime');
+    
+    // Set skipped login flag
+    localStorage.setItem('isSkippedLogin', 'true');
+    
+    console.log('Logout successful, localStorage cleared');
+    
+    // Dispatch storage event
+    window.dispatchEvent(new Event('storage'));
+    
+    navigate('/login');
+  };
 
   const handleLocationAccess = () => {
     if ("geolocation" in navigator) {

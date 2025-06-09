@@ -3,10 +3,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import axios from 'axios';
 import { CartItem } from '../context/CartContext';
+import { useCart } from '../context/CartContext';
 
 const Payment = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { clearCart } = useCart();
   const [items, setItems] = useState<CartItem[]>([]);
   const [isScreenshotUploaded, setIsScreenshotUploaded] = useState(false);
   const [transactionId, setTransactionId] = useState<string>('');
@@ -178,6 +180,22 @@ const Payment = () => {
       if (paymentResponse.data.message === 'Payment status updated successfully') {
         // Clear the pending order data from localStorage
         localStorage.removeItem('pendingOrderData');
+        
+        // Clear the cart in backend
+        try {
+          const userId = localStorage.getItem('userId');
+          if (userId) {
+            await axios.delete('https://peghouse.in/api/cart/clear', {
+              data: { userId }
+            });
+          }
+        } catch (error) {
+          console.error('Error clearing cart:', error);
+          // Continue with success flow even if cart clearing fails
+        }
+        
+        // Clear the cart context
+        clearCart();
         
         // Navigate to success page
         navigate('/order-success');
