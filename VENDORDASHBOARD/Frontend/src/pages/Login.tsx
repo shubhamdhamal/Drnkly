@@ -81,11 +81,17 @@ const Login: React.FC = () => {
       window.addEventListener(event, handleUserActivity);
     });
 
-    // Check for existing session
+    // Check for existing session and enforce login
     const token = localStorage.getItem('authToken');
     const sessionStartTime = localStorage.getItem('sessionStartTime');
     
-    if (token && sessionStartTime) {
+    if (!token) {
+      // If no token exists, redirect to login
+      navigate('/login');
+      return;
+    }
+    
+    if (sessionStartTime) {
       const startTime = new Date(sessionStartTime).getTime();
       const currentTime = Date.now();
       const sessionAge = currentTime - startTime;
@@ -98,6 +104,9 @@ const Login: React.FC = () => {
         resetSessionTimer();
         navigate('/dashboard');
       }
+    } else {
+      // If no session start time, redirect to login
+      navigate('/login');
     }
 
     // Cleanup function
