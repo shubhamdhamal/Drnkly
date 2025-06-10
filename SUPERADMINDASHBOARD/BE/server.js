@@ -9,7 +9,7 @@ const app = express();
 const PORT = 5003;
 
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://admin.peghouse.in'], // make sure frontend URL matches
+  origin: ['http://localhost:5173', 'https://admin.peghouse.in', 'https://dg.peghouse.in'], // make sure frontend URL matches
   credentials: true
 }));
 
