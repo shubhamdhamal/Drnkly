@@ -271,7 +271,7 @@ const Cart = () => {
     return sum;
   }, 0);
 
-  const shipping = 100;
+  let shipping = total > 500 ? 0 : 100;
   const platformFee = 12;
   const gst = (total + drinksFee) * 0.18;
   const finalTotal = total + drinksFee + shipping + platformFee + gst;
