@@ -520,15 +520,12 @@ const handleSendOtp = async () => {
 
     <div>
       <label>Email</label>
-      <input
-        type="email"
-        className="w-full border px-3 py-2 rounded"
-        placeholder="Email"
-        value={formData.email}
-        onChange={(e) =>
-          setFormData({ ...formData, email: e.target.value })
-        }
-      />
+     <input
+    type="email"
+    className="w-full border px-3 py-2 rounded bg-gray-100 text-gray-600 cursor-not-allowed"
+    value={formData.email}
+    disabled
+  />
       {formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) && (
         <p className="text-red-500 text-xs mt-1">Please enter a valid email address.</p>
       )}
