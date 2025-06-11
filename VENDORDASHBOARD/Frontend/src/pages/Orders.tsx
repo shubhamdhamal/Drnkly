@@ -102,14 +102,65 @@ const Orders: React.FC = () => {
 
   useEffect(() => {
     // Setup WebSocket connection for real-time updates
-    wsRef.current = new WebSocket('ws://localhost:5000/ws/orders');
-    
-    wsRef.current.onmessage = (event) => {
-      const newOrder = JSON.parse(event.data);
-      handleNewOrder(newOrder);
+    const connectWebSocket = () => {
+      wsRef.current = new WebSocket('wss://vendor.peghouse.in/ws/orders');
+      
+      wsRef.current.onopen = () => {
+        console.log('WebSocket Connected');
+        // Send authentication token
+        const token = localStorage.getItem('authToken');
+        if (token && wsRef.current) {
+          wsRef.current.send(JSON.stringify({ type: 'auth', token }));
+        }
+      };
+      
+      wsRef.current.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'new_order') {
+            const newOrder: Order = {
+              id: data.order.orderId,
+              orderNumber: data.order.orderNumber,
+              customerName: data.order.deliveryAddress?.fullName || 'Customer',
+              items: data.order.items.map((item: any) => ({
+                productId: item.productId,
+                name: item.name,
+                quantity: item.quantity,
+                price: item.price,
+                status: item.status,
+              })),
+              totalAmount: data.order.totalAmount || 0,
+              paymentStatus: data.order.paymentStatus || 'pending',
+              transactionId: data.order.transactionId || '',
+              paymentProof: data.order.paymentProof || '',
+              createdAt: data.order.createdAt,
+              readyForPickup: data.order.readyForPickup || false,
+            };
+            handleNewOrder(newOrder);
+          }
+        } catch (error) {
+          console.error('Error processing WebSocket message:', error);
+        }
+      };
+
+      wsRef.current.onerror = (error) => {
+        console.error('WebSocket Error:', error);
+      };
+
+      wsRef.current.onclose = () => {
+        console.log('WebSocket Disconnected - Attempting to reconnect...');
+        // Attempt to reconnect after 3 seconds
+        setTimeout(connectWebSocket, 3000);
+      };
     };
 
+    // Initial connection
+    connectWebSocket();
+
+    // Initial fetch of orders
     fetchOrders();
+
+    // Request notification permission
     requestNotificationPermission();
     
     return () => {
@@ -147,15 +198,24 @@ const Orders: React.FC = () => {
 
   const handleNewOrder = (newOrder: Order) => {
     setOrders(prev => {
-      // Remove the order if it already exists
-      const filteredOrders = prev.filter(o => o.id !== newOrder.id);
+      // Check if order already exists
+      const orderExists = prev.some(o => o.id === newOrder.id);
+      if (orderExists) {
+        // Update existing order
+        return prev.map(o => o.id === newOrder.id ? newOrder : o);
+      }
       
       // Add new order at the beginning of the array
-      const updatedOrders = [newOrder, ...filteredOrders];
+      const updatedOrders = [newOrder, ...prev];
       
       // Set as new order for notification
       setNewOrders(prevNew => [newOrder, ...prevNew]);
-      showOrderNotification([newOrder]);
+      
+      // Show notification with sound
+      if (audioRef.current) {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch(err => console.error("Failed to play sound:", err));
+      }
       
       return updatedOrders;
     });
@@ -324,14 +384,13 @@ const Orders: React.FC = () => {
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
-  // Show notification for new orders - improved notification message
+  // Update showOrderNotification for better visibility
   const showOrderNotification = (newOrders: Order[]) => {
     const orderCount = newOrders.length;
     const pendingCount = newOrders.filter(order => 
       order.items.some(item => item.status === 'pending')
     ).length;
     
-    // More detailed notification message
     let message = '';
     if (pendingCount > 0) {
       const firstOrder = newOrders[0];
@@ -341,54 +400,29 @@ const Orders: React.FC = () => {
         .join(', ');
       
       message = pendingCount === 1 
-        ? `${firstOrder.customerName} ने ऑर्डर केली आहे: ${itemsSummary}` 
+        ? `नवीन ऑर्डर: ${firstOrder.customerName} - ${itemsSummary}` 
         : `${pendingCount} नवीन ऑर्डर्स आल्या आहेत!`;
     } else {
       message = orderCount === 1 
-        ? `${newOrders[0].customerName} ची नवीन ऑर्डर: ${newOrders[0].orderNumber}` 
+        ? `नवीन ऑर्डर: ${newOrders[0].orderNumber}` 
         : `${orderCount} नवीन ऑर्डर्स आल्या आहेत!`;
     }
     
     setNotificationMessage(message);
     setShowNotification(true);
     
-    // Auto-hide notification after 30 seconds instead of 15
+    // Show notification for 30 seconds
     setTimeout(() => {
       setShowNotification(false);
-    }, 30000); // 30 seconds
+    }, 30000);
     
-    // Try to use browser notifications if allowed
+    // Show browser notification if permitted
     if ("Notification" in window && Notification.permission === "granted") {
-      new Notification("Drnkly - नवीन ऑर्डर आली आहे!", {
+      new Notification("Drnkly - नवीन ऑर्डर", {
         body: message,
-        icon: "/logo.png"
+        icon: "/logo.png",
+        requireInteraction: true // Keep notification visible until user interacts
       });
-    }
-
-    // Play notification sound
-    if (audioRef.current) {
-      // Reset the audio to the beginning
-      audioRef.current.currentTime = 0;
-      
-      // Play the sound multiple times for better attention
-      let playCount = 0;
-      const maxPlays = 3;
-      
-      const playSound = () => {
-        if (playCount < maxPlays) {
-          audioRef.current?.play().catch(err => console.error("Failed to play sound:", err));
-          playCount++;
-        }
-      };
-      
-      // Play immediately
-      playSound();
-      
-      // Play again after 3 seconds
-      setTimeout(playSound, 3000);
-      
-      // Play one more time after 6 seconds
-      setTimeout(playSound, 6000);
     }
   };
 
@@ -476,10 +510,67 @@ const Orders: React.FC = () => {
     return order.items.every(item => item.status === 'handedOver');
   };
 
+  // Function to track order in payouts
+  const trackOrderInPayouts = async (order: Order, token: string) => {
+    try {
+      // First try to add to payouts tracking in backend
+      await axios.post(
+        'https://vendor.peghouse.in/api/vendor/payouts/track',
+        {
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          amount: order.totalAmount,
+          customerName: order.customerName,
+          items: order.items.map(item => ({
+            productId: item.productId,
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price
+          })),
+          status: 'completed',
+          handedOverAt: new Date().toISOString(),
+          paymentStatus: order.paymentStatus,
+          transactionId: order.transactionId || null
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Also store in localStorage for immediate UI updates
+      const storedPayouts = JSON.parse(localStorage.getItem('payoutsData') || '[]');
+      const newPayout = {
+        id: `PAY${Date.now()}`,
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        amount: order.totalAmount,
+        date: new Date().toISOString(),
+        status: 'pending',
+        commission: Math.round(order.totalAmount * 0.1), // 10% commission
+        customerName: order.customerName,
+        items: order.items.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price
+        }))
+      };
+      
+      const updatedPayouts = [newPayout, ...storedPayouts];
+      localStorage.setItem('payoutsData', JSON.stringify(updatedPayouts));
+      
+      return true;
+    } catch (error) {
+      console.error('Failed to track order in payouts:', error);
+      return false;
+    }
+  };
+
   // Function to handle handover of all items in an order
   const handleOrderHandover = async (order: Order) => {
     try {
       const token = localStorage.getItem('authToken');
+      if (!token) {
+        toast.error('Authentication required');
+        return;
+      }
       
       // Update all accepted items to handed over
       const updatePromises = order.items
@@ -494,28 +585,10 @@ const Orders: React.FC = () => {
       
       await Promise.all(updatePromises);
 
-      // Add order to payouts tracking
-      try {
-        await axios.post(
-          'https://vendor.peghouse.in/api/vendor/payouts/track',
-          {
-            orderId: order.id,
-            orderNumber: order.orderNumber,
-            amount: order.totalAmount,
-            customerName: order.customerName,
-            items: order.items.map(item => ({
-              productId: item.productId,
-              name: item.name,
-              quantity: item.quantity,
-              price: item.price
-            })),
-            status: 'completed',
-            handedOverAt: new Date().toISOString()
-          },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-      } catch (payoutErr) {
-        console.error('Failed to track order in payouts:', payoutErr);
+      // Track order in payouts
+      const payoutTracked = await trackOrderInPayouts(order, token);
+      if (!payoutTracked) {
+        toast.warning('Order handed over but payout tracking failed');
       }
 
       // Update the orders state to move the order to past orders

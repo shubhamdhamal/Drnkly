@@ -1,16 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Clock } from 'lucide-react';
 import Button from '../components/Button';
 import axios from 'axios';
 
 const Availability: React.FC = () => {
-  const timeSlots = [
-    { id: '1', start: '09:00', end: '11:00' },
-    { id: '2', start: '11:00', end: '13:00' },
-    { id: '3', start: '14:00', end: '16:00' },
-    { id: '4', start: '16:00', end: '18:00' },
-  ];
-
   const [products, setProducts] = useState<any[]>([]);
 
   // Fetch products for the logged-in vendor from the backend
@@ -84,24 +76,6 @@ const Availability: React.FC = () => {
       <h1 className="title">Set Availability</h1>
 
       <div className="section">
-        <h2 className="section-title">Delivery Time Slots</h2>
-        <div className="slot-grid">
-          {timeSlots.map((slot) => (
-            <div key={slot.id} className="slot-card">
-              <div className="slot-info">
-                <Clock size={18} />
-                <span>{slot.start} - {slot.end}</span>
-              </div>
-              <label className="switch">
-                <input type="checkbox" />
-                <span className="slider"></span>
-              </label>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="section">
         <h2 className="section-title">Product Availability</h2>
         <div className="product-list">
           {products.map((product) => (
@@ -155,28 +129,6 @@ const Availability: React.FC = () => {
         .section-title {
           font-size: 18px;
           margin-bottom: 15px;
-        }
-
-        .slot-grid {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 15px;
-        }
-
-        .slot-card {
-          flex: 1 1 200px;
-          border: 1px solid #ddd;
-          padding: 12px 16px;
-          border-radius: 6px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .slot-info {
-          display: flex;
-          align-items: center;
-          gap: 8px;
         }
 
         .product-list {

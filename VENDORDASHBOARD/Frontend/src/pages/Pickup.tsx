@@ -155,9 +155,64 @@ const Pickup: React.FC = () => {
     }
   };
 
+  // Function to track order in payouts
+  const trackOrderInPayouts = async (groupedOrder: GroupedOrder, token: string) => {
+    try {
+      // First try to add to payouts tracking in backend
+      await axios.post(
+        'https://vendor.peghouse.in/api/vendor/payouts/track',
+        {
+          orderId: groupedOrder.items[0].orderId,
+          orderNumber: groupedOrder.orderNumber,
+          amount: groupedOrder.totalAmount,
+          customerName: groupedOrder.customerName,
+          items: groupedOrder.items.map(item => ({
+            productId: item.productId,
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price
+          })),
+          status: 'completed',
+          handedOverAt: new Date().toISOString()
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Also store in localStorage for immediate UI updates
+      const storedPayouts = JSON.parse(localStorage.getItem('payoutsData') || '[]');
+      const newPayout = {
+        id: `PAY${Date.now()}`,
+        orderId: groupedOrder.items[0].orderId,
+        orderNumber: groupedOrder.orderNumber,
+        amount: groupedOrder.totalAmount,
+        date: new Date().toISOString(),
+        status: 'pending',
+        commission: Math.round(groupedOrder.totalAmount * 0.1), // 10% commission
+        customerName: groupedOrder.customerName,
+        items: groupedOrder.items.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price
+        }))
+      };
+      
+      const updatedPayouts = [newPayout, ...storedPayouts];
+      localStorage.setItem('payoutsData', JSON.stringify(updatedPayouts));
+      
+      return true;
+    } catch (error) {
+      console.error('Failed to track order in payouts:', error);
+      return false;
+    }
+  };
+
   const handleGroupHandover = async (groupedOrder: GroupedOrder) => {
     try {
       const token = localStorage.getItem('authToken');
+      if (!token) {
+        toast.error('Authentication required');
+        return;
+      }
       
       // First remove the order from pickup page immediately
       setOrders(prev => prev.filter(order => 
@@ -206,28 +261,10 @@ const Pickup: React.FC = () => {
       ];
       localStorage.setItem('handedOverOrders', JSON.stringify(newHandedOverOrders));
 
-      // Add to payouts tracking
-      try {
-        await axios.post(
-          'https://vendor.peghouse.in/api/vendor/payouts/track',
-          {
-            orderId: groupedOrder.items[0].orderId,
-            orderNumber: groupedOrder.orderNumber,
-            amount: groupedOrder.totalAmount,
-            customerName: groupedOrder.customerName,
-            items: groupedOrder.items.map(item => ({
-              productId: item.productId,
-              name: item.name,
-              quantity: item.quantity,
-              price: item.price
-            })),
-            status: 'completed',
-            handedOverAt: new Date().toISOString()
-          },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-      } catch (payoutErr) {
-        console.error('Failed to track order in payouts:', payoutErr);
+      // Track order in payouts
+      const payoutTracked = await trackOrderInPayouts(groupedOrder, token);
+      if (!payoutTracked) {
+        toast.warning('Order handed over but payout tracking failed');
       }
       
       toast.success('Order group handed over to delivery successfully!');
