@@ -519,11 +519,8 @@ function Dashboard() {
                   currentBanner === index ? "opacity-100 z-10" : "opacity-0 z-0"
                 }`}
                 onClick={() => {
-                  if (banner.type === "special") {
-                    navigate('/products?category=Drinks&offer=weekend');
-                  } else {
-                    navigate('/products');
-                  }
+                  // Always navigate to Old Monk Rum Free product regardless of banner type
+                  navigate('/products?search=Old%20Monk%20Rum%20Free');
                 }}
               >
                 {/* Banner content */}
@@ -551,7 +548,13 @@ function Dashboard() {
                       {banner.description}
                     </p>
                     
-                    <button className="bg-[#cd6839] hover:bg-[#b55a31] text-white px-4 py-2 md:px-6 md:py-3 rounded-lg transition-colors shadow-lg hover:shadow-xl text-sm md:text-base font-medium banner-content">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent double navigation
+                        navigate('/products?search=Old%20Monk%20Rum%20Free');
+                      }}
+                      className="bg-[#cd6839] hover:bg-[#b55a31] text-white px-4 py-2 md:px-6 md:py-3 rounded-lg transition-colors shadow-lg hover:shadow-xl text-sm md:text-base font-medium banner-content"
+                    >
                       Order Now →
                     </button>
                   </div>
