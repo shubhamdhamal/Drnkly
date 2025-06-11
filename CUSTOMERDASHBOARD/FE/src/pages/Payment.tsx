@@ -8,8 +8,10 @@ const Payment = () => {
   const navigate = useNavigate();
   const [items, setItems] = useState<CartItem[]>([]);
   const [isScreenshotUploaded, setIsScreenshotUploaded] = useState(false);
-  const [transactionId, setTransactionId] = useState<string>(''); // New state for transaction ID
-  const [isCashOnDelivery, setIsCashOnDelivery] = useState(false); // New state for cash on delivery
+  const [transactionId, setTransactionId] = useState<string>('');
+  const [isCashOnDelivery, setIsCashOnDelivery] = useState(false);
+  const [pendingOrder, setPendingOrder] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
   
   // Reference for payment method section
   const paymentMethodRef = useRef<HTMLDivElement>(null);
@@ -49,7 +51,7 @@ const Payment = () => {
     }
   };
 
-  // 🔁 Fetch vendor cart items
+  // 🔁 Fetch cart items and pending order data
   useEffect(() => {
     const fetchCart = async () => {
       const userId = localStorage.getItem('userId');
@@ -65,26 +67,43 @@ const Payment = () => {
 
     fetchCart();
     
+    // Get pending order data from localStorage
+    const pendingOrderData = localStorage.getItem('pendingOrderData');
+    if (pendingOrderData) {
+      try {
+        const orderData = JSON.parse(pendingOrderData);
+        setPendingOrder(orderData);
+      } catch (err) {
+        console.error('Failed to parse pending order data:', err);
+        alert('There was an issue with your order. Please try again.');
+        navigate('/checkout');
+      }
+    } else {
+      // If no pending order data, redirect back to checkout
+      alert('No order information found. Please complete the checkout process first.');
+      navigate('/checkout');
+    }
+    
     // Scroll to payment method section on component mount
     if (paymentMethodRef.current) {
       setTimeout(() => {
         paymentMethodRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 100);
     }
-  }, []);
+  }, [navigate]);
 
   const orderTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  // Calculate 20% fee on Drinks only
+  // Calculate 35% fee on Drinks only
   const drinksFee = items.reduce((sum, item) => {
     const isDrink = item.productId?.category === 'Drinks';
     if (isDrink) {
-      return sum + item.price * item.quantity * 0.20;
+      return sum + item.price * item.quantity * 0.35;
     }
     return sum;
   }, 0);
 
-  let deliveryCharges = orderTotal > 500 ? 0 : 100;
+  const deliveryCharges = 100.0;
   const platform = 12.0;
   const gst = 18.0;
   const gstAmount = (orderTotal + drinksFee) * gst / 100;
@@ -97,22 +116,41 @@ const Payment = () => {
   const handlePaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const orderId = localStorage.getItem('latestOrderId');
-    if (!orderId) return alert('No order ID found. Please place an order first.');
+    if (!pendingOrder) {
+      alert('No order information found. Please complete the checkout process first.');
+      navigate('/checkout');
+      return;
+    }
 
     if (!isFormValid) {
       return alert('Please either provide payment details (transaction ID or screenshot) or select Cash on Delivery.');
     }
 
     try {
-      // Send the request to backend
-      const res = await axios.put(
+      setIsLoading(true);
+      
+      // Step 1: Create the actual order first
+      const createOrderResponse = await axios.post('https://peghouse.in/api/orders', pendingOrder, {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      if (!createOrderResponse.data || !createOrderResponse.data.order || !createOrderResponse.data.order._id) {
+        throw new Error('Failed to create order');
+      }
+      
+      const orderId = createOrderResponse.data.order._id;
+      localStorage.setItem('latestOrderId', orderId);
+
+      // Step 2: Update payment status for the newly created order
+      const paymentResponse = await axios.put(
         `https://peghouse.in/api/orders/${orderId}/pay`,
         {
           screenshotUploaded: isScreenshotUploaded,
-          paymentProof: isScreenshotUploaded ? 'placeholder.jpg' : '', // Send a dummy payment proof
+          paymentProof: isScreenshotUploaded ? 'placeholder.jpg' : '',
           transactionId: transactionId || null,
-          isCashOnDelivery, // Send the cash on delivery status
+          isCashOnDelivery,
         },
         {
           headers: {
@@ -121,17 +159,23 @@ const Payment = () => {
         }
       );
 
-      if (res.data.message === 'Payment status updated successfully') {
+      if (paymentResponse.data.message === 'Payment status updated successfully') {
+        // Clear the pending order data from localStorage
+        localStorage.removeItem('pendingOrderData');
+        
+        // Navigate to success page
         navigate('/order-success');
       } else {
-        console.error("Payment failed:", res.data);
+        console.error("Payment failed:", paymentResponse.data);
         alert('Payment failed. Please try again.');
       }
     } catch (err: unknown) {
-      console.error('Payment error:', err instanceof Error && err.hasOwnProperty('response') 
+      console.error('Order/Payment error:', err instanceof Error && err.hasOwnProperty('response') 
         ? (err as any).response?.data 
         : err);
-      alert('Something went wrong while submitting payment.');
+      alert('Something went wrong while processing your order. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -253,7 +297,7 @@ const Payment = () => {
               <span className="font-semibold">₹{orderTotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Drinks Service Fee (20%)</span>
+              <span className="text-gray-600">Drinks Service Fee (35%)</span>
               <span className="font-semibold">₹{drinksFee.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
@@ -288,14 +332,14 @@ const Payment = () => {
         {/* Pay Now Button */}
         <button
           onClick={handlePaymentSubmit}
+          disabled={!isFormValid || isLoading}
           className={`w-full py-4 rounded-xl font-semibold text-lg transition-colors ${
-            isFormValid 
+            isFormValid && !isLoading
               ? 'bg-blue-600 text-white hover:bg-blue-700' 
               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
           }`}
-          disabled={!isFormValid}
         >
-          Submit Payment
+          {isLoading ? 'Processing...' : 'Place Order & Submit Payment'}
         </button>
       </div>
     </div>
