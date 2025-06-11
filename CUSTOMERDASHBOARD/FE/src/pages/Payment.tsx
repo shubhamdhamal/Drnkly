@@ -103,7 +103,7 @@ const Payment = () => {
     return sum;
   }, 0);
 
-  const deliveryCharges = 100.0;
+    let deliveryCharges = orderTotal > 500 ? 0 : 100;
   const platform = 12.0;
   const gst = 18.0;
   const gstAmount = (orderTotal + drinksFee) * gst / 100;
