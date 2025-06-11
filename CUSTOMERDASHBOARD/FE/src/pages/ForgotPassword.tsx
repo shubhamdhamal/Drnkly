@@ -12,11 +12,11 @@ function ForgotPassword() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-
   const [success, setSuccess] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [resetToken, setResetToken] = useState('');
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
@@ -33,6 +33,7 @@ function ForgotPassword() {
     e.preventDefault();
     setError('');
     setSuccess('');
+
     if (!email || !email.includes('@')) {
       setError('Please enter a valid email address.');
       return;
@@ -58,6 +59,7 @@ function ForgotPassword() {
     e.preventDefault();
     setError('');
     setSuccess('');
+
     if (!otp || otp.length !== 6) {
       setError('Please enter a valid 6-digit OTP.');
       return;
@@ -65,12 +67,11 @@ function ForgotPassword() {
 
     setIsLoading(true);
     try {
-      const response = await axios.post('https://peghouse.in/api/auth/verify-forgot-otp', {
-        email,
-        otp,
-      });
+      const response = await axios.post('https://peghouse.in/api/auth/verify-forgot-otp', { email, otp });
+
       if (response.data.success) {
         setSuccess('OTP verified successfully!');
+        setResetToken(response.data.token);
         setStep('newPassword');
       } else {
         setError(response.data.message || 'Invalid OTP');
@@ -107,13 +108,22 @@ function ForgotPassword() {
       return;
     }
 
+    if (!resetToken) {
+      setError('Unauthorized password reset attempt. Please verify OTP again.');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const response = await axios.post('https://peghouse.in/api/auth/reset-password', {
-        email,
-        mobile,
-        newPassword,
-      });
+      const response = await axios.post(
+        'https://peghouse.in/api/auth/reset-password',
+        { email, mobile, newPassword },
+        {
+          headers: {
+            Authorization: `Bearer ${resetToken}`,
+          },
+        }
+      );
 
       if (response.data.success) {
         setSuccess('Password updated successfully!');
