@@ -72,7 +72,7 @@ setItems(populatedItems);
     }
     return sum;
   }, 0);
-  const deliveryCharges = 100.00;
+    let deliveryCharges = orderTotal > 500 ? 0 : 100;
   const platform = 12.00;
   const gst = 18.00;
   const gstAmount = ((orderTotal+drinksFee) * gst) / 100;
