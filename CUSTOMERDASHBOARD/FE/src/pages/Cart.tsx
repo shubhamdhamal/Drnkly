@@ -258,14 +258,14 @@ const Cart = () => {
     return sum + price * quantity;
   }, 0);
 
-  // Drinks Fee (35%)
+  // Drinks Fee (20%)
   const drinksFee = items.reduce((sum, item) => {
     const category = item?.category;
     const price = typeof item.price === 'string' ? Number(item.price.replace(/[^\d.]/g, '')) : item.price;
     const quantity = typeof item.quantity === 'string' ? Number(item.quantity.replace(/[^\d.]/g, '')) : item.quantity;
 
     if (category === 'Drinks') {
-      return sum + (Number(price) || 0) * (Number(quantity) || 1) * 0.35;
+      return sum + (Number(price) || 0) * (Number(quantity) || 1) * 0.20;
     }
 
     return sum;
@@ -360,7 +360,7 @@ const Cart = () => {
 
                         {item.category === 'Drinks' && (
                           <p className="text-sm text-red-600 mt-1">
-                            + ₹{(Number(item.price) * Number(item.quantity) * 0.35).toFixed(2)} Service Fee (35%)
+                            + ₹{(Number(item.price) * Number(item.quantity) * 0.20).toFixed(2)} Service Fee (20%)
                           </p>
                         )}
                       </div>
@@ -415,7 +415,7 @@ const Cart = () => {
               </div>
 
               <div className="flex justify-between mb-4">
-                <span className="text-gray-600">Service Fee (35%)</span>
+                <span className="text-gray-600">Service Fee (20%)</span>
                 <span className="text-gray-900 font-medium">₹{drinksFee.toFixed(2)}</span>
               </div>
 
