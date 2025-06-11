@@ -8,7 +8,7 @@ import { useCart } from '../context/CartContext';
 
 const Cart = () => {
   const navigate = useNavigate();
-  const { setItems: setContextItems, clearCart: clearContextCart } = useCart();
+  const { setItems: setContextItems } = useCart(); // Get setItems from context
 
   interface CartItem {
     category: any;
@@ -71,15 +71,9 @@ const Cart = () => {
     };
   }, []);
 
-  // Fetch cart items and sync with context
   useEffect(() => {
     const fetchCart = async () => {
-      if (!userId) {
-        toast.error('User not logged in');
-        clearContextCart(); // Clear context cart if user is not logged in
-        setItems([]); // Clear local items
-        return;
-      }
+      if (!userId) return toast.error('User not logged in');
 
       try {
         const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
@@ -101,30 +95,28 @@ const Cart = () => {
         }));
         setContextItems(contextItems);
 
-        // If no items in cart, clear context
-        if (res.data.items.length === 0) {
-          clearContextCart();
-        }
-
         // Debug: Log each product's category
-        console.log('Fetched Cart Items:', res.data.items.length);
+        console.log('Fetched Cart Items:');
+        res.data.items.forEach((item: any, i: number) => {
+          console.log(`Item ${i + 1}:`, item.productId?.category || 'No category found');
+        });
       } catch (error) {
         toast.error('Failed to load cart');
         console.error(error);
-        // Clear both local and context cart on error
-        setItems([]);
-        clearContextCart();
       }
     };
 
     fetchCart();
-  }, [userId, setContextItems, clearContextCart]);
+  }, [userId, setContextItems]);
+
 
   // Update quantity in backend
   const updateQuantity = async (productId: string, quantity: number) => {
+    // Set loading state for this specific item
     setIsLoading(prev => ({ ...prev, [productId]: true }));
     
     try {
+      // If quantity is 0 or less, show delete confirmation
       if (quantity <= 0) {
         setItemToDelete(productId);
         setShowDeleteConfirm(true);
@@ -144,7 +136,7 @@ const Cart = () => {
         name: item.productId?.name || item.name,
         image: item.productId?.image || item.image,
         price: item.productId?.price || item.price,
-        productId: item.productId?._id || item.productId,
+        productId: item.productId?._id || item.productId, // normalize
         quantity: item.quantity
       }));
 
@@ -161,11 +153,6 @@ const Cart = () => {
         quantity: Number(item.quantity)
       }));
       setContextItems(contextItems);
-
-      // If no items left, clear context
-      if (res.data.cart.items.length === 0) {
-        clearContextCart();
-      }
       
       // Track Add/Remove from Cart events for Facebook Pixel
       if (window && (window as any).fbq) {
@@ -182,13 +169,18 @@ const Cart = () => {
       toast.error('Failed to update quantity');
       console.error('Error updating quantity:', error);
     } finally {
+      // Clear loading state for this item
       setIsLoading(prev => ({ ...prev, [productId]: false }));
     }
   };
 
+
   // Remove item from cart
   const removeFromCart = async (productId: string) => {
+    // Close confirmation modal if open
     setShowDeleteConfirm(false);
+    
+    // Set loading state for this specific item
     setIsLoading(prev => ({ ...prev, [productId]: true }));
     
     try {
@@ -219,11 +211,6 @@ const Cart = () => {
         quantity: Number(item.quantity)
       }));
       setContextItems(contextItems);
-
-      // If no items left, clear context
-      if (res.data.cart.items.length === 0) {
-        clearContextCart();
-      }
       
       // Track Remove from Cart event for Facebook Pixel
       if (window && (window as any).fbq) {
@@ -239,6 +226,7 @@ const Cart = () => {
       toast.error('Failed to remove item');
       console.error('Error removing item:', error);
     } finally {
+      // Clear loading state for this item
       setIsLoading(prev => ({ ...prev, [productId]: false }));
     }
   };
@@ -258,20 +246,20 @@ const Cart = () => {
     return sum + price * quantity;
   }, 0);
 
-  // Drinks Fee (20%)
+  // Drinks Fee (35%)
   const drinksFee = items.reduce((sum, item) => {
     const category = item?.category;
     const price = typeof item.price === 'string' ? Number(item.price.replace(/[^\d.]/g, '')) : item.price;
     const quantity = typeof item.quantity === 'string' ? Number(item.quantity.replace(/[^\d.]/g, '')) : item.quantity;
 
     if (category === 'Drinks') {
-      return sum + (Number(price) || 0) * (Number(quantity) || 1) * 0.20;
+      return sum + (Number(price) || 0) * (Number(quantity) || 1) * 0.35;
     }
 
     return sum;
   }, 0);
 
-  let shipping = total > 500 ? 0 : 100;
+  const shipping = 100;
   const platformFee = 12;
   const gst = (total + drinksFee) * 0.18;
   const finalTotal = total + drinksFee + shipping + platformFee + gst;
@@ -360,7 +348,7 @@ const Cart = () => {
 
                         {item.category === 'Drinks' && (
                           <p className="text-sm text-red-600 mt-1">
-                            + ₹{(Number(item.price) * Number(item.quantity) * 0.20).toFixed(2)} Service Fee (20%)
+                            + ₹{(Number(item.price) * Number(item.quantity) * 0.35).toFixed(2)} Service Fee (35%)
                           </p>
                         )}
                       </div>
@@ -415,7 +403,7 @@ const Cart = () => {
               </div>
 
               <div className="flex justify-between mb-4">
-                <span className="text-gray-600">Service Fee (20%)</span>
+                <span className="text-gray-600">Service Fee (35%)</span>
                 <span className="text-gray-900 font-medium">₹{drinksFee.toFixed(2)}</span>
               </div>
 
@@ -464,9 +452,10 @@ const Cart = () => {
           )}
         </div>
 
-        {/* <p style={{ display: 'none' }}>
+        {/* Add path for sound file in public folder */}
+        <p style={{ display: 'none' }}>
           Sound file should be placed at: {process.env.PUBLIC_URL}/notification-sound.mp3
-        </p> */}
+        </p>
       </div>
     </div>
   );
