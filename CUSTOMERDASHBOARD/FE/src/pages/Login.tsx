@@ -10,12 +10,13 @@ function Login() {
   const navigate = useNavigate();
   const [showLocationPopup, setShowLocationPopup] = useState(false);
   const [locationError, setLocationError] = useState('');
-  const [mobile, setMobile] = useState('');
+
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [showTermsPopup, setShowTermsPopup] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isTermsChecked, setIsTermsChecked] = useState(false);  // Set default to true to check it by default
+const [identifier, setIdentifier] = useState('');
 
   // New checkboxes states
   const [hasDrinkingLicense, setHasDrinkingLicense] = useState(false);
@@ -24,14 +25,10 @@ function Login() {
   const [isSkipped, setIsSkipped] = useState(false);
   
   // Handle mobile number change and restrict to 10 digits
-  const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+  const handleIdentifierChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  setIdentifier(e.target.value); // allow both numbers and text
+};
 
-    // Allow only numbers and restrict the length to 10 digits
-    if (/^\d{0,10}$/.test(value)) {
-      setMobile(value);
-    }
-  };
 
   // Add session management
   useEffect(() => {
@@ -107,53 +104,49 @@ function Login() {
     };
   }, [navigate]);
 
-  const handleLogin = async (e: React.FormEvent) => {
+const handleLogin = async (e: React.FormEvent) => {
   e.preventDefault();
 
-  // Validation only for Terms agreement
+  // ✅ Basic validation
   if (!agreedToTerms) {
     setError('Please agree to the Terms & Govt. Regulations.');
     return;
   }
 
-  // Mobile number length validation
-  if (!mobile || mobile.length !== 10) {
-    setError('Mobile number must be exactly 10 digits.');
+  if (!identifier.trim()) {
+    setError('Please enter your email or mobile number.');
     return;
   }
 
-  // Validate user input
-  if (!password) {
+  if (!password.trim()) {
     setError('Please enter your password.');
     return;
   }
 
-  // Make the API call to login
   try {
-    const response = await axios.post('https://peghouse.in/api/auth/login', { mobile, password });
+    
+    // ✅ API call
+    const response = await axios.post('http://localhost:5000/api/auth/login', {
+      identifier,
+      password,
+    });
 
     if (response.data.message === 'Login successful') {
-      // Store JWT token
+      // ✅ Save session info
       localStorage.setItem('authToken', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
       localStorage.setItem('userId', response.data.user._id);
 
-      // Make sure to remove the skipped login flag if it exists
+      // Clear flags
       localStorage.removeItem('isSkippedLogin');
-
-      // Reset the Old Monk offer shown flag to ensure they see it on this login
       localStorage.removeItem('oldMonkOfferShown');
 
-      console.log('Login successful, localStorage updated:', { 
-        token: true, 
-        userId: true, 
-        skipped: false 
-      });
+      console.log('Login successful, localStorage updated.');
 
-      // Dispatch a storage event to notify other components
+      // Notify other components
       window.dispatchEvent(new Event('storage'));
 
-      // ✅ Location check
+      // ✅ Navigate
       if (localStorage.getItem('locationGranted') === 'true') {
         navigate('/dashboard');
       } else {
@@ -161,17 +154,18 @@ function Login() {
       }
     }
   } catch (error) {
-    const msg = (error as any).response?.data?.message;
+    const msg = (error as any)?.response?.data?.message;
 
     if (msg === 'User not found') {
-      setError('No account found with this mobile number.');
+      setError('No account found with this email or mobile number.');
     } else if (msg === 'Invalid credentials') {
-      setError('Incorrect mobile number or password.');
+      setError('Incorrect email or mobile number, or password.');
     } else {
       setError('Something went wrong. Please try again.');
     }
   }
 };
+
   
   const handleLogout = () => {
     // Clear all auth data
@@ -298,15 +292,16 @@ function Login() {
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Mobile Number
-              </label>
+  Mobile Number or Email
+</label>
               <input
-                type="text"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
-                placeholder="Enter your mobile number"
-                value={mobile}
-                onChange={handleMobileChange}
-              />
+  type="text"
+  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#cd6839]"
+  placeholder="Enter your mobile number or email"
+  value={identifier}
+  onChange={handleIdentifierChange}
+/>
+
             </div>
 
             <div className="relative">
