@@ -102,32 +102,37 @@ const publicUrl = `https://image.peghouse.in/uploads/${imageFilename}`;
 exports.updateStockForProducts = async (req, res) => {
   try {
     const { products } = req.body;
+    console.log("🛠 Incoming stock update payload:", products);
 
-    // Ensure products is an array
     if (!Array.isArray(products)) {
       return res.status(400).json({ error: "'products' should be an array" });
     }
 
-    const updatePromises = products.map(async (product) => {
+    const validUpdates = [];
+
+    for (const product of products) {
       const { productId, inStock } = product;
 
       if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
-        return res.status(400).json({ error: `Invalid productId: ${productId}` });
+        console.warn(`⚠️ Skipping invalid productId: ${productId}`);
+        continue;
       }
 
-      // Find the product and update its inStock status
-      return await Product.findByIdAndUpdate(
-        productId, 
-        { inStock }, 
-        { new: true } // Return the updated product
+      const updated = await Product.findByIdAndUpdate(
+        productId,
+        { inStock },
+        { new: true }
       );
-    });
 
-    const updatedProducts = await Promise.all(updatePromises);
-    res.status(200).json({ updatedProducts });
+      if (updated) {
+        validUpdates.push(updated);
+      }
+    }
+
+    return res.status(200).json({ updatedProducts: validUpdates });
   } catch (error) {
-    console.error('Error updating product stock:', error);
-    res.status(500).json({ error: 'Error updating product stock' });
+    console.error('🔥 Error updating product stock:', error); // This will print the full error
+    return res.status(500).json({ error: 'Error updating product stock', details: error.message });
   }
 };
 
