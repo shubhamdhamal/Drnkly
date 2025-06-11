@@ -75,11 +75,11 @@ const Payment = () => {
 
   const orderTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  // Calculate 35% fee on Drinks only
+  // Calculate 20% fee on Drinks only
   const drinksFee = items.reduce((sum, item) => {
     const isDrink = item.productId?.category === 'Drinks';
     if (isDrink) {
-      return sum + item.price * item.quantity * 0.35;
+      return sum + item.price * item.quantity * 0.20;
     }
     return sum;
   }, 0);
@@ -253,7 +253,7 @@ const Payment = () => {
               <span className="font-semibold">₹{orderTotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Drinks Service Fee (35%)</span>
+              <span className="text-gray-600">Drinks Service Fee (20%)</span>
               <span className="font-semibold">₹{drinksFee.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
