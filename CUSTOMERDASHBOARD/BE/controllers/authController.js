@@ -14,8 +14,7 @@ exports.handleSendOtp = async (req, res) => {
   try {
     const otp = Math.floor(100000 + Math.random() * 900000);
     const otpExpire = Date.now() + 10 * 60 * 1000;
-
-    otpStore.set(email, { otp, otpExpire });
+    otpStore.set(email, { otp, otpExpire, verified: false });
 
     const transporter = nodemailer.createTransport({
       service: 'gmail',
@@ -59,11 +58,15 @@ exports.handleVerifyOtp = (req, res) => {
       return res.status(400).json({ message: "OTP has expired." });
     }
 
+    if (record.verified) {
+      return res.status(400).json({ message: "OTP already used." });
+    }
+
     if (String(record.otp) !== String(otp)) {
       return res.status(400).json({ message: "Invalid OTP." });
     }
 
-    otpStore.delete(email);
+    otpStore.set(email, { ...record, verified: true });
     res.status(200).json({ success: true, message: "OTP verified successfully." });
   } catch (error) {
     console.error("Error verifying OTP:", error);
@@ -82,7 +85,7 @@ exports.sendPasswordResetOtp = async (req, res) => {
 
     const otp = Math.floor(100000 + Math.random() * 900000);
     const otpExpire = Date.now() + 10 * 60 * 1000;
-    otpStore.set(email, { otp, otpExpire });
+    otpStore.set(email, { otp, otpExpire, verified: false });
 
     const transporter = nodemailer.createTransport({
       service: 'gmail',
@@ -119,6 +122,10 @@ exports.verifyPasswordResetOtp = async (req, res) => {
     return res.status(400).json({ message: 'OTP expired' });
   }
 
+  if (record.verified) {
+    return res.status(400).json({ message: 'OTP already used' });
+  }
+
   if (String(record.otp) !== String(otp)) {
     return res.status(400).json({ message: 'Invalid OTP' });
   }
@@ -126,9 +133,9 @@ exports.verifyPasswordResetOtp = async (req, res) => {
   const user = await User.findOne({ email });
   if (!user) return res.status(404).json({ message: 'User not found' });
 
-  const token = jwt.sign({ email: user.email, userId: user._id }, process.env.JWT_SECRET, { expiresIn: '15m' });
+  const token = jwt.sign({ email: user.email, userId: user._id, type: 'reset' }, process.env.JWT_SECRET, { expiresIn: '15m' });
 
-  otpStore.delete(email);
+  otpStore.set(email, { ...record, verified: true });
 
   return res.status(200).json({
     success: true,
@@ -137,6 +144,7 @@ exports.verifyPasswordResetOtp = async (req, res) => {
   });
 };
 
+// ✅ Update password after OTP
 exports.updateUserPasswordAfterOtp = async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -148,6 +156,9 @@ exports.updateUserPasswordAfterOtp = async (req, res) => {
 
   try {
     decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.type !== 'reset') {
+      return res.status(403).json({ message: 'Invalid token type' });
+    }
   } catch (err) {
     return res.status(401).json({ message: 'Invalid or expired token' });
   }
@@ -182,7 +193,6 @@ exports.updateUserPasswordAfterOtp = async (req, res) => {
     return res.status(500).json({ message: 'Failed to reset password' });
   }
 };
-
 
 // ✅ User Signup
 exports.signup = async (req, res) => {
