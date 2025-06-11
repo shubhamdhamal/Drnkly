@@ -126,7 +126,7 @@ const handleLogin = async (e: React.FormEvent) => {
   try {
     
     // ✅ API call
-    const response = await axios.post('http://localhost:5000/api/auth/login', {
+    const response = await axios.post('https://peghouse.in/api/auth/login', {
       identifier,
       password,
     });
@@ -258,7 +258,7 @@ const handleLogin = async (e: React.FormEvent) => {
   const handleGoogleLogin = async () => {
     try {
       // Redirect to Google OAuth endpoint
-      window.location.href = 'http://localhost:5000/api/auth/google';
+      window.location.href = 'https://peghouse.in/api/auth/google';
     } catch (error) {
       console.error('Google login error:', error);
       setError('Failed to login with Google. Please try again.');
