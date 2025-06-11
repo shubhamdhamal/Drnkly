@@ -6,7 +6,8 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto'); // Ensure this is required at the top
 // Put this at the top of your controller file or in a separate module
-const otpStore = new Map(); // email => { otp, otpExpire }
+// 📌 In-memory store: { email: { otp, otpExpire, verified } }
+const otpStore = new Map();
 
 
 // Secret key for JWT signing
@@ -117,7 +118,6 @@ exports.sendPasswordResetOtp = async (req, res) => {
   }
 };
 
-// 📌 Verify OTP
 exports.verifyPasswordResetOtp = (req, res) => {
   const { email, otp } = req.body;
 
@@ -133,15 +133,23 @@ exports.verifyPasswordResetOtp = (req, res) => {
     return res.status(400).json({ message: 'Invalid OTP' });
   }
 
-  otpStore.delete(email);
+  // Mark as verified, keep the record
+  otpStore.set(email, { ...record, verified: true });
+
   return res.status(200).json({ success: true, message: 'OTP verified successfully' });
 };
 
-// 📌 Reset Password
+
 exports.updateUserPasswordAfterOtp = async (req, res) => {
   const { email, mobile, newPassword } = req.body;
   if (!email || !mobile || !newPassword)
     return res.status(400).json({ message: 'All fields are required' });
+
+  // Check if OTP was verified
+  const record = otpStore.get(email);
+  if (!record || !record.verified) {
+    return res.status(403).json({ message: 'OTP not verified. Access denied.' });
+  }
 
   try {
     const user = await User.findOne({ email, mobile });
@@ -151,13 +159,15 @@ exports.updateUserPasswordAfterOtp = async (req, res) => {
     user.password = hashedPassword;
     await user.save();
 
+    // Clear the store after successful password change
+    otpStore.delete(email);
+
     return res.status(200).json({ success: true, message: 'Password updated successfully' });
   } catch (err) {
     console.error('Password Reset Error:', err);
     return res.status(500).json({ message: 'Failed to reset password' });
   }
 };
-
 exports.signup = async (req, res) => {
   try {
     const { 
