@@ -12,10 +12,20 @@ exports.handleSendOtp = async (req, res) => {
   const { email } = req.body;
 
   try {
-    const otp = Math.floor(100000 + Math.random() * 900000);
-    const otpExpire = Date.now() + 10 * 60 * 1000;
-    otpStore.set(email, { otp, otpExpire, verified: false });
+    // ✅ Step 1: Check if the email is already registered
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'This email is already registered. Please use different email.' });
+    }
 
+    // ✅ Step 2: Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    const otpExpire = Date.now() + 10 * 60 * 1000;  // OTP expires in 10 min
+
+    // ✅ Step 3: Store OTP in memory
+    otpStore.set(email, { otp, otpExpire });
+
+    // ✅ Step 4: Send OTP via email
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -32,7 +42,9 @@ exports.handleSendOtp = async (req, res) => {
     };
 
     await transporter.sendMail(mailOptions);
+
     res.status(200).json({ success: true, message: 'OTP sent successfully to your email' });
+
   } catch (err) {
     console.error('Error sending OTP:', err);
     res.status(500).json({ message: 'Error sending OTP. Please try again later.' });
@@ -238,14 +250,20 @@ exports.signup = async (req, res) => {
 
 // ✅ User Login
 exports.login = async (req, res) => {
-  const { mobile, password } = req.body;
+  const { identifier, password } = req.body;
 
-  if (!mobile || !password) {
-    return res.status(400).json({ message: 'Please provide both mobile number and password.' });
+  if (!identifier || !password) {
+    return res.status(400).json({ message: 'Please provide email/mobile and password.' });
   }
 
   try {
-    const user = await User.findOne({ mobile });
+    const user = await User.findOne({
+      $or: [
+        { mobile: identifier },
+        { email: identifier }
+      ]
+    });
+
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -255,9 +273,14 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
 
-    return res.status(200).json({ message: 'Login successful', token, user });
+    return res.status(200).json({
+      message: 'Login successful',
+      token,
+      user
+    });
+
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ message: 'Server error.', error: error.message });
