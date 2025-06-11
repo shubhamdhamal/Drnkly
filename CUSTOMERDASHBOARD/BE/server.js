@@ -11,21 +11,17 @@ const userRoutes = require('./routes/userRoutes');
 const productRoutes = require('./routes/productRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const orderRoutes = require('./routes/orderRoutes');
-const passport = require('passport');
-require('./config/passport'); 
 
 dotenv.config();         // ✅ Load environment variables
 connectDB();             // ✅ Connect to MongoDB
 
 const app = express();
-// adjust path
-
-app.use(passport.initialize());
 
 // ✅ Parse JSON and URL-encoded bodies BEFORE routes
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Use OTP Routes
 // ✅ Enable CORS before routes
 app.use(cors({
   origin: ['http://localhost:5173', 'https://peghouse.in'],
@@ -44,6 +40,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api', orderRoutes);         // General route (like /api/orders)
 app.use('/api/issues', issueRoutes);
+
 
 // ✅ Health check route
 app.get('/', (req, res) => {
