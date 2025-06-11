@@ -41,7 +41,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/cart', cartRoutes);
-app.use('/api/orders', orderRoutes);
+app.use('/orders', orderRoutes);
 app.use('/api/issues', issueRoutes);
 
 // ✅ Health check route
