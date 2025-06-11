@@ -68,7 +68,7 @@ setItems(populatedItems);
   const drinksFee = items.reduce((sum, item) => {
     const isDrink = item.productId?.category === 'Drinks';
     if (isDrink) {
-      return sum + item.price * item.quantity * 0.35;
+      return sum + item.price * item.quantity * 0.20;
     }
     return sum;
   }, 0);
@@ -204,11 +204,11 @@ setItems(populatedItems);
       }));
   
       const orderTotal = items.reduce((sum: number, item: CartItem) => sum + item.price * item.quantity, 0);
-      // Calculate 35% fee on Drinks only
+      // Calculate 20% fee on Drinks only
   const drinksFee = items.reduce((sum, item) => {
     const isDrink = item.productId?.category === 'Drinks';
     if (isDrink) {
-      return sum + item.price * item.quantity * 0.35;
+      return sum + item.price * item.quantity * 0.20;
     }
     return sum;
   }, 0);
@@ -351,7 +351,7 @@ setItems(populatedItems);
                     <p className="text-gray-600">Quantity: {item.quantity}</p>
                     {item.productId?.category === 'Drinks' && (
                       <p className="text-sm text-red-600 mt-1">
-                        + ₹{(item.price * item.quantity * 0.35).toFixed(2)} Service Fee (35%)
+                        + ₹{(item.price * item.quantity * 0.20).toFixed(2)} Service Fee (20%)
                       </p>
                     )}
                   </div>
@@ -374,7 +374,7 @@ setItems(populatedItems);
               <span>₹{orderTotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-gray-600">
-    <span>Drinks Service Fee (35%)</span>
+    <span>Drinks Service Fee (20%)</span>
     <span>₹{drinksFee.toFixed(2)}</span>
   </div>
             <div className="flex justify-between text-gray-600">
