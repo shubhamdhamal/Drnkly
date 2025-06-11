@@ -20,6 +20,7 @@ interface Customer {
   performance: 'Excellent' | 'Good' | 'Poor';
   status: 'Verified' | 'Pending';
   idProof: string | null;  // Path to the uploaded file (ID proof)
+
 }
 
 function CustomerMonitoring() {
@@ -45,6 +46,7 @@ function CustomerMonitoring() {
         performance: 'Good',
         status: user.status || 'Pending',
         idProof: user.idProof, // Add the file path here
+        createdAt: user.createdAt,
       }));
       setCustomers(formatted);
     } catch (err) {
@@ -194,28 +196,17 @@ const handleReject = async (customerId: string) => {
           <thead>
             <tr className="border-b text-left bg-gray-50">
               <th className="p-4">Customer Name</th>
-              <th className="p-4">License</th>
+              
               <th className="p-4">Status</th>
               <th className="p-4">Actions</th>
+              <th className="p-4">Registration Time</th>
             </tr>
           </thead>
           <tbody>
             {customers.map((shop) => (
               <tr key={shop.id} className="border-b hover:bg-gray-50">
                 <td className="p-4">{shop.name}</td>
-                <td className="p-4">
-                  {/* Add the download link for the ID Proof */}
-                  {shop.idProof && (
-                    <a 
-                      href={`https://admin.peghouse.in${shop.idProof}`} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      download
-                    >
-                      Download ID Proof
-                    </a>
-                  )}
-                </td>
+                
                 <td className="p-4">
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                     shop.status === 'Verified'
@@ -247,6 +238,10 @@ const handleReject = async (customerId: string) => {
                     View Details
                   </button>
                 </td>
+                <td className="p-4">
+  {new Date(shop.createdAt).toLocaleString()}
+</td>
+
               </tr>
             ))}
           </tbody>
