@@ -74,7 +74,7 @@ function App() {
         identifier,
         password,
       });
-
+ 
       if (response.data.message === 'Login successful') {
         localStorage.setItem('authToken', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
@@ -167,9 +167,7 @@ function App() {
               <div className="w-16 h-16 mx-auto bg-gradient-to-br from-orange-400 to-red-500 rounded-xl flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-6 transition-transform duration-300">
                 <Wine className="w-8 h-8 text-white" />
               </div>
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center animate-pulse">
-                <CheckCircle className="w-3 h-3 text-white" />
-              </div>
+           
             </div>
             <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent mb-1">
               Welcome Back
