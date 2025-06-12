@@ -23,6 +23,7 @@ interface Product {
   category: string;
   brand: string;
   alcoholContent?: number;
+  inStock?: boolean;
 }
 
 interface SubBrand {
@@ -1306,18 +1307,37 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
         {/* Product Grid */}
         <div style={productContainerStyle}>
           {filterProducts().map((product) => (
-            <div
-              key={product._id}
-              id={`product-${product._id}`}
-              className="product-card"
-              style={{
-                ...productCardStyle,
-                transition: 'all 0.3s ease',
-                border: '1px solid #e5e7eb',
-                borderRadius: '12px',
-                overflow: 'hidden'
-              }}
-            >
+           <div
+  key={product._id}
+  id={`product-${product._id}`}
+  className="product-card"
+  style={{
+    ...productCardStyle,
+    transition: 'all 0.3s ease',
+    border: '1px solid #e5e7eb',
+    borderRadius: '12px',
+    overflow: 'hidden',
+    opacity: product.inStock === false ? 0.5 : 1,
+    filter: product.inStock === false ? 'grayscale(80%)' : 'none',
+    pointerEvents: product.inStock === false ? 'none' : 'auto'
+  }}
+>
+  {!product.inStock && (
+    <div style={{
+      position: 'absolute',
+      top: 5,
+      left: 5,
+      background: '#e53e3e',
+      color: 'white',
+      fontSize: '12px',
+      padding: '2px 6px',
+      borderRadius: '4px',
+      zIndex: 10
+    }}>
+      Out of Stock
+    </div>
+  )}
+
               <div> {/* Content wrapper */}
                 <div style={productImageContainerStyle}>
                   <img
@@ -1345,22 +1365,24 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
               </div>
               
               <button
-                onClick={(e) => handleAddToCart(e, product)}
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  background: '#cd6839',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  marginTop: '10px',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.3s ease'
-                }}
-                className="hover:bg-[#b55a31]"
-              >
-                Add to Cart
-              </button>
+  onClick={(e) => handleAddToCart(e, product)}
+  disabled={product.inStock === false}
+  style={{
+    width: '100%',
+    padding: '8px',
+    background: product.inStock === false ? '#e5e7eb' : '#cd6839',
+    color: product.inStock === false ? '#888' : 'white',
+    border: 'none',
+    borderRadius: '8px',
+    marginTop: '10px',
+    cursor: product.inStock === false ? 'not-allowed' : 'pointer',
+    transition: 'background-color 0.3s ease'
+  }}
+  className={product.inStock === false ? '' : 'hover:bg-[#b55a31]'}
+>
+  {product.inStock === false ? 'Out of Stock' : 'Add to Cart'}
+</button>
+
             </div>
           ))}
         </div>

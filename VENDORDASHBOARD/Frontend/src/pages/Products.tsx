@@ -6,6 +6,7 @@ import FileUpload from '../components/FileUpload';
 import axios from 'axios';
 
 interface Product {
+  inStock: any;
   _id: string; // Use _id for MongoDB ID
   name: string;
   brand: string;
@@ -432,23 +433,43 @@ const handleAddProduct = async (e: React.FormEvent) => {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
         {filteredProducts.map((product) => (
           <div 
-            id={`product-${product._id}`}
-            key={product._id} 
-            className="product-card bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all"
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              height: '100%',
-              justifyContent: 'space-between',
-              position: 'relative',
-              boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              maxWidth: '220px',
-              margin: '0 auto',
-              width: '100%'
-            }}
-          >
+  id={`product-${product._id}`}
+  key={product._id} 
+  className={`product-card bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all ${
+    !product.inStock ? 'opacity-60 grayscale pointer-events-none' : ''
+  }`}
+  style={{
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
+    justifyContent: 'space-between',
+    position: 'relative',
+    boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    maxWidth: '220px',
+    margin: '0 auto',
+    width: '100%'
+  }}
+>
+
+{!product.inStock && (
+  <div style={{
+    position: 'absolute',
+    top: '5px',
+    left: '5px',
+    backgroundColor: '#ef4444',
+    color: 'white',
+    fontSize: '12px',
+    padding: '2px 6px',
+    borderRadius: '4px',
+    zIndex: 10
+  }}>
+    Out of Stock
+  </div>
+)}
+
+
             <div className="relative"> {/* Content wrapper */}
               <div style={{
                 width: '100%',
@@ -492,9 +513,10 @@ const handleAddProduct = async (e: React.FormEvent) => {
                   <p style={{ color: '#cd6839', fontWeight: 'bold', margin: '2px 0', fontSize: '16px' }}>₹{product.price}</p>
                 )}
                 
-                <div className={`text-xs mt-1 ${product.stock > 20 ? 'text-green-600' : 'text-red-600'}`}>
-                  {product.stock} in stock
-                </div>
+                <div className={`text-xs mt-1 ${product.inStock ? 'text-green-600' : 'text-red-600'}`}>
+  {product.inStock ? `${product.stock} in stock` : 'Out of Stock'}
+</div>
+
               </div>
               </div>
             
