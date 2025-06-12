@@ -1,75 +1,95 @@
 import React, { useState, useEffect } from 'react';
-import Button from '../components/Button';
 import axios from 'axios';
+import Button from '../components/Button';
 
 const Availability: React.FC = () => {
   const [products, setProducts] = useState<any[]>([]);
 
-  // Fetch products for the logged-in vendor from the backend
+  // ✅ Fetch vendor products on component mount
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const token = localStorage.getItem('authToken'); // Get the auth token from localStorage
-        if (token) {
-          const response = await axios.get('https://vendor.peghouse.in/api/vendor/products', {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-          setProducts(response.data.products); // Set the fetched products
-        } else {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
           console.error('No token found');
+          return;
         }
+
+        const response = await axios.get('https://vendor.peghouse.in/api/vendor/products', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setProducts(response.data.products);
       } catch (error) {
         console.error('Error fetching products:', error);
       }
     };
 
     fetchProducts();
-  }, []); // Empty dependency array to fetch products on mount
+  }, []);
 
-  const handleToggle = (productId: string, currentStockStatus: boolean) => {
+  // ✅ Handle toggle and update backend instantly
+  const handleToggle = async (productId: string, currentStockStatus: boolean) => {
     const updatedStockStatus = !currentStockStatus;
-  
-    // Update the product state with the new stock status
+
     const updatedProducts = products.map((product) =>
-      product._id === productId
-        ? { ...product, inStock: updatedStockStatus }
-        : product
+      product._id === productId ? { ...product, inStock: updatedStockStatus } : product
     );
     setProducts(updatedProducts);
+
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) return;
+
+      await axios.put(
+        'https://vendor.peghouse.in/api/products/update-stock',
+        {
+          products: [{ productId, inStock: updatedStockStatus }],
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log(`✅ ${productId} updated to ${updatedStockStatus ? 'In Stock' : 'Out of Stock'}`);
+    } catch (error) {
+      console.error('❌ Failed to update stock:', error);
+    }
   };
-  
+
+  // 🔁 Optional bulk save (if needed)
   const handleSaveAvailability = async () => {
     try {
-      const token = localStorage.getItem('authToken'); // Get the auth token from localStorage
+      const token = localStorage.getItem('authToken');
       if (!token) {
         console.error('No token found');
         return;
       }
-  
+
       const updatedProducts = products.map((product) => ({
-        productId: product._id,  // Ensure the product _id is included
-        inStock: product.com.inStock,
+        productId: product._id,
+        inStock: product.inStock,
       }));
-  
-      // Send updated inStock status for each product to the backend
-      const response = await axios.put('https://vendor.peghouse.in/api/products/update-stock', { products: updatedProducts }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-  
-      console.log('Stock status updated successfully', response);
+
+      const response = await axios.put(
+        'https://vendor.peghouse.in/api/products/update-stock',
+        { products: updatedProducts },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log('✅ Stock status updated successfully', response.data);
     } catch (error) {
-      console.error('Error saving availability settings:', error);
+      console.error('❌ Error saving availability settings:', error);
     }
   };
-  
-  
-  
-  
-
 
   return (
     <div className="availability-wrapper">

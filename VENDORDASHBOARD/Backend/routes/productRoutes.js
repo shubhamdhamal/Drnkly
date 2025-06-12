@@ -4,7 +4,7 @@ const productController = require('../controllers/productController');
 const { authenticateVendor } = require('../middleware/auth');
 const upload = require('../utils/multerConfig'); // ✅ Use central multer config
 
-// ✅ Add Product
+// ✅ Add Product with Image Upload
 router.post(
   '/add',
   authenticateVendor,
@@ -25,11 +25,16 @@ router.post(
   productController.addProduct
 );
 
-
-// ✅ Other routes (no multer needed)
-router.put('/:id', authenticateVendor, productController.updateProduct);
-router.delete('/:id', authenticateVendor, productController.deleteProduct);
+// ✅ Update Stock Availability (MUST be before /:id)
 router.put('/update-stock', authenticateVendor, productController.updateStockForProducts);
+
+// ✅ Update Product by ID
+router.put('/:id', authenticateVendor, productController.updateProduct);
+
+// ✅ Delete Product by ID
+router.delete('/:id', authenticateVendor, productController.deleteProduct);
+
+// ✅ Get All Products for Logged-in Vendor
 router.get('/vendor', authenticateVendor, productController.getProductsByVendor);
 
 module.exports = router;
