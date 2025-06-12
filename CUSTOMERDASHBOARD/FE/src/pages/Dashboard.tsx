@@ -60,6 +60,13 @@ const stores = [
 
 // Banner data
 const banners = [
+    {
+    id: 3,
+    image: "https://images.unsplash.com/photo-1574807947927-2960b61a4dba?q=80&w=2070&auto=format&fit=crop",
+
+    type: "regular",
+    theme: "beer"
+  },
   {
     id: 1,
     image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=2070&auto=format&fit=crop",
@@ -71,19 +78,10 @@ const banners = [
   {
     id: 2,
     image: "https://images.unsplash.com/photo-1616527546362-77e70524262d?q=80&w=2070&auto=format&fit=crop",
-    title: "Weekend Special Offers",
-    description: "Up to 20% off on premium liquor brands and free delivery on orders above ₹999",
     type: "special",
     theme: "cocktail"
   },
-  {
-    id: 3,
-    image: "https://images.unsplash.com/photo-1574807947927-2960b61a4dba?q=80&w=2070&auto=format&fit=crop",
-    title: "Craft Beer Collection",
-    description: "Discover our handpicked selection of local craft beers",
-    type: "regular",
-    theme: "beer"
-  },
+  
   {
     id: 4,
     image: "https://images.unsplash.com/photo-1528823872057-9c018a7a7553?q=80&w=2070&auto=format&fit=crop",
@@ -560,16 +558,24 @@ function Dashboard() {
                   </div>
                 </div>
                 
-                <img
-                  src={banner.image}
-                  alt={banner.title}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.onerror = null;
-                    target.src = "website1.png";
-                  }}
-                />
+<img
+  src={banner.image}
+  alt={banner.title}
+  className="w-full h-full object-cover"
+  onError={(e) => {
+    const target = e.target as HTMLImageElement;
+    target.onerror = null;
+    target.src = "/website1.png";
+
+    // ✅ Apply mobile-friendly fallback styles
+    target.style.objectFit = "contain"; // Show entire image
+    target.style.padding = "29px"; // Add padding to prevent edge clipping
+    target.style.backgroundColor = "#000"; // Optional: dark background
+  }}
+/>
+
+
+
               </div>
             ))}
           </div>
