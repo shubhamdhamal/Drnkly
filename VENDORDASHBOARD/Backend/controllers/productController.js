@@ -1,7 +1,7 @@
 const Product = require('../models/product');
 const path = require('path');
 const fs = require('fs');
-
+const mongoose = require('mongoose');
 
 // Function to categorize liquor based on alcohol content
 const categorizeLiquor = (alcoholContent) => {
