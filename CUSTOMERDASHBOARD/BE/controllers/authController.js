@@ -250,7 +250,8 @@ exports.signup = async (req, res) => {
   }
 };
 
-// ✅ User Login
+
+// ✅ User Login with status check
 exports.login = async (req, res) => {
   const { identifier, password } = req.body;
 
