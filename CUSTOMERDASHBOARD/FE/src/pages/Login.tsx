@@ -89,18 +89,21 @@ function App() {
           setShowLocationPopup(true);
         }
       }
-    } catch (err: any) {
-      const msg = err?.response?.data?.message;
-      if (msg === 'User not found') {
-        setError('No account found with this email or mobile number.');
-      } else if (msg === 'Invalid credentials') {
-        setError('Incorrect credentials. Please try again.');
-      } else {
-        setError('Something went wrong. Please try again later.');
-      }
-    } finally {
-      setIsLoading(false);
+    } catch (error) {
+    const msg = (error as any)?.response?.data?.message;
+
+    if (msg === 'User not found') {
+      setError('No account found with this email or mobile number.');
+    } else if (msg === 'Invalid credentials') {
+      setError('Incorrect email or mobile number, or password.');
+    } else if (msg === 'Your account has been rejected. Please contact support.') {
+      setError('Your account is rejected. Please contact support.');
+    } else if (msg === 'Your account is not verified yet.') {
+      setError('Your account is not yet verified. Please wait for approval.');
+    } else {
+      setError('Something went wrong. Please try again.');
     }
+  }
   };
 
   const handleGoogleLogin = () => {
