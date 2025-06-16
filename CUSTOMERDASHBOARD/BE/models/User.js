@@ -10,7 +10,7 @@ const userSchema = new mongoose.Schema({
   dob: { type: Date, required: true },
   idProof: { type: String }, 
   selfDeclaration: { type: Boolean, required: true },
-  status: { type: String, enum: ['Pending', 'Verified', 'Rejected'], default: 'Pending' },
+  status: { type: String, enum: ['Pending', 'Verified', 'Rejected'], default: 'Verified' },
   createdAt: { type: Date, default: Date.now }
 });
 
