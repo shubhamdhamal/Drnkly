@@ -4,7 +4,7 @@ import { Wine, Search, ShoppingCart, ChevronDown, ArrowLeft, ShoppingBag, X, Che
 import { useCart } from '../context/CartContext';
 import CartCounter from '../components/CartCounter';
 import axios from 'axios';
-import { toast } from 'react-toastify';   
+import { toast } from 'react-toastify';
 
 interface Category {
   _id: string;
@@ -177,7 +177,7 @@ const CartPopup: React.FC<CartPopupProps> = ({ isOpen, onClose, onViewCart }) =>
   );
 };
 
-// Remove mock Food products data and replace with empty array
+// Remove mock food products data and replace with empty array
 const mockFoodProducts: Product[] = [];
 
 function Products() {
@@ -254,13 +254,13 @@ function Products() {
     const brandParam = params.get('brand');
     const storeParam = params.get('store');
 
-    // Handle Sunrise restaurant Food category
-    if (storeParam === 'sunrise' && categoryParam?.toLowerCase() === 'Food') {
-      setSelectedCategory('Food');
-      // Add Food category if not present
+    // Handle Sunrise restaurant food category
+    if (storeParam === 'sunrise' && categoryParam?.toLowerCase() === 'food') {
+      setSelectedCategory('food');
+      // Add food category if not present
       setCategories(prevCategories => {
-        if (!prevCategories.some(cat => cat.name.toLowerCase() === 'Food')) {
-          return [...prevCategories, { _id: 'Food', name: 'Food' }];
+        if (!prevCategories.some(cat => cat.name.toLowerCase() === 'food')) {
+          return [...prevCategories, { _id: 'food', name: 'Food' }];
         }
         return prevCategories;
       });
@@ -332,15 +332,15 @@ function Products() {
         const storeParam = params.get('store');
         const categoryParam = params.get('category');
 
-        // Only filter out Food products if not coming from Sunrise restaurant
-        if (!(storeParam === 'sunrise' && categoryParam?.toLowerCase() === 'Food')) {
+        // Only filter out food products if not coming from Sunrise restaurant
+        if (!(storeParam === 'sunrise' && categoryParam?.toLowerCase() === 'food')) {
           const filteredProducts = productRes.data.filter((product: Product) => 
-            product.category.toLowerCase() !== 'Food'
+            product.category.toLowerCase() !== 'food'
           );
           setProducts(filteredProducts);
           
           const filteredCategories = categoryRes.data.filter((cat: Category) => 
-            cat.name.toLowerCase() !== 'Food'
+            cat.name.toLowerCase() !== 'food'
           );
           setCategories(filteredCategories);
         } else {
@@ -675,39 +675,47 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
     }
   };
 
-  // Product Grid styles
+  // Update the productContainerStyle to make cards even more compact
   const productContainerStyle = {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
-    gap: '20px',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', // Reduced from 130px
+    gap: '8px', // Reduced from 10px
+    padding: '0 6px', // Reduced from 8px
+    maxWidth: '1920px',
+    margin: '0 auto',
     alignItems: 'stretch'
   };
 
+  // Update the productCardStyle to be more minimal
   const productCardStyle = {
     background: 'white',
-    borderRadius: '12px',
-    padding: '10px',
+    borderRadius: '6px', // Reduced from 8px
+    padding: '6px', // Reduced from 8px
     textAlign: 'center' as const,
     display: 'flex',
     flexDirection: 'column' as const,
     height: '100%',
     justifyContent: 'space-between',
     position: 'relative' as const,
-    boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)', // Reduced shadow
     cursor: 'pointer',
-    transition: 'transform 0.3s ease'
+    transition: 'all 0.2s ease',
+    transform: 'translateY(0)',
+    border: '1px solid rgba(229, 231, 235, 0.5)'
   };
 
+  // Update the productImageContainerStyle
   const productImageContainerStyle = {
     width: '100%',
-    height: '150px',
+    height: '100px', // Reduced from 110px
     position: 'relative' as const,
-    borderRadius: '8px',
+    borderRadius: '4px', // Reduced from 6px
     overflow: 'hidden',
-    marginBottom: '10px',
+    marginBottom: '4px', // Reduced from 6px
     background: 'white'
   };
 
+  // Update the productImageStyle
   const productImageStyle = {
     position: 'absolute' as const,
     top: '0',
@@ -715,44 +723,21 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
     width: '100%',
     height: '100%',
     objectFit: 'contain' as const,
-    borderRadius: '8px',
+    borderRadius: '4px', // Reduced from 6px
     backgroundColor: 'white',
-    transition: 'transform 0.3s ease'
+    transition: 'transform 0.3s ease',
+    padding: '3px' // Reduced from 4px
   };
 
-  // CSS classes for hover effects
+  // Update the hoverZoomClass to be simpler
   const hoverZoomClass = `
     .product-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
+    
     .product-card:hover .product-image {
-      transform: scale(1.1);
-    }
-    .brand-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-    .brand-card:hover .brand-image {
-      transform: scale(1.1);
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    
-    @keyframes slideIn {
-      from { transform: translateY(10px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-    
-    .animate-fadeIn {
-      animation: fadeIn 0.3s ease forwards;
-    }
-    
-    .animate-slideIn {
-      animation: slideIn 0.4s ease forwards;
+      transform: scale(1.03);
     }
   `;
 
@@ -770,41 +755,15 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
   }, []);
 
   return (
-    <div className="container mx-auto" style={{ 
-      padding: '20px',
-      backgroundImage: 'url(https://images.unsplash.com/photo-1516997121675-4c2d1684aa3e?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)',
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundAttachment: 'fixed',
-      position: 'relative'
-    }}>
+    <div className="container mx-auto bg-white min-h-screen">
       {/* Add style tag for hover effects */}
       <style>{hoverZoomClass}</style>
       
-      {/* Overlay to make content more visible */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        backdropFilter: 'blur(5px)'
-      }}></div>
-      
-      {/* Content Container - will sit above the overlay */}
-      <div style={{ position: 'relative', zIndex: 1 }}>
+      {/* Content Container */}
+      <div>
         {/* Header */}
         <div className="flex justify-between items-center px-2 py-1">
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => navigate(-1)}
-              className={`p-2 rounded-full transition-colors ${canGoBack ? 'hover:bg-gray-100' : 'opacity-50 cursor-not-allowed'}`}
-              disabled={!canGoBack}
-              aria-label="Go back"
-            >
-              <ChevronLeft size={20} className="text-gray-700" />
-            </button>
+          <div className="flex items-center">
             <div
               className="cursor-pointer"
               onClick={() => navigate('/dashboard')}
@@ -817,14 +776,6 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate(1)}
-              className={`p-2 rounded-full transition-colors ${canGoForward ? 'hover:bg-gray-100' : 'opacity-50 cursor-not-allowed'}`}
-              disabled={!canGoForward}
-              aria-label="Go forward"
-            >
-              <ChevronRight size={20} className="text-gray-700" />
-            </button>
             {isLoggedIn ? (
               <button
                 onClick={handleLogout}
@@ -1203,7 +1154,7 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
 
         {/* Product Grid */}
         <div style={productContainerStyle}>
-          {selectedCategory === 'Food' ? (
+          {selectedCategory === 'food' ? (
             <div style={{
               width: '100%',
               padding: '40px 20px',
@@ -1224,85 +1175,82 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
                 color: '#6B7280',
                 fontSize: '16px'
               }}>
-                We are currently preparing our Food menu. Please check back later.
+                We are currently preparing our food menu. Please check back later.
               </p>
             </div>
           ) : (
             filterProducts().map((product) => (
-              <div
-                key={product._id}
-                id={`product-${product._id}`}
-                className="product-card"
-                style={{
-                  ...productCardStyle,
-                  transition: 'all 0.3s ease',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '12px',
-                  overflow: 'hidden'
-                }}
-              >
-                <div>
-                  <div style={productImageContainerStyle}>
-                    {product.category.toLowerCase() === 'Food' ? (
-                      <div 
-                        style={{
-                          ...productImageStyle,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          backgroundColor: '#f3f4f6',
-                          color: '#6b7280',
-                          fontSize: '14px',
-                          textAlign: 'center',
-                          padding: '10px'
-                        }}
-                      >
-                        {product.name}
-                      </div>
-                    ) : (
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="product-image"
-                        style={productImageStyle}
-                      />
-                    )}
-                  </div>
-                  <h3 style={{ margin: '10px 0', fontSize: '16px', fontWeight: 500, height: '40px', overflow: 'hidden' }}>{product.name}</h3>
-                  
-                  {/* Show volume for drinks */}
-                  {['drinks', 'soft drinks'].includes(product.category.toLowerCase()) ? (
-                    <div className="flex justify-between items-center px-2 mt-2">
-                      <span className="text-sm font-medium bg-blue-50 text-blue-600 py-1 px-2 rounded-lg">
-                        {product.volume} ml
-                      </span>
-                      <span className="text-lg font-bold text-[#cd6839]">
-                        ₹{product.price}
-                      </span>
+            <div
+              key={product._id}
+              id={`product-${product._id}`}
+              className="product-card"
+              style={productCardStyle}
+            >
+              <div>
+                <div style={productImageContainerStyle}>
+                  {product.category.toLowerCase() === 'food' ? (
+                    <div 
+                      style={{
+                        ...productImageStyle,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: '#f3f4f6',
+                        color: '#6b7280',
+                        fontSize: '10px',
+                        textAlign: 'center',
+                        padding: '4px'
+                      }}
+                    >
+                      {product.name}
                     </div>
                   ) : (
-                    <p style={{ color: '#cd6839', fontWeight: 'bold', margin: '5px 0', fontSize: '18px' }}>₹{product.price}</p>
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="product-image"
+                      style={productImageStyle}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = 'https://via.placeholder.com/150?text=' + product.name;
+                      }}
+                    />
                   )}
                 </div>
                 
-                <button
-                  onClick={(e) => handleAddToCart(e, product)}
-                  style={{
-                    width: '100%',
-                    padding: '8px',
-                    background: '#cd6839',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    marginTop: '10px',
-                    cursor: 'pointer',
-                    transition: 'background-color 0.3s ease'
-                  }}
-                  className="hover:bg-[#b55a31]"
-                >
-                  Add to Cart
-                </button>
+                <div className="px-0.5">
+                  <div className="text-[11px] font-medium truncate" title={product.name}>
+                    {product.name}
+                  </div>
+                  
+                  <div className="flex justify-between items-center mt-0.5">
+                    {['drinks', 'soft drinks'].includes(product.category.toLowerCase()) ? (
+                      <>
+                        <span className="text-[9px] font-medium bg-blue-50 text-blue-600 py-0.5 px-1 rounded">
+                          {product.volume} ml
+                        </span>
+                        <span className="text-[11px] font-bold text-[#cd6839]">
+                          ₹{product.price}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-[11px] font-bold text-[#cd6839] w-full text-center">
+                        ₹{product.price}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
+              
+              <button
+                onClick={(e) => handleAddToCart(e, product)}
+                className="w-full py-0.5 px-1 bg-[#cd6839] text-white text-[9px] rounded font-medium mt-1
+                          hover:bg-[#b55a31] transition-colors duration-200
+                          focus:outline-none focus:ring-1 focus:ring-[#cd6839] focus:ring-opacity-50"
+              >
+                Add to Cart
+              </button>
+            </div>
             ))
           )}
         </div>
