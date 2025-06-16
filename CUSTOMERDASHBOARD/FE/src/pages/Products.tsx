@@ -177,7 +177,7 @@ const CartPopup: React.FC<CartPopupProps> = ({ isOpen, onClose, onViewCart }) =>
   );
 };
 
-// Remove mock food products data and replace with empty array
+// Remove mock Food products data and replace with empty array
 const mockFoodProducts: Product[] = [];
 
 function Products() {
@@ -254,13 +254,13 @@ function Products() {
     const brandParam = params.get('brand');
     const storeParam = params.get('store');
 
-    // Handle Sunrise restaurant food category
-    if (storeParam === 'sunrise' && categoryParam?.toLowerCase() === 'food') {
-      setSelectedCategory('food');
-      // Add food category if not present
+    // Handle Sunrise restaurant Food category
+    if (storeParam === 'sunrise' && categoryParam?.toLowerCase() === 'Food') {
+      setSelectedCategory('Food');
+      // Add Food category if not present
       setCategories(prevCategories => {
-        if (!prevCategories.some(cat => cat.name.toLowerCase() === 'food')) {
-          return [...prevCategories, { _id: 'food', name: 'Food' }];
+        if (!prevCategories.some(cat => cat.name.toLowerCase() === 'Food')) {
+          return [...prevCategories, { _id: 'Food', name: 'Food' }];
         }
         return prevCategories;
       });
@@ -332,15 +332,15 @@ function Products() {
         const storeParam = params.get('store');
         const categoryParam = params.get('category');
 
-        // Only filter out food products if not coming from Sunrise restaurant
-        if (!(storeParam === 'sunrise' && categoryParam?.toLowerCase() === 'food')) {
+        // Only filter out Food products if not coming from Sunrise restaurant
+        if (!(storeParam === 'sunrise' && categoryParam?.toLowerCase() === 'Food')) {
           const filteredProducts = productRes.data.filter((product: Product) => 
-            product.category.toLowerCase() !== 'food'
+            product.category.toLowerCase() !== 'Food'
           );
           setProducts(filteredProducts);
           
           const filteredCategories = categoryRes.data.filter((cat: Category) => 
-            cat.name.toLowerCase() !== 'food'
+            cat.name.toLowerCase() !== 'Food'
           );
           setCategories(filteredCategories);
         } else {
@@ -1154,7 +1154,7 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
 
         {/* Product Grid */}
         <div style={productContainerStyle}>
-          {selectedCategory === 'food' ? (
+          {selectedCategory === 'Food' ? (
             <div style={{
               width: '100%',
               padding: '40px 20px',
@@ -1175,7 +1175,7 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
                 color: '#6B7280',
                 fontSize: '16px'
               }}>
-                We are currently preparing our food menu. Please check back later.
+                We are currently preparing our Food menu. Please check back later.
               </p>
             </div>
           ) : (
@@ -1188,7 +1188,7 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
             >
               <div>
                 <div style={productImageContainerStyle}>
-                  {product.category.toLowerCase() === 'food' ? (
+                  {product.category.toLowerCase() === 'Food' ? (
                     <div 
                       style={{
                         ...productImageStyle,
