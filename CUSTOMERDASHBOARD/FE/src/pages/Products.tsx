@@ -1,13 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Wine, Search, ShoppingCart, ChevronDown, ArrowLeft, ShoppingBag, X, ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
-import { useCart, CartItem } from '../context/CartContext';
+import { useCart } from '../context/CartContext';
 import CartCounter from '../components/CartCounter';
 import axios from 'axios';
-import { toast } from 'react-toastify';
-
-// Remove banner data
-// const banners = [ ... ];
+import { toast } from 'react-toastify';   
 
 interface Category {
   _id: string;
@@ -23,7 +20,7 @@ interface Product {
   category: string;
   brand: string;
   alcoholContent?: number;
-  inStock?: boolean;
+  description?: string;
 }
 
 interface SubBrand {
@@ -32,136 +29,27 @@ interface SubBrand {
   category: string;
 }
 
-// Mock food products data (replace with actual API fetch in production)
-const mockFoodProducts: Product[] = [
-  // CHINESE VEG STARTER
-  { _id: 'food_101', name: 'Mushroom Crispy', price: 260, image: 'https://via.placeholder.com/150?text=Mushroom+Crispy', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_102', name: 'Veg Manchurian Dry', price: 170, image: 'https://via.placeholder.com/150?text=Veg+Manchurian', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_103', name: 'Veg Manchurian Grevy', price: 190, image: 'https://via.placeholder.com/150?text=Veg+Manchurian+Grevy', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_104', name: 'Veg 65 Dry', price: 180, image: 'https://via.placeholder.com/150?text=Veg+65+Dry', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_105', name: 'Veg 65 Grevy', price: 190, image: 'https://via.placeholder.com/150?text=Veg+65+Grevy', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_106', name: 'Veg Crispy', price: 210, image: 'https://via.placeholder.com/150?text=Veg+Crispy', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_107', name: 'Potato Crispy', price: 205, image: 'https://via.placeholder.com/150?text=Potato+Crispy', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_108', name: 'Gobi Manchurian Dry', price: 180, image: 'https://via.placeholder.com/150?text=Gobi+Manchurian', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_109', name: 'Gobi Manchurian Grevy', price: 210, image: 'https://via.placeholder.com/150?text=Gobi+Manchurian+Grevy', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_110', name: 'Gobi Hotpan', price: 215, image: 'https://via.placeholder.com/150?text=Gobi+Hotpan', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_111', name: 'Mushroom Man. Dry', price: 210, image: 'https://via.placeholder.com/150?text=Mushroom+Man.Dry', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_112', name: 'Mushroom Man. Grevy', price: 240, image: 'https://via.placeholder.com/150?text=Mushroom+Man.Grevy', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_113', name: 'Mushroom Chilly Dry', price: 210, image: 'https://via.placeholder.com/150?text=Mushroom+Chilly+Dry', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_114', name: 'Mushroom Chilly Grevy', price: 240, image: 'https://via.placeholder.com/150?text=Mushroom+Chilly+Grevy', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_115', name: 'Mushroom Hot Pan', price: 270, image: 'https://via.placeholder.com/150?text=Mushroom+Hot+Pan', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_116', name: 'Paneer Crispy', price: 280, image: 'https://via.placeholder.com/150?text=Paneer+Crispy', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_117', name: 'Paneer Hot Pan', price: 290, image: 'https://via.placeholder.com/150?text=Paneer+Hot+Pan', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_118', name: 'Mushroom Paneer Hot Pan', price: 295, image: 'https://via.placeholder.com/150?text=Mushroom+Paneer+Hot+Pan', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_119', name: 'Paneer Manchurian Dry', price: 200, image: 'https://via.placeholder.com/150?text=Paneer+Manchurian', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_120', name: 'Paneer Manchurian Grevy', price: 240, image: 'https://via.placeholder.com/150?text=Paneer+Manchurian+Grevy', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_121', name: 'Paneer Chilly Dry', price: 200, image: 'https://via.placeholder.com/150?text=Paneer+Chilly+Dry', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_122', name: 'Paneer Chilly Grevy', price: 240, image: 'https://via.placeholder.com/150?text=Paneer+Chilly+Grevy', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_123', name: 'Veg 65 Dry', price: 200, image: 'https://via.placeholder.com/150?text=Veg+65+Dry', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_124', name: 'Veg 65 Grevy', price: 240, image: 'https://via.placeholder.com/150?text=Veg+65+Grevy', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_125', name: 'Babycorn Crispy', price: 260, image: 'https://via.placeholder.com/150?text=Babycorn+Crispy', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_126', name: 'Babycorn Chilly Dry', price: 215, image: 'https://via.placeholder.com/150?text=Babycorn+Chilly+Dry', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_127', name: 'Babycorn Chilly Grevy', price: 240, image: 'https://via.placeholder.com/150?text=Babycorn+Chilly+Grevy', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_128', name: 'Veg Spring Roll', price: 250, image: 'https://via.placeholder.com/150?text=Veg+Spring+Roll', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_129', name: 'Veg Chinise Platters', price: 725, image: 'https://via.placeholder.com/150?text=Veg+Chinise+Platters', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_130', name: 'Veg Bullet', price: 310, image: 'https://via.placeholder.com/150?text=Veg+Bullet', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_131', name: 'Veg Hotpan', price: 250, image: 'https://via.placeholder.com/150?text=Veg+Hotpan', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-  { _id: 'food_132', name: 'Mushroom Butter Fry', price: 280, image: 'https://via.placeholder.com/150?text=Mushroom+Butter+Fry', volume: 0, category: 'Food', brand: 'CHINESE VEG STARTER' },
-
-  // CHINESE NON VEG STARTER
-  { _id: 'food_201', name: 'Chicken Manc. Dry', price: 240, image: 'https://via.placeholder.com/150?text=Chicken+Manc.Dry', volume: 0, category: 'Food', brand: 'CHINESE NON VEG STARTER' },
-  { _id: 'food_202', name: 'Chicken Manc. Grevy', price: 270, image: 'https://via.placeholder.com/150?text=Chicken+Manc.Grevy', volume: 0, category: 'Food', brand: 'CHINESE NON VEG STARTER' },
-  { _id: 'food_203', name: 'Chicken Chilly Dry', price: 240, image: 'https://via.placeholder.com/150?text=Chicken+Chilly+Dry', volume: 0, category: 'Food', brand: 'CHINESE NON VEG STARTER' },
-  { _id: 'food_204', name: 'Chicken Chilly Grevy', price: 270, image: 'https://via.placeholder.com/150?text=Chicken+Chilly+Grevy', volume: 0, category: 'Food', brand: 'CHINESE NON VEG STARTER' },
-  { _id: 'food_205', name: 'Drums of Heaven Dry', price: 240, image: 'https://via.placeholder.com/150?text=Drums+of+Heaven+Dry', volume: 0, category: 'Food', brand: 'CHINESE NON VEG STARTER' },
-  { _id: 'food_206', name: 'Drums of Heaven Grevy', price: 270, image: 'https://via.placeholder.com/150?text=Drums+of+Heaven+Grevy', volume: 0, category: 'Food', brand: 'CHINESE NON VEG STARTER' },
-  { _id: 'food_207', name: 'Chicken Crispy', price: 310, image: 'https://via.placeholder.com/150?text=Chicken+Crispy', volume: 0, category: 'Food', brand: 'CHINESE NON VEG STARTER' },
-  { _id: 'food_208', name: 'Chicken Hot Pan', price: 315, image: 'https://via.placeholder.com/150?text=Chicken+Hot+Pan', volume: 0, category: 'Food', brand: 'CHINESE NON VEG STARTER' },
-  { _id: 'food_209', name: 'Chicken Bullet', price: 380, image: 'https://via.placeholder.com/150?text=Chicken+Bullet', volume: 0, category: 'Food', brand: 'CHINESE NON VEG STARTER' },
-  { _id: 'food_210', name: 'Mutton Hot Pan', price: 390, image: 'https://via.placeholder.com/150?text=Mutton+Hot+Pan', volume: 0, category: 'Food', brand: 'CHINESE NON VEG STARTER' },
-  { _id: 'food_211', name: 'Chicken 65 Dry', price: 250, image: 'https://via.placeholder.com/150?text=Chicken+65+Dry', volume: 0, category: 'Food', brand: 'CHINESE NON VEG STARTER' },
-  { _id: 'food_212', name: 'Chicken 65 Grevy', price: 280, image: 'https://via.placeholder.com/150?text=Chicken+65+Grevy', volume: 0, category: 'Food', brand: 'CHINESE NON VEG STARTER' },
-  { _id: 'food_213', name: 'Chicken 65 (Bone) H/F', price: 295, image: 'https://via.placeholder.com/150?text=Chicken+65+Bone', volume: 0, category: 'Food', brand: 'CHINESE NON VEG STARTER' },
-
-  // CHINESE RICE & NOODLES (VEG)
-  { _id: 'food_301', name: 'Veg Fried Rice', price: 215, image: 'https://via.placeholder.com/150?text=Veg+Fried+Rice', volume: 0, category: 'Food', brand: 'CHINESE RICE & NOODLES (VEG)' },
-  { _id: 'food_302', name: 'Veg Schezwan Rice', price: 250, image: 'https://via.placeholder.com/150?text=Veg+Schezwan+Rice', volume: 0, category: 'Food', brand: 'CHINESE RICE & NOODLES (VEG)' },
-  { _id: 'food_303', name: 'Veg Manchurian Rice', price: 295, image: 'https://via.placeholder.com/150?text=Veg+Manchurian+Rice', volume: 0, category: 'Food', brand: 'CHINESE RICE & NOODLES (VEG)' },
-  { _id: 'food_304', name: 'Veg Combination Rice', price: 290, image: 'https://via.placeholder.com/150?text=Veg+Combination+Rice', volume: 0, category: 'Food', brand: 'CHINESE RICE & NOODLES (VEG)' },
-  { _id: 'food_305', name: 'Veg Tripal Schezwan Rice', price: 295, image: 'https://via.placeholder.com/150?text=Veg+Tripal+Schezwan+Rice', volume: 0, category: 'Food', brand: 'CHINESE RICE & NOODLES (VEG)' },
-  { _id: 'food_306', name: 'Veg Hakka Noodles', price: 215, image: 'https://via.placeholder.com/150?text=Veg+Hakka+Noodles', volume: 0, category: 'Food', brand: 'CHINESE RICE & NOODLES (VEG)' },
-  { _id: 'food_307', name: 'Veg Schezwan Noodles', price: 250, image: 'https://via.placeholder.com/150?text=Veg+Schezwan+Noodles', volume: 0, category: 'Food', brand: 'CHINESE RICE & NOODLES (VEG)' },
-  { _id: 'food_308', name: 'Veg Manchurian Noodles', price: 290, image: 'https://via.placeholder.com/150?text=Veg+Manchurian+Noodles', volume: 0, category: 'Food', brand: 'CHINESE RICE & NOODLES (VEG)' },
-  { _id: 'food_309', name: 'Veg Singapuri Noodles', price: 250, image: 'https://via.placeholder.com/150?text=Veg+Singapuri+Noodles', volume: 0, category: 'Food', brand: 'CHINESE RICE & NOODLES (VEG)' },
-  { _id: 'food_310', name: 'Veg Tripal Schez. Noodles', price: 295, image: 'https://via.placeholder.com/150?text=Veg+Tripal+Schez.Noodles', volume: 0, category: 'Food', brand: 'CHINESE RICE & NOODLES (VEG)' },
-  { _id: 'food_311', name: 'Veg American Chaupsy', price: 290, image: 'https://via.placeholder.com/150?text=Veg+American+Chaupsy', volume: 0, category: 'Food', brand: 'CHINESE RICE & NOODLES (VEG)' },
-  { _id: 'food_312', name: 'Veg Chinese Choupsy', price: 295, image: 'https://via.placeholder.com/150?text=Veg+Chinese+Choupsy', volume: 0, category: 'Food', brand: 'CHINESE RICE & NOODLES (VEG)' },
-  { _id: 'food_313', name: 'Veg Singapuri Rice', price: 265, image: 'https://via.placeholder.com/150?text=Veg+Singapuri+Rice', volume: 0, category: 'Food', brand: 'CHINESE RICE & NOODLES (VEG)' },
-
-  // CHINESE RICE & NOODLES (NON-VEG)
-  { _id: 'food_401', name: 'Chicken Fried Rice', price: 250, image: 'https://via.placeholder.com/150?text=Chicken+Fried+Rice', volume: 0, category: 'Food', brand: 'CHINESE RICE & NOODLES (NON-VEG)' },
-  { _id: 'food_402', name: 'Chicken Schezwan Fired Rice', price: 290, image: 'https://via.placeholder.com/150?text=Chicken+Schezwan+Fired+Rice', volume: 0, category: 'Food', brand: 'CHINESE RICE & NOODLES (NON-VEG)' },
-  { _id: 'food_403', name: 'Chicken Singapuri Rice', price: 290, image: 'https://via.placeholder.com/150?text=Chicken+Singapuri+Rice', volume: 0, category: 'Food', brand: 'CHINESE RICE & NOODLES (NON-VEG)' },
-  { _id: 'food_404', name: 'Chicken Manchurian Fired Rice', price: 295, image: 'https://via.placeholder.com/150?text=Chicken+Manchurian+Fired+Rice', volume: 0, category: 'Food', brand: 'CHINESE RICE & NOODLES (NON-VEG)' },
-  { _id: 'food_405', name: 'Chicken Triple Rice', price: 390, image: 'https://via.placeholder.com/150?text=Chicken+Triple+Rice', volume: 0, category: 'Food', brand: 'CHINESE RICE & NOODLES (NON-VEG)' },
-  { _id: 'food_406', name: 'Chicken Hakka Noodles', price: 265, image: 'https://via.placeholder.com/150?text=Chicken+Hakka+Noodles', volume: 0, category: 'Food', brand: 'CHINESE RICE & NOODLES (NON-VEG)' },
-  { _id: 'food_407', name: 'Chicken Schezwan Noodles', price: 290, image: 'https://via.placeholder.com/150?text=Chicken+Schezwan+Noodles', volume: 0, category: 'Food', brand: 'CHINESE RICE & NOODLES (NON-VEG)' },
-  { _id: 'food_408', name: 'Chicken American Chopsy', price: 340, image: 'https://via.placeholder.com/150?text=Chicken+American+Chopsy', volume: 0, category: 'Food', brand: 'CHINESE RICE & NOODLES (NON-VEG)' },
-  { _id: 'food_409', name: 'Chicken Chinese Chopsy', price: 340, image: 'https://via.placeholder.com/150?text=Chicken+Chinese+Chopsy', volume: 0, category: 'Food', brand: 'CHINESE RICE & NOODLES (NON-VEG)' },
-  { _id: 'food_410', name: 'Egg Fried Rice', price: 215, image: 'https://via.placeholder.com/150?text=Egg+Fried+Rice', volume: 0, category: 'Food', brand: 'CHINESE RICE & NOODLES (NON-VEG)' },
-  { _id: 'food_411', name: 'Egg Hakka Noodles', price: 250, image: 'https://via.placeholder.com/150?text=Egg+Hakka+Noodles', volume: 0, category: 'Food', brand: 'CHINESE RICE & NOODLES (NON-VEG)' },
-  { _id: 'food_412', name: 'Mix Fried Rice', price: 395, image: 'https://via.placeholder.com/150?text=Mix+Fried+Rice', volume: 0, category: 'Food', brand: 'CHINESE RICE & NOODLES (NON-VEG)' },
-
-  // Chamal Ka Prakar (Rice)
-  { _id: 'food_501', name: 'Steam Rice H/F', price: 80, image: 'https://via.placeholder.com/150?text=Steam+Rice', volume: 0, category: 'Food', brand: 'RICE' },
-  { _id: 'food_502', name: 'Jeera Rice H/F', price: 95, image: 'https://via.placeholder.com/150?text=Jeera+Rice', volume: 0, category: 'Food', brand: 'RICE' },
-  { _id: 'food_503', name: 'Curd Rice', price: 245, image: 'https://via.placeholder.com/150?text=Curd+Rice', volume: 0, category: 'Food', brand: 'RICE' },
-  { _id: 'food_504', name: 'Dal Khichadi', price: 225, image: 'https://via.placeholder.com/150?text=Dal+Khichadi', volume: 0, category: 'Food', brand: 'RICE' },
-  { _id: 'food_505', name: 'Dal Palak Khichadi', price: 240, image: 'https://via.placeholder.com/150?text=Dal+Palak+Khichadi', volume: 0, category: 'Food', brand: 'RICE' },
-  { _id: 'food_506', name: 'Veg Pulav', price: 240, image: 'https://via.placeholder.com/150?text=Veg+Pulav', volume: 0, category: 'Food', brand: 'RICE' },
-  { _id: 'food_507', name: 'Kashmiri Pulav', price: 290, image: 'https://via.placeholder.com/150?text=Kashmiri+Pulav', volume: 0, category: 'Food', brand: 'RICE' },
-  { _id: 'food_508', name: 'Biryani Rice', price: 195, image: 'https://via.placeholder.com/150?text=Biryani+Rice', volume: 0, category: 'Food', brand: 'RICE' },
-  { _id: 'food_509', name: 'Veg Biryani', price: 250, image: 'https://via.placeholder.com/150?text=Veg+Biryani', volume: 0, category: 'Food', brand: 'RICE' },
-  { _id: 'food_510', name: 'Veg Dum Biryani', price: 270, image: 'https://via.placeholder.com/150?text=Veg+Dum+Biryani', volume: 0, category: 'Food', brand: 'RICE' },
-  { _id: 'food_511', name: 'Chi. Biryani', price: 305, image: 'https://via.placeholder.com/150?text=Chi.Biryani', volume: 0, category: 'Food', brand: 'RICE' },
-  { _id: 'food_512', name: 'Spl. Chicken Dum Biryani', price: 340, image: 'https://via.placeholder.com/150?text=Spl.Chicken+Dum+Biryani', volume: 0, category: 'Food', brand: 'RICE' },
-  { _id: 'food_513', name: 'Mutton Biryani', price: 370, image: 'https://via.placeholder.com/150?text=Mutton+Biryani', volume: 0, category: 'Food', brand: 'RICE' },
-  { _id: 'food_514', name: 'Spl. Mutton Dum Biryani', price: 410, image: 'https://via.placeholder.com/150?text=Spl.Mutton+Dum+Biryani', volume: 0, category: 'Food', brand: 'RICE' },
-  { _id: 'food_515', name: 'Egg Biryani', price: 270, image: 'https://via.placeholder.com/150?text=Egg+Biryani', volume: 0, category: 'Food', brand: 'RICE' },
-  { _id: 'food_516', name: 'Fish Biryani', price: 440, image: 'https://via.placeholder.com/150?text=Fish+Biryani', volume: 0, category: 'Food', brand: 'RICE' },
-  { _id: 'food_517', name: 'Prawans Biryani', price: 440, image: 'https://via.placeholder.com/150?text=Prawans+Biryani', volume: 0, category: 'Food', brand: 'RICE' },
-
-  // Breads (from various menus, grouping under 'INDIAN BREADS')
-  { _id: 'food_601', name: 'Plain Naan', price: 40, image: 'https://via.placeholder.com/150?text=Plain+Naan', volume: 0, category: 'Food', brand: 'INDIAN BREADS' },
-  { _id: 'food_602', name: 'Butter Naan', price: 50, image: 'https://via.placeholder.com/150?text=Butter+Naan', volume: 0, category: 'Food', brand: 'INDIAN BREADS' },
-  { _id: 'food_603', name: 'Lacha Paratha', price: 50, image: 'https://via.placeholder.com/150?text=Lacha+Paratha', volume: 0, category: 'Food', brand: 'INDIAN BREADS' },
-  { _id: 'food_604', name: 'Paratha', price: 45, image: 'https://via.placeholder.com/150?text=Paratha', volume: 0, category: 'Food', brand: 'INDIAN BREADS' },
-  { _id: 'food_605', name: 'Missi Roti', price: 65, image: 'https://via.placeholder.com/150?text=Missi+Roti', volume: 0, category: 'Food', brand: 'INDIAN BREADS' },
-  { _id: 'food_606', name: 'Garlic Naan', price: 95, image: 'https://via.placeholder.com/150?text=Garlic+Naan', volume: 0, category: 'Food', brand: 'INDIAN BREADS' },
-  { _id: 'food_607', name: 'Butter Garlic Naan', price: 115, image: 'https://via.placeholder.com/150?text=Butter+Garlic+Naan', volume: 0, category: 'Food', brand: 'INDIAN BREADS' },
-  { _id: 'food_608', name: 'Cheese Garlic Naan', price: 150, image: 'https://via.placeholder.com/150?text=Cheese+Garlic+Naan', volume: 0, category: 'Food', brand: 'INDIAN BREADS' },
-  { _id: 'food_609', name: 'Kulcha', price: 40, image: 'https://via.placeholder.com/150?text=Kulcha', volume: 0, category: 'Food', brand: 'INDIAN BREADS' },
-  { _id: 'food_610', name: 'Butter Kulcha', price: 50, image: 'https://via.placeholder.com/150?text=Butter+Kulcha', volume: 0, category: 'Food', brand: 'INDIAN BREADS' },
-  { _id: 'food_611', name: 'Onion Kulcha', price: 60, image: 'https://via.placeholder.com/150?text=Onion+Kulcha', volume: 0, category: 'Food', brand: 'INDIAN BREADS' },
-  { _id: 'food_612', name: 'Alu Paratha', price: 125, image: 'https://via.placeholder.com/150?text=Alu+Paratha', volume: 0, category: 'Food', brand: 'INDIAN BREADS' },
-  { _id: 'food_613', name: 'Gobi Paratha', price: 130, image: 'https://via.placeholder.com/150?text=Gobi+Paratha', volume: 0, category: 'Food', brand: 'INDIAN BREADS' },
-  { _id: 'food_614', name: 'Veg Paratha', price: 130, image: 'https://via.placeholder.com/150?text=Veg+Paratha', volume: 0, category: 'Food', brand: 'INDIAN BREADS' },
-  { _id: 'food_615', name: 'Paneer Paratha', price: 150, image: 'https://via.placeholder.com/150?text=Paneer+Paratha', volume: 0, category: 'Food', brand: 'INDIAN BREADS' },
-  { _id: 'food_616', name: 'Cheese Paratha', price: 175, image: 'https://via.placeholder.com/150?text=Cheese+Paratha', volume: 0, category: 'Food', brand: 'INDIAN BREADS' },
-  { _id: 'food_617', name: 'Roti Ki Tokri (Basket)', price: 495, image: 'https://via.placeholder.com/150?text=Roti+Ki+Tokri', volume: 0, category: 'Food', brand: 'INDIAN BREADS' },
-];
+// Define local CartItem interface to extend the imported one
+interface LocalCartItem {
+  id: number;
+  productId: string;
+  category: string;
+  name: string;
+  price: number;
+  image: string;
+  quantity: number;
+  volume?: number;
+}
 
 // Cart Popup Component
-const CartPopup = ({
-  isOpen,
-  onClose,
-  onViewCart,
-}: {
+interface CartPopupProps {
   isOpen: boolean;
   onClose: () => void;
   onViewCart: () => void;
-}) => {
-  const [items, setItems] = React.useState<CartItem[]>([]);
+}
+
+const CartPopup: React.FC<CartPopupProps> = ({ isOpen, onClose, onViewCart }) => {
+  const [items, setItems] = React.useState<LocalCartItem[]>([]);
   const [loading, setLoading] = React.useState(false);
 
   React.useEffect(() => {
@@ -200,7 +88,7 @@ const CartPopup = ({
   const deliveryCharge = 40; // Fixed delivery charge
   const total = subtotal + deliveryCharge;
 
-  // Get the 3 most recently added items (assuming they're at the end of the array)
+  // Get the 3 most recently added items
   const recentItems = [...items].slice(-3).reverse();
   const remainingCount = items.length - recentItems.length;
 
@@ -289,6 +177,9 @@ const CartPopup = ({
   );
 };
 
+// Remove mock Food products data and replace with empty array
+const mockFoodProducts: Product[] = [];
+
 function Products() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -359,36 +250,36 @@ function Products() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const categoryParam = params.get('category');
-    const storeParam = params.get('store');
     const searchParam = params.get('search');
     const brandParam = params.get('brand');
+    const storeParam = params.get('store');
+
+    // Handle Sunrise restaurant Food category
+    if (storeParam === 'sunrise' && categoryParam?.toLowerCase() === 'Food') {
+      setSelectedCategory('Food');
+      // Add Food category if not present
+      setCategories(prevCategories => {
+        if (!prevCategories.some(cat => cat.name.toLowerCase() === 'Food')) {
+          return [...prevCategories, { _id: 'Food', name: 'Food' }];
+        }
+        return prevCategories;
+      });
+    }
 
     if (categoryParam) {
       const catLower = categoryParam.toLowerCase();
       setSelectedCategory(catLower);
-      
-      // For all categories, show sub-brands when navigating from URL
       if (products.length > 0) {
         showSubBrandsForCategory(catLower);
       }
     }
 
-    if (storeParam === 'sunrise') {
-      // Add Food category if it doesn't exist
-      if (!categories.some(cat => cat.name === 'Food')) {
-        setCategories(prev => [...prev, { _id: 'food', name: 'Food' }]);
-      }
-      setSelectedCategory('food');
-    }
-
     if (searchParam) {
       setSearchQuery(searchParam);
       
-      // Focus the search input when coming from a search
       setTimeout(() => {
         if (searchInputRef.current) {
           searchInputRef.current.focus();
-          // Also show search results if we have a query
           if (searchParam.trim() !== '') {
             handleSearch(searchParam);
           }
@@ -397,24 +288,17 @@ function Products() {
       
       // Special handling for Old Monk promotion
       if (searchParam.toLowerCase().includes('old monk')) {
-        console.log('Old Monk  search detected:', searchParam);
-        
-        // Set category to drinks
         setSelectedCategory('drinks');
-        // Set brand to Old Monk if available
         if (products.length > 0) {
           const oldMonkProducts = products.filter(p => 
             p.name.toLowerCase().includes('old monk') || 
             p.brand.toLowerCase().includes('old monk')
           );
           
-          console.log('Found Old Monk products:', oldMonkProducts.length);
-          
           if (oldMonkProducts.length > 0) {
             setSelectedBrand('Old Monk');
             setShowSubBrands(false);
             
-            // Show a toast notification about the free offer
             toast.success("🥃 Get a FREE Old Monk on your first order!", {
               position: "top-center",
               autoClose: 5000,
@@ -442,12 +326,28 @@ function Products() {
           axios.get('https://peghouse.in/api/products'),
           axios.get('https://peghouse.in/api/categories'),
         ]);
-        // Combine fetched products with mock food products
-        setProducts([...productRes.data, ...mockFoodProducts]);
-        // Add 'Food' category if not already present
-        const updatedCategories = Array.from(new Set([...categoryRes.data.map((cat: Category) => cat.name), 'Food']))
-                                     .map(name => ({ _id: name.toLowerCase(), name })); // Ensure 'Food' has an _id for consistency
-        setCategories(updatedCategories);
+        
+        // Get store parameter
+        const params = new URLSearchParams(location.search);
+        const storeParam = params.get('store');
+        const categoryParam = params.get('category');
+
+        // Only filter out Food products if not coming from Sunrise restaurant
+        if (!(storeParam === 'sunrise' && categoryParam?.toLowerCase() === 'Food')) {
+          const filteredProducts = productRes.data.filter((product: Product) => 
+            product.category.toLowerCase() !== 'Food'
+          );
+          setProducts(filteredProducts);
+          
+          const filteredCategories = categoryRes.data.filter((cat: Category) => 
+            cat.name.toLowerCase() !== 'Food'
+          );
+          setCategories(filteredCategories);
+        } else {
+          // If coming from Sunrise, include all products
+          setProducts(productRes.data);
+          setCategories(categoryRes.data);
+        }
       } catch (err: unknown) {
         if (err instanceof Error) {
           console.error('Error fetching data:', err.message);
@@ -458,7 +358,7 @@ function Products() {
     };
 
     fetchData();
-  }, []);
+  }, [location.search]);
 
   // Extract all unique brands from products
   useEffect(() => {
@@ -484,8 +384,7 @@ function Products() {
       const searchableText = [
         product.name,
         product.brand,
-        product.category,
-        product.description || ''
+        product.category
       ].map(text => text?.toLowerCase() || '').join(' ');
       
       return searchableText.includes(trimmedQuery);
@@ -629,7 +528,7 @@ function Products() {
     setShowSubBrands(false);
   };
 
-  // Modify handleAddToCart to accept an optional event parameter
+  // Modify handleAddToCart to handle volume properly
 const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => {
   if (e) {
     e.stopPropagation();
@@ -649,7 +548,6 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
     // Check if already in cart
     const alreadyInCart = items.some(item =>
       item.name.toLowerCase().includes('Old Monk Rum Free') &&
-      item.volume === 180 &&
       item.quantity === 1
     );
 
@@ -670,16 +568,16 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
       alcoholContent: product.alcoholContent
     });
 
-    // Add to local cart context
-    addToCart({
-      id: parseInt(product._id) || Date.now(), // Use timestamp as fallback if conversion fails
+      // Add to local cart context with the correct type
+      const cartItem = {
+        id: parseInt(product._id) || Date.now(),
       productId: product._id,
       category: product.category,
       name: product.name,
       price: product.price,
-      image: product.image,
-      volume: product.volume
-    });
+        image: product.image
+      };
+      addToCart(cartItem);
 
     toast.success(`${product.name} added to cart!`, {
       position: "bottom-right",
@@ -702,7 +600,6 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
     console.error('Cart Error:', err);
   }
 };
-
 
   // Handle view cart action
   const handleViewCart = () => {
@@ -1306,85 +1203,108 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
 
         {/* Product Grid */}
         <div style={productContainerStyle}>
-          {filterProducts().map((product) => (
-           <div
-  key={product._id}
-  id={`product-${product._id}`}
-  className="product-card"
-  style={{
-    ...productCardStyle,
-    transition: 'all 0.3s ease',
-    border: '1px solid #e5e7eb',
-    borderRadius: '12px',
-    overflow: 'hidden',
-    opacity: product.inStock === false ? 0.5 : 1,
-    filter: product.inStock === false ? 'grayscale(80%)' : 'none',
-    pointerEvents: product.inStock === false ? 'none' : 'auto'
-  }}
->
-  {!product.inStock && (
-    <div style={{
-      position: 'absolute',
-      top: 5,
-      left: 5,
-      background: '#e53e3e',
-      color: 'white',
-      fontSize: '12px',
-      padding: '2px 6px',
-      borderRadius: '4px',
-      zIndex: 10
-    }}>
-      Out of Stock
-    </div>
-  )}
-
-              <div> {/* Content wrapper */}
-                <div style={productImageContainerStyle}>
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="product-image"
-                    style={productImageStyle}
-                  />
-                </div>
-                <h3 style={{ margin: '10px 0', fontSize: '16px', fontWeight: 500, height: '40px', overflow: 'hidden' }}>{product.name}</h3>
-                
-                {/* Show volume for drinks */}
-                {['drinks', 'soft drinks'].includes(product.category.toLowerCase()) ? (
-                  <div className="flex justify-between items-center px-2 mt-2">
-                    <span className="text-sm font-medium bg-blue-50 text-blue-600 py-1 px-2 rounded-lg">
-                      {product.volume} ml
-                    </span>
-                    <span className="text-lg font-bold text-[#cd6839]">
-                      ₹{product.price}
-                    </span>
-                  </div>
-                ) : (
-                  <p style={{ color: '#cd6839', fontWeight: 'bold', margin: '5px 0', fontSize: '18px' }}>₹{product.price}</p>
-                )}
-              </div>
-              
-              <button
-  onClick={(e) => handleAddToCart(e, product)}
-  disabled={product.inStock === false}
-  style={{
-    width: '100%',
-    padding: '8px',
-    background: product.inStock === false ? '#e5e7eb' : '#cd6839',
-    color: product.inStock === false ? '#888' : 'white',
-    border: 'none',
-    borderRadius: '8px',
-    marginTop: '10px',
-    cursor: product.inStock === false ? 'not-allowed' : 'pointer',
-    transition: 'background-color 0.3s ease'
-  }}
-  className={product.inStock === false ? '' : 'hover:bg-[#b55a31]'}
->
-  {product.inStock === false ? 'Out of Stock' : 'Add to Cart'}
-</button>
-
+          {selectedCategory === 'Food' ? (
+            <div style={{
+              width: '100%',
+              padding: '40px 20px',
+              textAlign: 'center',
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+              gridColumn: '1 / -1'
+            }}>
+              <h3 style={{ 
+                fontSize: '20px', 
+                color: '#4B5563',
+                marginBottom: '10px'
+              }}>
+                Food Menu Coming Soon
+              </h3>
+              <p style={{ 
+                color: '#6B7280',
+                fontSize: '16px'
+              }}>
+                We are currently preparing our Food menu. Please check back later.
+              </p>
             </div>
-          ))}
+          ) : (
+            filterProducts().map((product) => (
+              <div
+                key={product._id}
+                id={`product-${product._id}`}
+                className="product-card"
+                style={{
+                  ...productCardStyle,
+                  transition: 'all 0.3s ease',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '12px',
+                  overflow: 'hidden'
+                }}
+              >
+                <div>
+                  <div style={productImageContainerStyle}>
+                    {product.category.toLowerCase() === 'Food' ? (
+                      <div 
+                        style={{
+                          ...productImageStyle,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: '#f3f4f6',
+                          color: '#6b7280',
+                          fontSize: '14px',
+                          textAlign: 'center',
+                          padding: '10px'
+                        }}
+                      >
+                        {product.name}
+                      </div>
+                    ) : (
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="product-image"
+                        style={productImageStyle}
+                      />
+                    )}
+                  </div>
+                  <h3 style={{ margin: '10px 0', fontSize: '16px', fontWeight: 500, height: '40px', overflow: 'hidden' }}>{product.name}</h3>
+                  
+                  {/* Show volume for drinks */}
+                  {['drinks', 'soft drinks'].includes(product.category.toLowerCase()) ? (
+                    <div className="flex justify-between items-center px-2 mt-2">
+                      <span className="text-sm font-medium bg-blue-50 text-blue-600 py-1 px-2 rounded-lg">
+                        {product.volume} ml
+                      </span>
+                      <span className="text-lg font-bold text-[#cd6839]">
+                        ₹{product.price}
+                      </span>
+                    </div>
+                  ) : (
+                    <p style={{ color: '#cd6839', fontWeight: 'bold', margin: '5px 0', fontSize: '18px' }}>₹{product.price}</p>
+                  )}
+                </div>
+                
+                <button
+                  onClick={(e) => handleAddToCart(e, product)}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    background: '#cd6839',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    marginTop: '10px',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.3s ease'
+                  }}
+                  className="hover:bg-[#b55a31]"
+                >
+                  Add to Cart
+                </button>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -1392,8 +1312,10 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
       <CartPopup 
         isOpen={isCartPopupOpen}
         onClose={() => setIsCartPopupOpen(false)}
-        items={items}
-        onViewCart={handleViewCart}
+        onViewCart={() => {
+          setIsCartPopupOpen(false);
+          navigate('/cart');
+        }}
       />
 
       {/* Add highlight animation styles */}
