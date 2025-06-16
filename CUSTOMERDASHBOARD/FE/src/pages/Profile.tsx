@@ -32,7 +32,7 @@ interface Message {
 const FAQ_DATA = [
   {
     q: "shop timings|दुकान वेळ|timing|वेळ",
-    a: "Our shop is open from 10 AM to 10 PM every day.\nआमचं दुकान दररोज सकाळी १० ते रात्री १० वाजेपर्यंत उघडं असतं."
+    a: "Our shop is open from 10 AM to 1 AM every day.\nआमचं दुकान दररोज सकाळी १० ते रात्री १ वाजेपर्यंत उघडं असतं."
   },
   {
     q: "location|address|दुकान कुठे|पत्ता",
@@ -44,7 +44,7 @@ const FAQ_DATA = [
   },
   {
     q: "delivery|डिलिव्हरी|होम डिलिव्हरी",
-    a: "Yes, we offer home delivery! 🚚\n\n• Delivery Hours: 10 AM to 10 PM\n• Minimum Order: ₹500\n• Free delivery on orders above ₹2000\n\nहो, आम्ही होम डिलिव्हरी देतो! 🚚"
+    a: "Yes, we offer home delivery! 🚚\n\n• Delivery Hours: 10 AM to 1 AM\n• Minimum Order: ₹500\n• Free delivery on orders above ₹500\n\nहो, आम्ही होम डिलिव्हरी देतो! 🚚"
   },
   {
     q: "payment|पेमेंट|payment methods|पैसे",
