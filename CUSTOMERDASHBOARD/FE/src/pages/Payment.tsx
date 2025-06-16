@@ -159,13 +159,21 @@ const Payment = () => {
         }
       );
 
-      if (paymentResponse.data.message === 'Payment status updated successfully') {
-        // Clear the pending order data from localStorage
-        localStorage.removeItem('pendingOrderData');
-        
-        // Navigate to success page
-        navigate('/order-success');
-      } else {
+     if (userId) {
+    await axios.post('https://peghouse.in/api/cart/clear', { userId });
+
+    // ✅ Clear cart context and localStorage
+    localStorage.removeItem('cartItems'); // if used anywhere
+
+    if (typeof window !== "undefined") {
+      const event = new CustomEvent("clearCartContext");
+      window.dispatchEvent(event);
+    }
+  }
+
+  // ✅ Go to success page
+  navigate('/order-success');
+} else {
         console.error("Payment failed:", paymentResponse.data);
         alert('Payment failed. Please try again.');
       }
