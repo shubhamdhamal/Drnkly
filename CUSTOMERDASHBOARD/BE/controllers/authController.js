@@ -270,12 +270,20 @@ exports.login = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    // ✅ Check user status
+    if (user.status === 'Rejected') {
+      return res.status(403).json({ message: 'Your account has been rejected. Please contact support.' });
+    }
+
+    if (user.status !== 'Verified') {
+      return res.status(403).json({ message: 'Your account is not verified yet.' });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // ✅ FIXED: use process.env.JWT_SECRET
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
     return res.status(200).json({
