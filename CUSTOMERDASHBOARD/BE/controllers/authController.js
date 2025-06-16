@@ -235,7 +235,8 @@ exports.signup = async (req, res) => {
       city,
       dob,
       idProof,
-      selfDeclaration
+      selfDeclaration,
+      status: 'Verified' 
     });
 
     await user.save();
@@ -244,6 +245,7 @@ exports.signup = async (req, res) => {
 
     res.status(201).json({ message: 'User created successfully!', token });
   } catch (error) {
+    console.error('Signup error:', error);
     res.status(500).json({ message: 'Server error.', error: error.message });
   }
 };
