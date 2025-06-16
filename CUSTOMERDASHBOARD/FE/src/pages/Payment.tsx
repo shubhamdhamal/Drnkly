@@ -130,11 +130,19 @@ const Payment = () => {
       setIsLoading(true);
       
       // Step 1: Create the actual order first
-      const createOrderResponse = await axios.post('https://peghouse.in/api/orders', pendingOrder, {
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
+    
+      const finalOrderData = {
+  userId: pendingOrder.userId,
+  address: pendingOrder.address,
+  items: pendingOrder.items,
+  totalAmount: total, // ✅ calculated from frontend including deliveryCharges
+};
+
+const createOrderResponse = await axios.post('https://peghouse.in/api/orders', finalOrderData, {
+  headers: {
+    'Content-Type': 'application/json',
+  }
+});
       
       if (!createOrderResponse.data || !createOrderResponse.data.order || !createOrderResponse.data.order._id) {
         throw new Error('Failed to create order');
