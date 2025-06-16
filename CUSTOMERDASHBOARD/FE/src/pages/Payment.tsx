@@ -159,7 +159,13 @@ const Payment = () => {
         }
       );
 
-     if (userId) {
+     if (paymentResponse.data.message === 'Payment status updated successfully') {
+  // ✅ Clear pending order data
+  localStorage.removeItem('pendingOrderData');
+
+  // ✅ Clear cart from backend
+  const userId = localStorage.getItem('userId');
+  if (userId) {
     await axios.post('https://peghouse.in/api/cart/clear', { userId });
 
     // ✅ Clear cart context and localStorage
