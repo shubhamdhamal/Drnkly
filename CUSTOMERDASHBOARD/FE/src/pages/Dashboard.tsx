@@ -60,14 +60,6 @@ const stores = [
 
 // Banner data
 const banners = [
-    {
-    id: 3,
-    image: "https://images.unsplash.com/photo-1574807947927-2960b61a4dba?q=80&w=2070&auto=format&fit=crop",
-    title: "Craft Beer Collection",
-    description: "Discover our handpicked selection of local craft beers",
-    type: "regular",
-    theme: "beer"
-  },
   {
     id: 1,
     image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=2070&auto=format&fit=crop",
@@ -638,7 +630,7 @@ function Dashboard() {
                   if (store.name === "PK Wines") {
                     navigate('/products?store=pkwines');
                   } else if (store.name === "Sunrise Family Garden Restaurant") {
-                    navigate('/products?store=sunrise&category=Food');
+                    navigate('/products?store=sunrise&category=food');
                   }
                 }}
               >
