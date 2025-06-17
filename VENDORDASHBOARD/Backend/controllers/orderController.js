@@ -32,10 +32,11 @@ const getOrdersForVendor = async (vendorId) => {
             productName: product.name,
             productImage: product.image,
             orderId: order._id,
-            deliveryAddress: order.deliveryAddress,
             orderDate: order.createdAt,
-            paymentStatus: order.paymentStatus,  // <-- Ensure this is included
-            transactionId: order.transactionId || '',  // <-- Ensure this is included
+            paymentStatus: order.paymentStatus || '',
+            transactionId: order.transactionId || '',
+            customerPhone: order.deliveryAddress?.phone || '',
+            customerAddress: `${order.deliveryAddress?.street || ''}, ${order.deliveryAddress?.city || ''}, ${order.deliveryAddress?.state || ''} - ${order.deliveryAddress?.pincode || ''}`,
           });
         }
       }
@@ -44,10 +45,13 @@ const getOrdersForVendor = async (vendorId) => {
         filteredOrders.push({
           orderId: order._id,
           customerId: order.userId,
+          customerName: order.deliveryAddress?.fullName || 'Customer',
+          customerPhone: order.deliveryAddress?.phone || '',
+          customerAddress: `${order.deliveryAddress?.street || ''}, ${order.deliveryAddress?.city || ''}, ${order.deliveryAddress?.state || ''} - ${order.deliveryAddress?.pincode || ''}`,
           deliveryAddress: order.deliveryAddress,
           createdAt: order.createdAt,
-          paymentStatus: order.paymentStatus,  // <-- Ensure this is included
-          transactionId: order.transactionId || '',  // <-- Ensure this is included
+          paymentStatus: order.paymentStatus || '',
+          transactionId: order.transactionId || '',
           paymentProof: order.paymentProof || '',
           totalAmount: order.totalAmount || 0,
           orderNumber: order.orderNumber,
@@ -62,6 +66,7 @@ const getOrdersForVendor = async (vendorId) => {
     throw new Error('Unable to fetch vendor orders');
   }
 };
+
 
 
   

@@ -25,6 +25,7 @@ interface Order {
   paymentProof?: string;
   createdAt: string;
   readyForPickup?: boolean;
+  
 }
 
 interface ApiResponse {
@@ -75,23 +76,28 @@ const Orders: React.FC = () => {
       });
 
       const fetchedOrders: Order[] = res.data.orders.map((order) => ({
-        id: order.orderId,
-        orderNumber: order.orderNumber,
-        customerName: order.deliveryAddress?.fullName || 'Customer',
-        items: order.items.map((item) => ({
-          productId: item.productId,
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price,
-          status: item.status,
-        })),
-        totalAmount: order.totalAmount || 0,
-        paymentStatus: order.paymentStatus || 'pending',
-        transactionId: order.transactionId || '',
-        paymentProof: order.paymentProof || '',
-        createdAt: order.createdAt,
-        readyForPickup: order.readyForPickup || false,
-      }));
+  id: order.orderId,
+  orderNumber: order.orderNumber,
+  customerName: order.customerName || order.deliveryAddress?.fullName || 'Customer',
+  customerPhone: order.customerPhone || order.deliveryAddress?.phone || '',
+  customerAddress:
+    order.customerAddress ||
+    `${order.deliveryAddress?.street || ''}, ${order.deliveryAddress?.city || ''}, ${order.deliveryAddress?.state || ''} - ${order.deliveryAddress?.pincode || ''}`,
+  items: order.items.map((item) => ({
+    productId: item.productId,
+    name: item.name,
+    quantity: item.quantity,
+    price: item.price,
+    status: item.status,
+  })),
+  totalAmount: order.totalAmount || 0,
+  paymentStatus: order.paymentStatus || 'pending',
+  transactionId: order.transactionId || '',
+  paymentProof: order.paymentProof || '',
+  createdAt: order.createdAt,
+  readyForPickup: order.readyForPickup || false,
+}));
+
 
       setOrders(fetchedOrders);
     } catch (err) {
@@ -811,6 +817,13 @@ const Orders: React.FC = () => {
               )}
             </h3>
             <p style={{ color: '#666', fontSize: '14px' }}>{order.customerName}</p>
+            <p style={{ fontSize: '14px', color: '#888' }}>
+  <strong>Mobile:</strong> {order.customerPhone}
+</p>
+<p style={{ fontSize: '14px', color: '#888' }}>
+  <strong>Address:</strong> {order.customerAddress}
+</p>
+
             <p style={{ marginTop: '2px', fontSize: '14px', color: '#888' }}>
   <strong>Placed On:</strong> {new Date(order.createdAt).toLocaleString()}
 </p>
