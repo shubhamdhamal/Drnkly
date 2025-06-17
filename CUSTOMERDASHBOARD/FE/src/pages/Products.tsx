@@ -253,6 +253,15 @@ function Products() {
     const searchParam = params.get('search');
     const brandParam = params.get('brand');
     const storeParam = params.get('store');
+    const excludeParam = params.get('exclude');
+
+    // Handle PK Wines - exclude Food category
+    if (storeParam === 'pkwines' && excludeParam === 'food') {
+      // Filter out Food category from categories
+      setCategories(prevCategories => 
+        prevCategories.filter(cat => cat.name.toLowerCase() !== 'food')
+      );
+    }
 
     // Handle Sunrise restaurant Food category
     if (storeParam === 'sunrise' && categoryParam?.toLowerCase() === 'Food') {
@@ -331,9 +340,22 @@ function Products() {
         const params = new URLSearchParams(location.search);
         const storeParam = params.get('store');
         const categoryParam = params.get('category');
+        const excludeParam = params.get('exclude');
 
+        // Filter out Food products for PK Wines
+        if (storeParam === 'pkwines' && excludeParam === 'food') {
+          const filteredProducts = productRes.data.filter((product: Product) => 
+            product.category.toLowerCase() !== 'food'
+          );
+          setProducts(filteredProducts);
+          
+          const filteredCategories = categoryRes.data.filter((cat: Category) => 
+            cat.name.toLowerCase() !== 'food'
+          );
+          setCategories(filteredCategories);
+        }
         // Only filter out Food products if not coming from Sunrise restaurant
-        if (!(storeParam === 'sunrise' && categoryParam?.toLowerCase() === 'Food')) {
+        else if (!(storeParam === 'sunrise' && categoryParam?.toLowerCase() === 'Food')) {
           const filteredProducts = productRes.data.filter((product: Product) => 
             product.category.toLowerCase() !== 'Food'
           );
@@ -675,43 +697,43 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
     }
   };
 
-  // Update the productContainerStyle to make cards even more compact
+  // Update the productContainerStyle to make cards larger
   const productContainerStyle = {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', // Reduced from 130px
-    gap: '8px', // Reduced from 10px
-    padding: '0 6px', // Reduced from 8px
+    gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', // Increased from 120px to 160px
+    gap: '12px', // Increased from 8px to 12px
+    padding: '0 8px', // Increased from 6px to 8px
     maxWidth: '1920px',
     margin: '0 auto',
     alignItems: 'stretch'
   };
 
-  // Update the productCardStyle to be more minimal
+  // Update the productCardStyle to be larger
   const productCardStyle = {
     background: 'white',
-    borderRadius: '6px', // Reduced from 8px
-    padding: '6px', // Reduced from 8px
+    borderRadius: '8px', // Increased from 6px to 8px
+    padding: '8px', // Increased from 6px to 8px
     textAlign: 'center' as const,
     display: 'flex',
     flexDirection: 'column' as const,
     height: '100%',
     justifyContent: 'space-between',
     position: 'relative' as const,
-    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)', // Reduced shadow
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)', // Increased shadow
     cursor: 'pointer',
     transition: 'all 0.2s ease',
     transform: 'translateY(0)',
     border: '1px solid rgba(229, 231, 235, 0.5)'
   };
 
-  // Update the productImageContainerStyle
+  // Update the productImageContainerStyle to be larger
   const productImageContainerStyle = {
     width: '100%',
-    height: '100px', // Reduced from 110px
+    height: '130px', // Increased from 100px to 130px
     position: 'relative' as const,
-    borderRadius: '4px', // Reduced from 6px
+    borderRadius: '6px', // Increased from 4px to 6px
     overflow: 'hidden',
-    marginBottom: '4px', // Reduced from 6px
+    marginBottom: '6px', // Increased from 4px to 6px
     background: 'white'
   };
 
@@ -723,10 +745,10 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
     width: '100%',
     height: '100%',
     objectFit: 'contain' as const,
-    borderRadius: '4px', // Reduced from 6px
+    borderRadius: '6px', // Increased from 4px to 6px
     backgroundColor: 'white',
     transition: 'transform 0.3s ease',
-    padding: '3px' // Reduced from 4px
+    padding: '4px' // Increased from 3px to 4px
   };
 
   // Update the hoverZoomClass to be simpler
@@ -927,38 +949,46 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
 
         {/* Sub-Brands Horizontal Display */}
         {showSubBrands ? (
-          <div className="my-4">
+          <div className="my-4 px-2">
             <div className="flex items-center mb-4">
               <button 
                 onClick={handleBackFromSubBrands}
-                className="flex items-center text-gray-700 hover:text-gray-900"
+                className="flex items-center text-gray-700 hover:text-gray-900 text-sm"
               >
-                <ArrowLeft size={20} className="mr-2" />
-                <span className="font-medium">Back to Categories</span>
+                <ArrowLeft size={16} className="mr-1" />
+                <span className="font-medium">Back</span>
               </button>
-              <h2 className="ml-4 text-xl font-semibold">{selectedCategory} Brands</h2>
+              <h2 className="ml-3 text-lg font-semibold text-gray-800">{selectedCategory} Brands</h2>
             </div>
             
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
               {subBrands.map((subBrand) => (
                 <div 
                   key={subBrand.name}
-                  className={`brand-card cursor-pointer rounded-lg overflow-hidden border ${selectedBrand === subBrand.name ? 'border-[#cd6839]' : 'border-gray-200'} hover:shadow-md transition-all bg-white`}
+                  className={`brand-card cursor-pointer rounded-lg overflow-hidden border transition-all duration-200 hover:shadow-md bg-white ${
+                    selectedBrand === subBrand.name 
+                      ? 'border-[#cd6839] shadow-md' 
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
                   onClick={() => handleSubBrandSelect(subBrand.name)}
                 >
-                  <div className="h-32 bg-white p-2 flex items-center justify-center overflow-hidden">
+                  <div className="aspect-square bg-white p-2 flex items-center justify-center overflow-hidden">
                     <img 
                       src={subBrand.image} 
                       alt={subBrand.name}
-                      className="brand-image h-full object-contain bg-white transition-transform duration-300"
+                      className="brand-image w-full h-full object-contain bg-white transition-transform duration-300 hover:scale-105"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.src = 'https://via.placeholder.com/150?text=' + subBrand.name;
                       }}
                     />
                   </div>
-                  <div className={`py-2 px-3 text-center ${selectedBrand === subBrand.name ? 'bg-orange-50 text-[#cd6839]' : 'bg-white'}`}>
-                    <h3 className="text-sm font-medium">{subBrand.name}</h3>
+                  <div className={`py-2 px-2 text-center ${
+                    selectedBrand === subBrand.name 
+                      ? 'bg-orange-50 text-[#cd6839]' 
+                      : 'bg-white text-gray-700'
+                  }`}>
+                    <h3 className="text-xs sm:text-sm font-medium truncate">{subBrand.name}</h3>
                   </div>
                 </div>
               ))}
@@ -966,36 +996,32 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
           </div>
         ) : (
           /* Show main categories */
-          <div style={{ display: 'flex', gap: '10px', margin: '20px 0', overflowX: 'auto' }}>
-            <button
-              style={{
-                padding: '8px 16px',
-                background: selectedCategory === 'all' ? '#cd6839' : '#f5f5f5',
-                color: selectedCategory === 'all' ? 'white' : 'black',
-                border: 'none',
-                borderRadius: '20px',
-                cursor: 'pointer'
-              }}
-              onClick={() => setSelectedCategory('all')}
-            >
-              All
-            </button>
-            {categories.map((cat) => (
+          <div className="my-4 px-2">
+            <div className="flex flex-wrap gap-2 sm:gap-3 overflow-x-auto pb-2">
               <button
-                key={cat._id}
-                style={{
-                  padding: '8px 16px',
-                  background: selectedCategory === cat.name.toLowerCase() ? '#cd6839' : '#f5f5f5',
-                  color: selectedCategory === cat.name.toLowerCase() ? 'white' : 'black',
-                  border: 'none',
-                  borderRadius: '20px',
-                  cursor: 'pointer'
-                }}
-                onClick={() => handleCategoryClick(cat.name.toLowerCase())}
+                className={`px-3 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 whitespace-nowrap ${
+                  selectedCategory === 'all' 
+                    ? 'bg-[#cd6839] text-white shadow-lg' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+                onClick={() => setSelectedCategory('all')}
               >
-                {cat.name}
+                All Products
               </button>
-            ))}
+              {categories.map((cat) => (
+                <button
+                  key={cat._id}
+                  className={`px-3 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 whitespace-nowrap ${
+                    selectedCategory === cat.name.toLowerCase() 
+                      ? 'bg-[#cd6839] text-white shadow-lg' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  onClick={() => handleCategoryClick(cat.name.toLowerCase())}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
@@ -1218,23 +1244,23 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
                   )}
                 </div>
                 
-                <div className="px-0.5">
-                  <div className="text-[11px] font-medium truncate" title={product.name}>
+                <div className="px-1">
+                  <div className="text-[13px] font-medium truncate" title={product.name}>
                     {product.name}
                   </div>
                   
-                  <div className="flex justify-between items-center mt-0.5">
+                  <div className="flex justify-between items-center mt-1">
                     {['drinks', 'soft drinks'].includes(product.category.toLowerCase()) ? (
                       <>
-                        <span className="text-[9px] font-medium bg-blue-50 text-blue-600 py-0.5 px-1 rounded">
+                        <span className="text-[10px] font-medium bg-blue-50 text-blue-600 py-0.5 px-1 rounded">
                           {product.volume} ml
                         </span>
-                        <span className="text-[11px] font-bold text-[#cd6839]">
+                        <span className="text-[13px] font-bold text-[#cd6839]">
                           ₹{product.price}
                         </span>
                       </>
                     ) : (
-                      <span className="text-[11px] font-bold text-[#cd6839] w-full text-center">
+                      <span className="text-[13px] font-bold text-[#cd6839] w-full text-center">
                         ₹{product.price}
                       </span>
                     )}
@@ -1244,7 +1270,7 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
               
               <button
                 onClick={(e) => handleAddToCart(e, product)}
-                className="w-full py-0.5 px-1 bg-[#cd6839] text-white text-[9px] rounded font-medium mt-1
+                className="w-full py-1 px-2 bg-[#cd6839] text-white text-[10px] rounded font-medium mt-2
                           hover:bg-[#b55a31] transition-colors duration-200
                           focus:outline-none focus:ring-1 focus:ring-[#cd6839] focus:ring-opacity-50"
               >

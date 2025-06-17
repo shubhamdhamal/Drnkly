@@ -26,7 +26,7 @@ const Navigation: React.FC<NavigationProps> = ({ isChatOpen, setIsChatOpen }) =>
   useEffect(() => {
     const checkLoginStatus = () => {
       const isSessionValid = sessionManager.isSessionValid();
-      const isSkipped = localStorage.getItem('isSkippedLogin');
+    const isSkipped = localStorage.getItem('isSkippedLogin');
       setIsLoggedIn(isSessionValid && !isSkipped);
     };
 
