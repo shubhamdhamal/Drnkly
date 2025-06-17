@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import Welcome from './pages/Welcome';
 import SignUp from './pages/SignUp';
 import Login from './pages/Login';
@@ -18,9 +18,40 @@ import IssueReport from './pages/IssueReport';     // ✅ Already Added
 import IssueTracking from './pages/IssueTracking'; // ✅ NEW
 import Blog from './pages/Blog'; // ✅ Added Blog import
 import Navigation from './components/Navigation';
+import SessionExpiryPopup from './components/SessionExpiryPopup';
+import SessionCountdown from './components/SessionCountdown';
 import { CartProvider } from './context/CartContext';
 // import ChatBox from './pages/Chatbox'; // Add the ChatBox import
+import { sessionManager } from './utils/sessionManager';
 import './styles/global.css';
+
+// Protected Route component
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const isSessionValid = sessionManager.isSessionValid();
+      if (!isSessionValid) {
+        navigate('/login');
+      }
+      setIsLoading(false);
+    };
+
+    checkAuth();
+  }, [navigate]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+};
 
 function App() {
   const [isChatOpen, setIsChatOpen] = useState(false); // State to control chat visibility
@@ -29,6 +60,8 @@ function App() {
     <CartProvider>
       <BrowserRouter>
         <div className="flex flex-col min-h-screen bg-gray-50">
+          <SessionExpiryPopup />
+          <SessionCountdown />
           <main className="flex-1 pb-20"> {/* Space for bottom nav */}
             <Routes>
               <Route path="/" element={<Welcome />} />
@@ -36,17 +69,61 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/verify-age" element={<AgeVerification />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/products" element={<Products />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/payment" element={<Payment />} />
-              <Route path="/order-success" element={<OrderSuccess />} />
-              <Route path="/order-history" element={<OrderHistory />} />
-              <Route path="/order-tracking/:orderNumber" element={<OrderTracking />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/issue-report" element={<IssueReport />} />
-              <Route path="/issue-tracking" element={<IssueTracking />} /> {/* ✅ NEW */}
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/products" element={
+                <ProtectedRoute>
+                  <Products />
+                </ProtectedRoute>
+              } />
+              <Route path="/cart" element={
+                <ProtectedRoute>
+                  <Cart />
+                </ProtectedRoute>
+              } />
+              <Route path="/checkout" element={
+                <ProtectedRoute>
+                  <Checkout />
+                </ProtectedRoute>
+              } />
+              <Route path="/payment" element={
+                <ProtectedRoute>
+                  <Payment />
+                </ProtectedRoute>
+              } />
+              <Route path="/order-success" element={
+                <ProtectedRoute>
+                  <OrderSuccess />
+                </ProtectedRoute>
+              } />
+              <Route path="/order-history" element={
+                <ProtectedRoute>
+                  <OrderHistory />
+                </ProtectedRoute>
+              } />
+              <Route path="/order-tracking/:orderNumber" element={
+                <ProtectedRoute>
+                  <OrderTracking />
+                </ProtectedRoute>
+              } />
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } />
+              <Route path="/issue-report" element={
+                <ProtectedRoute>
+                  <IssueReport />
+                </ProtectedRoute>
+              } />
+              <Route path="/issue-tracking" element={
+                <ProtectedRoute>
+                  <IssueTracking />
+                </ProtectedRoute>
+              } /> {/* ✅ NEW */}
               <Route path="/blog" element={<Blog />} /> {/* ✅ Added Blog route */}
             </Routes>
           </main>

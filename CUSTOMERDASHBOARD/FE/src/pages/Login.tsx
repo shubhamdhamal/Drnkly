@@ -16,6 +16,7 @@ import {
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { sessionManager } from '../utils/sessionManager';
 
 const SESSION_TIMEOUT = 60 * 60 * 1000;
 
@@ -76,9 +77,7 @@ function App() {
       });
  
       if (response.data.message === 'Login successful') {
-        localStorage.setItem('authToken', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        localStorage.setItem('userId', response.data.user._id);
+        sessionManager.setSession(response.data.token, response.data.user);
         localStorage.removeItem('isSkippedLogin');
         localStorage.removeItem('oldMonkOfferShown');
         window.dispatchEvent(new Event('storage'));
@@ -89,8 +88,8 @@ function App() {
           setShowLocationPopup(true);
         }
       }
-    } catch (error) {
-    const msg = (error as any)?.response?.data?.message;
+    } catch (error: any) {
+      const msg = error?.response?.data?.message;
 
     if (msg === 'User not found') {
       setError('No account found with this email or mobile number.');
@@ -103,7 +102,14 @@ function App() {
     } else {
       setError('Something went wrong. Please try again.');
     }
+    } finally {
+      setIsLoading(false);
   }
+  };
+
+  const handleLogout = () => {
+    sessionManager.clearSession();
+    navigate('/login');
   };
 
   const handleGoogleLogin = () => {
