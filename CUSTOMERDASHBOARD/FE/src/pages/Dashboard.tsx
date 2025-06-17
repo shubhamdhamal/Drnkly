@@ -470,7 +470,7 @@ function Dashboard() {
 
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
         {/* Simplified Hero Banner Carousel */}
-        <div className="relative mb-6 sm:mb-8 rounded-2xl overflow-hidden shadow-lg h-48 sm:h-64 md:h-72">
+        <div className="relative mb-6 sm:mb-8 rounded-2xl overflow-hidden shadow-lg h-48 sm:h-64 md:h-72 -mx-3 sm:mx-0">
           {/* Carousel indicators */}
           <div className="absolute bottom-3 left-0 right-0 z-20 flex justify-center space-x-2">
             {banners.map((_, index) => (
@@ -524,27 +524,27 @@ function Dashboard() {
                 }}
               >
                 {/* Banner content */}
-                <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/30 z-10 flex flex-col justify-center p-6 md:p-10">
+                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/20 z-10 flex flex-col justify-center p-4 sm:p-6 md:p-10">
                   <div className="max-w-lg">
                     {/* Special banner badge */}
                     {banner.type === "special" && (
-                      <div className="inline-block bg-yellow-400 text-blue-900 font-bold px-3 py-1 rounded-full text-sm mb-3">
+                      <div className="inline-block bg-yellow-400 text-blue-900 font-bold px-2 py-1 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm mb-2 sm:mb-3">
                         Weekend Special!
                       </div>
                     )}
                     
                     {/* Featured banner badge */}
                     {banner.type === "featured" && (
-                      <div className="inline-block bg-[#cd6839]/20 text-white font-bold px-3 py-1 rounded-full text-sm mb-3">
+                      <div className="inline-block bg-[#cd6839]/20 text-white font-bold px-2 py-1 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm mb-2 sm:mb-3">
                         Most Popular
                       </div>
                     )}
                     
-                    <h1 className="text-white text-2xl md:text-4xl font-bold mb-2 md:mb-3 banner-fade">
+                    <h1 className="text-white text-xl sm:text-2xl md:text-4xl font-bold mb-2 md:mb-3 banner-fade leading-tight">
                       {banner.title}
                     </h1>
                     
-                    <p className="text-white/90 text-sm md:text-lg mb-4 md:mb-6 banner-fade">
+                    <p className="text-white/90 text-xs sm:text-sm md:text-lg mb-3 sm:mb-4 md:mb-6 banner-fade leading-relaxed">
                       {banner.description}
                     </p>
                     
@@ -553,7 +553,7 @@ function Dashboard() {
                         e.stopPropagation(); // Prevent double navigation
                         navigate('/products?search=Old%20Monk%20Rum%20Free');
                       }}
-                      className="bg-[#cd6839] hover:bg-[#b55a31] text-white px-4 py-2 md:px-6 md:py-3 rounded-lg transition-colors shadow-lg hover:shadow-xl text-sm md:text-base font-medium banner-content"
+                      className="bg-[#cd6839] hover:bg-[#b55a31] text-white px-3 py-2 sm:px-4 sm:py-2 md:px-6 md:py-3 rounded-lg transition-colors shadow-lg hover:shadow-xl text-xs sm:text-sm md:text-base font-medium banner-content"
                     >
                       Order Now →
                     </button>
@@ -591,22 +591,28 @@ function Dashboard() {
               View All
             </button>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-4">
             {categories.map((category) => (
               <div 
                 key={category.name} 
                 onClick={() => {
                   navigate(`/products?category=${encodeURIComponent(category.name)}`);
                 }}
-                className="relative bg-white overflow-hidden rounded-xl cursor-pointer transform hover:scale-102 transition-all duration-300 hover:shadow-md group"
+                className="relative bg-white overflow-hidden rounded-lg sm:rounded-xl cursor-pointer transform hover:scale-105 transition-all duration-300 hover:shadow-lg group border border-gray-100"
               >
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent flex flex-col justify-end p-2 sm:p-4 z-10">
-                  <span className="text-2xl sm:text-4xl mb-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    {category.icon}
-                  </span>
-                  <h3 className="text-white font-medium text-sm sm:text-lg">{category.name}</h3>
+                <div className="aspect-square relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-2 sm:p-3 z-10">
+                    <span className="text-lg sm:text-2xl mb-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      {category.icon}
+                    </span>
+                    <h3 className="text-white font-semibold text-xs sm:text-sm leading-tight">{category.name}</h3>
+                  </div>
+                  <img 
+                    src={category.image} 
+                    alt={category.name} 
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                  />
                 </div>
-                <img src={category.image} alt={category.name} className="w-full h-24 sm:h-36 object-cover transition-transform duration-700 group-hover:scale-110" />
               </div>
             ))}
           </div>
@@ -628,7 +634,7 @@ function Dashboard() {
                 className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100" 
                 onClick={() => {
                   if (store.name === "PK Wines") {
-                    navigate('/products?store=pkwines');
+                    navigate('/products?store=pkwines&exclude=food');
                   } else if (store.name === "Sunrise Family Garden Restaurant") {
                     navigate('/products?store=sunrise&category=food');
                   }
