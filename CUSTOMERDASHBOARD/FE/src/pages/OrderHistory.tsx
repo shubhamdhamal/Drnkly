@@ -129,9 +129,9 @@ const OrderHistory: React.FC = () => {
           <div key={order._id} className="bg-white shadow-sm rounded-lg p-4 mb-4">
             <div className="flex justify-between items-start">
               <div>
-                <h2 className="font-semibold text-gray-800 mb-1">
-                  Order #{orders.length - index} - {order._id.slice(-5)}
-                </h2>
+             <h2 className="font-semibold text-gray-800 mb-1">
+  Order #{orders.length - index} - {order.orderNumber}
+</h2>
                 <ul className="text-sm text-gray-700 mb-2 list-disc ml-4">
                   {order.items.map((item, idx) => (
                     <li key={idx}>
