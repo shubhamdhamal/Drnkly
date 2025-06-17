@@ -10,8 +10,7 @@ import {
   BookOpen
 } from 'lucide-react';
 import CartCounter from './CartCounter';
-
-
+import { sessionManager } from '../utils/sessionManager';
 
 interface NavigationProps {
   isChatOpen: boolean;
@@ -25,23 +24,33 @@ const Navigation: React.FC<NavigationProps> = ({ isChatOpen, setIsChatOpen }) =>
 
   // Check if user is logged in
   useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    const isSkipped = localStorage.getItem('isSkippedLogin');
-    const loginStatus = !!token && !isSkipped;
-    console.log('Navigation login check:', { token: !!token, isSkipped: !!isSkipped, loginStatus });
-    setIsLoggedIn(loginStatus);
+    const checkLoginStatus = () => {
+      const isSessionValid = sessionManager.isSessionValid();
+      const isSkipped = localStorage.getItem('isSkippedLogin');
+      setIsLoggedIn(isSessionValid && !isSkipped);
+    };
+
+    // Initial check
+    checkLoginStatus();
     
-    // Listen for changes to localStorage
+    // Listen for session expiry event
+    const handleSessionExpired = () => {
+      setIsLoggedIn(false);
+    };
+    
+    window.addEventListener('sessionExpired', handleSessionExpired);
+    
+    // Listen for storage changes
     const handleStorageChange = () => {
-      const updatedToken = localStorage.getItem('authToken');
-      const updatedSkipped = localStorage.getItem('isSkippedLogin');
-      const updatedStatus = !!updatedToken && !updatedSkipped;
-      console.log('Storage changed:', { token: !!updatedToken, isSkipped: !!updatedSkipped, loginStatus: updatedStatus });
-      setIsLoggedIn(updatedStatus);
+      checkLoginStatus();
     };
     
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('sessionExpired', handleSessionExpired);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   const hiddenPaths = ['/', '/signup', '/login', '/verify-age'];
@@ -56,14 +65,15 @@ const Navigation: React.FC<NavigationProps> = ({ isChatOpen, setIsChatOpen }) =>
     }
   };
   
-  
+  const handleLogout = () => {
+    sessionManager.clearSession();
+    navigate('/login');
+  };
 
   const isActive = (path: string) => location.pathname === path;
 
   return (
     <>
-      {/* Terms Popup */}
-
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 z-40">
         <div className="max-w-lg mx-auto px-4 py-2 flex justify-between items-center">
@@ -116,8 +126,6 @@ const Navigation: React.FC<NavigationProps> = ({ isChatOpen, setIsChatOpen }) =>
         🚭 तुमच्या कुटुंबासाठी मद्यपान आणि धूम्रपान सोडा 🚯
         </div>
       </nav>
-
-
     </>
   );
 };
