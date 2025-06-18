@@ -122,10 +122,7 @@ const desktopBanners = [
   {
     id: "desktop-1",
     image: "https://images.unsplash.com/photo-1616527546362-77e70524262d?q=80&w=2070&auto=format&fit=crop",
-    title: "Premium Cocktail Collection",
-    description: "Discover our exclusive range of handcrafted cocktails and premium spirits",
-    type: "special",
-    theme: "cocktail",
+    
     mobileOptimized: false
   },
   {
@@ -251,7 +248,7 @@ function Dashboard() {
   };
 
   const handleLogout = () => {
-    sessionManager.manualLogout();
+    sessionManager.clearSession();
     localStorage.removeItem("locationGranted");
     setIsLoggedIn(false);
     navigate('/login');

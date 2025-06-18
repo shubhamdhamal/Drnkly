@@ -777,7 +777,7 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
   }, []);
 
   return (
-    <div className="container mx-auto bg-white min-h-screen">
+    <div className="container mx-auto bg-white min-h-screen pb-20">
       {/* Add style tag for hover effects */}
       <style>{hoverZoomClass}</style>
       
@@ -1179,7 +1179,19 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
         </div>
 
         {/* Product Grid */}
-        <div style={productContainerStyle}>
+        <div 
+          className="product-grid"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+            gap: '12px',
+            padding: '0 8px 120px 8px', // Added 120px bottom padding
+            maxWidth: '1920px',
+            margin: '0 auto',
+            alignItems: 'stretch',
+            minHeight: 'calc(100vh - 400px)'
+          }}
+        >
           {selectedCategory === 'Food' ? (
             <div style={{
               width: '100%',
@@ -1304,6 +1316,44 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
           .highlight-product {
             animation: highlightProduct 2s ease-out;
             border: 2px solid #cd6839;
+          }
+
+          /* Ensure product cards are properly displayed */
+          .product-card {
+            display: flex !important;
+            flex-direction: column !important;
+            height: 100% !important;
+            min-height: 200px !important;
+            background: white !important;
+            border-radius: 8px !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+            transition: all 0.2s ease !important;
+            overflow: hidden !important;
+            margin: 0 !important;
+            padding: 8px !important;
+          }
+
+          /* Fix for last row products */
+          .product-grid {
+            padding-bottom: 120px !important;
+            margin-bottom: 20px !important;
+          }
+
+          /* Ensure proper spacing between cards */
+          .product-card + .product-card {
+            margin-top: 0 !important;
+          }
+
+          /* Fix grid alignment issues */
+          .product-card > div {
+            display: flex !important;
+            flex-direction: column !important;
+            height: 100% !important;
+          }
+
+          /* Ensure button stays at bottom */
+          .product-card button {
+            margin-top: auto !important;
           }
         `}
       </style>
