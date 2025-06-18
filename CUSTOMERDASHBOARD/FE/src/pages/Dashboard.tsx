@@ -4,8 +4,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import oldMonkImage from './pop.jpeg';
 import CartCounter from '../components/CartCounter';
+import { sessionManager } from '../utils/sessionManager';
+import mobileBannerImage from './mobile.png';
 
-// Simplified banner animations CSS
+// Simplified banner animations CSS with media queries
 const bannerAnimations = `
   @keyframes fadeIn {
     from { opacity: 0; }
@@ -22,6 +24,26 @@ const bannerAnimations = `
   
   .banner-content:hover {
     transform: translateY(-5px);
+  }
+  
+  /* Mobile banners - hidden on desktop */
+  .mobile-banner {
+    display: block;
+  }
+  
+  .desktop-banner {
+    display: none;
+  }
+  
+  /* Desktop banners - hidden on mobile */
+  @media (min-width: 768px) {
+    .mobile-banner {
+      display: none;
+    }
+    
+    .desktop-banner {
+      display: block;
+    }
   }
 `;
 
@@ -58,42 +80,84 @@ const stores = [
   { id: 2, name: "Sunrise Family Garden Restaurant", rating: 4.5, image: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=600&h=400&fit=crop", address: "456 Oak Ave", distance: "1.2 miles", openTime: "11:00 AM - 9:00 PM", deliveryTime: "30-35 min" }
 ];
 
-// Banner data
-const banners = [
+// Banner data - Separate arrays for mobile and desktop
+const mobileBanners = [
   {
-    id: 1,
-    image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=2070&auto=format&fit=crop",
-    title: "Premium Drinks Delivered",
-    description: "Fast delivery in 45 minutes or less. Order now!",
+    id: "mobile-1",
+    image: mobileBannerImage,
+  
+    mobileOptimized: true
+  },
+  {
+    id: "mobile-2", 
+    image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=600&auto=format&fit=crop",
+    title: "Quick Delivery",
+    description: "Fast delivery in 30 minutes or less",
     type: "featured",
-    theme: "whiskey"
+    theme: "whiskey",
+    mobileOptimized: true
   },
   {
-    id: 2,
-    image: "https://images.unsplash.com/photo-1616527546362-77e70524262d?q=80&w=2070&auto=format&fit=crop",
-    title: "Weekend Special Offers",
-    description: "Up to 20% off on premium liquor brands and free delivery on orders above ₹999",
+    id: "mobile-3",
+    image: "https://images.unsplash.com/photo-1528823872057-9c018a7a7553?q=80&w=600&auto=format&fit=crop", 
+    title: "Party Packages",
+    description: "Everything for your weekend gathering",
+    type: "regular",
+    theme: "wine",
+    mobileOptimized: true
+  },
+  {
+    id: "mobile-4",
+    image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=600&auto=format&fit=crop",
+    title: "Happy Hours",
+    description: "50% off on selected drinks from 4-7 PM",
     type: "special",
-    theme: "cocktail"
-  },
-  {
-    id: 3,
-    image: "https://images.unsplash.com/photo-1574807947927-2960b61a4dba?q=80&w=2070&auto=format&fit=crop",
-    title: "Craft Beer Collection",
-    description: "Discover our handpicked selection of local craft beers",
-    type: "regular",
-    theme: "beer"
-  },
-  {
-    id: 4,
-    image: "https://images.unsplash.com/photo-1528823872057-9c018a7a7553?q=80&w=2070&auto=format&fit=crop",
-    title: "Premium Party Packages",
-    description: "Everything you need for your weekend gathering in one order",
-    type: "regular",
-    theme: "wine"
+    theme: "beer",
+    mobileOptimized: true
   }
 ];
 
+const desktopBanners = [
+  {
+    id: "desktop-1",
+    image: "https://images.unsplash.com/photo-1616527546362-77e70524262d?q=80&w=2070&auto=format&fit=crop",
+    title: "Premium Cocktail Collection",
+    description: "Discover our exclusive range of handcrafted cocktails and premium spirits",
+    type: "special",
+    theme: "cocktail",
+    mobileOptimized: false
+  },
+  {
+    id: "desktop-2",
+    image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=2070&auto=format&fit=crop",
+    title: "Premium Drinks Delivered",
+    description: "Fast delivery in 45 minutes or less. Order now and enjoy premium quality!",
+    type: "featured", 
+    theme: "whiskey",
+    mobileOptimized: false
+  },
+  {
+    id: "desktop-3",
+    image: "https://images.unsplash.com/photo-1528823872057-9c018a7a7553?q=80&w=2070&auto=format&fit=crop",
+    title: "Premium Party Packages",
+    description: "Everything you need for your weekend gathering in one comprehensive order",
+    type: "regular",
+    theme: "wine", 
+    mobileOptimized: false
+  },
+  {
+    id: "desktop-4",
+    image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=2070&auto=format&fit=crop",
+    title: "Craft Beer Selection",
+    description: "Explore our curated collection of local and international craft beers",
+    type: "featured",
+    theme: "beer",
+    mobileOptimized: false
+  }
+];
+
+// Legacy banners array for backward compatibility
+const banners = [...mobileBanners, ...desktopBanners];
 
 // Old Monk Promotional Popup Component
 const OldMonkPromotion = ({ isOpen, onClose, onGetOffer }: { isOpen: boolean, onClose: () => void, onGetOffer: () => void }) => {
@@ -134,6 +198,8 @@ function Dashboard() {
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [currentBanner, setCurrentBanner] = useState(0);
+  const [currentMobileBanner, setCurrentMobileBanner] = useState(0);
+  const [currentDesktopBanner, setCurrentDesktopBanner] = useState(0);
   const [sparkles, setSparkles] = useState<{ x: number, y: number, size: number, delay: number }[]>([]);
   const [bubbles, setBubbles] = useState<{left: string, size: number, delay: number, duration: number}[]>([]);
   
@@ -184,7 +250,7 @@ function Dashboard() {
   };
 
   const handleLogout = () => {
-    localStorage.clear();
+    sessionManager.manualLogout();
     localStorage.removeItem("locationGranted");
     setIsLoggedIn(false);
     navigate('/login');
@@ -272,13 +338,20 @@ function Dashboard() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
-  // Banner carousel logic
+  // Banner carousel logic - Separate for mobile and desktop
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentBanner((prev) => (prev + 1) % banners.length);
+    const mobileInterval = setInterval(() => {
+      setCurrentMobileBanner((prev) => (prev + 1) % mobileBanners.length);
     }, 7000);
     
-    return () => clearInterval(interval);
+    const desktopInterval = setInterval(() => {
+      setCurrentDesktopBanner((prev) => (prev + 1) % desktopBanners.length);
+    }, 7000);
+    
+    return () => {
+      clearInterval(mobileInterval);
+      clearInterval(desktopInterval);
+    };
   }, []);
 
   const nextBanner = () => {
@@ -329,7 +402,10 @@ function Dashboard() {
 
   // Generate bubbles for beer-themed banner
   useEffect(() => {
-    if (banners[currentBanner]?.theme === 'beer') {
+    const currentMobileBannerData = mobileBanners[currentMobileBanner];
+    const currentDesktopBannerData = desktopBanners[currentDesktopBanner];
+    
+    if (currentMobileBannerData?.theme === 'beer' || currentDesktopBannerData?.theme === 'beer') {
       const newBubbles = [];
       for (let i = 0; i < 20; i++) {
         newBubbles.push({
@@ -341,7 +417,7 @@ function Dashboard() {
       }
       setBubbles(newBubbles);
     }
-  }, [currentBanner]);
+  }, [currentMobileBanner, currentDesktopBanner]);
 
   // Function to trigger Facebook Pixel event
   const triggerFacebookPixelEvent = () => {
@@ -469,32 +545,32 @@ function Dashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
-        {/* Simplified Hero Banner Carousel */}
-        <div className="relative mb-6 sm:mb-8 rounded-2xl overflow-hidden shadow-lg h-48 sm:h-64 md:h-72 -mx-3 sm:mx-0">
-          {/* Carousel indicators */}
+        {/* Mobile Banner Carousel */}
+        <div className="mobile-banner relative mb-6 sm:mb-8 rounded-2xl overflow-hidden shadow-lg h-48 sm:h-64 md:h-72 -mx-3 sm:mx-0">
+          {/* Mobile Carousel indicators */}
           <div className="absolute bottom-3 left-0 right-0 z-20 flex justify-center space-x-2">
-            {banners.map((_, index) => (
+            {mobileBanners.map((_, index) => (
               <button
                 key={index}
-                onClick={() => setCurrentBanner(index)}
+                onClick={() => setCurrentMobileBanner(index)}
                 className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  currentBanner === index 
+                  currentMobileBanner === index 
                     ? "bg-white w-6" 
                     : "bg-white/50 hover:bg-white/80"
                 }`}
-                aria-label={`Go to slide ${index + 1}`}
+                aria-label={`Go to mobile slide ${index + 1}`}
               />
             ))}
           </div>
 
-          {/* Carousel navigation buttons */}
+          {/* Mobile Carousel navigation buttons */}
           <button 
             onClick={(e) => {
               e.stopPropagation();
-              prevBanner();
+              setCurrentMobileBanner((prev) => (prev === 0 ? mobileBanners.length - 1 : prev - 1));
             }}
             className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-black/30 hover:bg-black/50 text-white rounded-full p-2 backdrop-blur-sm transition-colors"
-            aria-label="Previous banner"
+            aria-label="Previous mobile banner"
           >
             <ChevronLeft size={20} />
           </button>
@@ -502,28 +578,159 @@ function Dashboard() {
           <button 
             onClick={(e) => {
               e.stopPropagation();
-              nextBanner();
+              setCurrentMobileBanner((prev) => (prev + 1) % mobileBanners.length);
             }}
             className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-black/30 hover:bg-black/50 text-white rounded-full p-2 backdrop-blur-sm transition-colors"
-            aria-label="Next banner"
+            aria-label="Next mobile banner"
           >
             <ChevronRight size={20} />
           </button>
 
-          {/* Banner slides */}
+          {/* Mobile Banner slides */}
           <div className="relative w-full h-full">
-            {banners.map((banner, index) => (
+            {mobileBanners.map((banner, index) => (
               <div 
                 key={banner.id}
                 className={`absolute inset-0 transition-opacity duration-500 ${
-                  currentBanner === index ? "opacity-100 z-10" : "opacity-0 z-0"
+                  currentMobileBanner === index ? "opacity-100 z-10" : "opacity-0 z-0"
                 }`}
                 onClick={() => {
-                  // Always navigate to Old Monk Rum Free product regardless of banner type
                   navigate('/products?search=Old%20Monk%20Rum%20Free');
                 }}
               >
-                {/* Banner content */}
+                {/* For first mobile banner, show only image and below it the text */}
+                {banner.id === "mobile-1" ? (
+                  <>
+                    <img
+                      src={banner.image}
+                      alt="Old Monk Offer"
+                      className="w-full h-full object-cover scale-90"
+                      style={{ objectPosition: 'center' }}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.onerror = null;
+                        target.src = "website1.png";
+                      }}
+                    />
+                    {/* Small Order Now button for first mobile banner */}
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate('/products?search=Old%20Monk%20Rum%20Free');
+                      }}
+                      className="absolute bottom-16 left-1/2 transform -translate-x-1/2 bg-[#cd6839] hover:bg-[#b55a31] text-white px-3 py-1.5 rounded-lg transition-colors shadow-lg hover:shadow-xl text-xs font-medium z-20"
+                    >
+                      Order Now →
+                    </button>
+                    <div className="bg-white text-center py-2 px-2 text-sm font-semibold text-[#cd6839]">
+                      GET OLD MONK QUARTER FREE!<br />
+                      On Your First Order<br />
+                      180 ml | Delivered in 45 Min
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Mobile Banner content for other banners (if any) */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/20 z-10 flex flex-col justify-center p-4 sm:p-6">
+                      <div className="max-w-lg">
+                        {banner.type === "special" && (
+                          <div className="inline-block bg-yellow-400 text-blue-900 font-bold px-2 py-1 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm mb-2 sm:mb-3">
+                            Weekend Special!
+                          </div>
+                        )}
+                        {banner.type === "featured" && (
+                          <div className="inline-block bg-[#cd6839]/20 text-white font-bold px-2 py-1 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm mb-2 sm:mb-3">
+                            Most Popular
+                          </div>
+                        )}
+                        <h1 className="text-white text-xl sm:text-2xl font-bold mb-2 md:mb-3 banner-fade leading-tight">
+                          {banner.title}
+                        </h1>
+                        <p className="text-white/90 text-xs sm:text-sm mb-3 sm:mb-4 banner-fade leading-relaxed">
+                          {banner.description}
+                        </p>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate('/products?search=Old%20Monk%20Rum%20Free');
+                          }}
+                          className="bg-[#cd6839] hover:bg-[#b55a31] text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg transition-colors shadow-lg hover:shadow-xl text-xs sm:text-sm font-medium banner-content"
+                        >
+                          Order Now →
+                        </button>
+                      </div>
+                    </div>
+                    <img
+                      src={banner.image}
+                      alt={banner.title}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.onerror = null;
+                        target.src = "website1.png";
+                      }}
+                    />
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Desktop Banner Carousel */}
+        <div className="desktop-banner relative mb-6 sm:mb-8 rounded-2xl overflow-hidden shadow-lg h-48 sm:h-64 md:h-72 -mx-3 sm:mx-0">
+          {/* Desktop Carousel indicators */}
+          <div className="absolute bottom-3 left-0 right-0 z-20 flex justify-center space-x-2">
+            {desktopBanners.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentDesktopBanner(index)}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  currentDesktopBanner === index 
+                    ? "bg-white w-6" 
+                    : "bg-white/50 hover:bg-white/80"
+                }`}
+                aria-label={`Go to desktop slide ${index + 1}`}
+              />
+            ))}
+          </div>
+
+          {/* Desktop Carousel navigation buttons */}
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              setCurrentDesktopBanner((prev) => (prev === 0 ? desktopBanners.length - 1 : prev - 1));
+            }}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-black/30 hover:bg-black/50 text-white rounded-full p-2 backdrop-blur-sm transition-colors"
+            aria-label="Previous desktop banner"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              setCurrentDesktopBanner((prev) => (prev + 1) % desktopBanners.length);
+            }}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-black/30 hover:bg-black/50 text-white rounded-full p-2 backdrop-blur-sm transition-colors"
+            aria-label="Next desktop banner"
+          >
+            <ChevronRight size={20} />
+          </button>
+
+          {/* Desktop Banner slides */}
+          <div className="relative w-full h-full">
+            {desktopBanners.map((banner, index) => (
+              <div 
+                key={banner.id}
+                className={`absolute inset-0 transition-opacity duration-500 ${
+                  currentDesktopBanner === index ? "opacity-100 z-10" : "opacity-0 z-0"
+                }`}
+                onClick={() => {
+                  navigate('/products?search=Old%20Monk%20Rum%20Free');
+                }}
+              >
+                {/* Desktop Banner content */}
                 <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/20 z-10 flex flex-col justify-center p-4 sm:p-6 md:p-10">
                   <div className="max-w-lg">
                     {/* Special banner badge */}
@@ -550,7 +757,7 @@ function Dashboard() {
                     
                     <button 
                       onClick={(e) => {
-                        e.stopPropagation(); // Prevent double navigation
+                        e.stopPropagation();
                         navigate('/products?search=Old%20Monk%20Rum%20Free');
                       }}
                       className="bg-[#cd6839] hover:bg-[#b55a31] text-white px-3 py-2 sm:px-4 sm:py-2 md:px-6 md:py-3 rounded-lg transition-colors shadow-lg hover:shadow-xl text-xs sm:text-sm md:text-base font-medium banner-content"
