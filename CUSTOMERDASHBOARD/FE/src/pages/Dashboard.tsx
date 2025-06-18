@@ -5,7 +5,7 @@ import axios from 'axios';
 import oldMonkImage from './pop.jpeg';
 import CartCounter from '../components/CartCounter';
 import { sessionManager } from '../utils/sessionManager';
-import mobileBannerImage from '../public/mobile.jpeg';
+import mobileBannerImage from './mobile.jpeg';
 
 // Simplified banner animations CSS with media queries
 const bannerAnimations = `
