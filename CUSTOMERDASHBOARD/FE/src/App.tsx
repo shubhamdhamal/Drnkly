@@ -19,6 +19,7 @@ import IssueTracking from './pages/IssueTracking'; // ✅ NEW
 import Blog from './pages/Blog'; // ✅ Added Blog import
 import Navigation from './components/Navigation';
 import SessionExpiryPopup from './components/SessionExpiryPopup';
+import IndianTimeDisplay from './components/IndianTimeDisplay'; // ✅ NEW
 import { CartProvider } from './context/CartContext';
 // import ChatBox from './pages/Chatbox'; // Add the ChatBox import
 import { sessionManager } from './utils/sessionManager';
@@ -60,6 +61,7 @@ function App() {
       <BrowserRouter>
         <div className="flex flex-col min-h-screen bg-gray-50">
           <SessionExpiryPopup />
+          <IndianTimeDisplay /> {/* ✅ NEW - Indian Time Display */}
           <main className="flex-1 pb-20"> {/* Space for bottom nav */}
             <Routes>
               <Route path="/" element={<Welcome />} />
