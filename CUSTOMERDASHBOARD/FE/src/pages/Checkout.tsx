@@ -1,428 +1,335 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, ChevronRight, ArrowLeft } from 'lucide-react';
-import { useCart } from '../context/CartContext';
+import { ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import { CartItem } from '../context/CartContext';
 
-
-function Checkout() {
+const Payment = () => {
   const navigate = useNavigate();
-  const { items, setItems } = useCart(); // Ensure setItems is available in context
-  const [address, setAddress] = useState({
-    fullName: '',
-    phone: '',
-    street: '',
-    city: 'Pune', // Prefill with Pune
-    state: 'Maharashtra', // Prefill with Maharashtra
-    pincode: '411057' // Prefill with 411057
-  });
-  const [phoneError, setPhoneError] = useState('');
-  const [formError, setFormError] = useState('');
-  const userId = localStorage.getItem('userId');
+  const [items, setItems] = useState<CartItem[]>([]);
+  const [isScreenshotUploaded, setIsScreenshotUploaded] = useState(false);
+  const [transactionId, setTransactionId] = useState<string>('');
+  const [isCashOnDelivery, setIsCashOnDelivery] = useState(false);
+  const [pendingOrder, setPendingOrder] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const paymentMethodRef = useRef<HTMLDivElement>(null);
 
-  // Fetch user profile information
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        if (!userId) return;
-        
-        const response = await axios.get(`https://peghouse.in/api/users/${userId}`);
-        const user = response.data;
-        
-        setAddress(prev => ({
-          ...prev,
-          fullName: user.name || '',
-          phone: user.mobile || ''
-        }));
-      } catch (error) {
-        console.error('Failed to fetch user profile:', error);
-      }
-    };
-    
-    fetchUserProfile();
-  }, [userId]);
+  const isPaymentDetailsProvided = isScreenshotUploaded || transactionId.trim().length > 0;
 
-  // 🛒 Fetch Cart Items from Backend
-  useEffect(() => {
-    const fetchCart = async () => {
-      try {
-        const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
-        const populatedItems = res.data.items.map((item: any) => ({
-  ...item,
-  category: item.productId?.category || null
-}));
-setItems(populatedItems);
-      } catch (err) {
-        console.error('Error fetching cart:', err);
-      }
-    };
-
-    if (userId) fetchCart();
-  }, [userId, setItems]);
-
-  const orderTotal = items && items.length
-  ? items.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  : 0;
-
-// ⏱️ Dynamic service fee: 100% from 11PM to 2AM IST, else 20%
-const getServiceFeeRate = () => {
-  const now = new Date();
-  const istOffset = 5.5 * 60 * 60 * 1000;
-  const istDate = new Date(now.getTime() + istOffset);
-  const hour = istDate.getUTCHours();
-  return (hour >= 23 || hour < 2) ? 1.0 : 0.2;
-};
-
-const serviceFeeRate = getServiceFeeRate();
-
-const drinksFee = items.reduce((sum, item) => {
-  const isDrink = item.productId?.category === 'Drinks';
-  if (isDrink) {
-    return sum + item.price * item.quantity * serviceFeeRate;
-  }
-  return sum;
-}, 0);
-
-    let deliveryCharges = orderTotal > 500 ? 0 : 100;
-  const platform = 12.00;
-  const gst = 18.00;
-  const gstAmount = ((orderTotal+drinksFee) * gst) / 100;
-  const total = orderTotal + deliveryCharges +platform + gstAmount+drinksFee;
-
-  // 🧾 Submit Order
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-  
-    const userId = localStorage.getItem('userId');
-    if (!userId) return alert("User not logged in");
-
-    // Ensure all address fields are filled
-    if (!address.fullName || !address.phone || !address.street || !address.city || !address.state || !address.pincode) {
-      return alert("Please fill in all the fields.");
-    }
-     // Ensure phone number is exactly 10 digits long
-     if (address.phone.length !== 10) {
-      setPhoneError("Phone number must be exactly 10 digits.");
-      return;
-    } else {
-      setPhoneError('');
-    }
-    const allowedPincodes = [
-      '411004', '411040', '410506', '410509', '413132', '411032', '411020', '412411', '412205', '412201', 
-      '412105', '412211', '412411', '412206', '410507', '411042', '412206', '410401', '411046', '412206', 
-      '410501', '410507', '412211', '410505', '412218', '411003', '412408', '411051', '412205', '411042', 
-      '412211', '412410', '410502', '413114', '412212', '410502', '412206', '411021', '412401', '412205', 
-      '410509', '412207', '412404', '411007', '411027', '411007', '412406', '412402', '412405', '412204', 
-      '410501', '411002', '410502', '411045', '411007', '413102', '413133', '413102', '413102', '412206', 
-      '411021', '413103', '412206', '413801', '410506', '412108', '413104', '412410', '412303', '412203', 
-      '412108', '412209', '413103', '410401', '411042', '413104', '413130', '413105', '410509', '412301', 
-      '412301', '413103', '412204', '412205', '412206', '410509', '412402', '411026', '411039', '410501', 
-      '412106', '411042', '411042', '411038', '412206', '410513', '411037', '413106', '412301', '413104', 
-      '412202', '412411', '412203', '413801', '411003', '412208', '411001', '411031', '410501', '412301', 
-      '410506', '410503', '412105', '410513', '410502', '412206', '412114', '412409', '412105', '412211', 
-      '412218', '410505', '411019', '411019', '412101', '411005', '412207', '413132', '412213', '411001', 
-      '411012', '413801', '413801', '412305', '410505', '412311', '411004', '412213', '412402', '412109', 
-      '412101', '412214', '413801', '410502', '413110', '410506', '410508', '412403', '412205', '411043', 
-      '412208', '411015', '411041', '413104', '412409', '411015', '410509', '412409', '412301', '410505', 
-      '411042', '413102', '411001', '411014', '411003', '412402', '411038', '411004', '412216', '410501', 
-      '412203', '412211', '412209', '411007', '410516', '412301', '412405', '412408', '411042', '411001', 
-      '411042', '410505', '413120', '412408', '413801', '410502', '412205', '410509', '411016', '412210', 
-      '413801', '411016', '410505', '412102', '413102', '412401', '412213', '412104', '411042', '411003', 
-      '411028', '411013', '412311', '412206', '412305', '412213', '413106', '413801', '412206', '412208', 
-      '410504', '412409', '412306', '411025', '411032', '412210', '413106', '413106', '412101', '410507', 
-      '411057', '412106', '410402', '413102', '412213', '411019', '410509', '410504', '412208', '412303', 
-      '412303', '412305', '413102', '412206', '410502', '410513', '412201', '412215', '412404', '412107', 
-      '410403', '413114', '413105', '413106', '412311', '411017', '413106', '410501', '412205', '413110', 
-      '412107', '412202', '410405', '412213', '412206', '412412', '412219', '412106', '410505', '412218', 
-      '411002', '412205', '412208', '412206', '412213', '412209', '412306', '410405', '413102', '412210', 
-      '412220', '412204', '412206', '413102', '410405', '412206', '410405', '411052', '410506', '411034', 
-      '411011', '412107', '412108', '412214', '413133', '413120', '411046', '413104', '412218', '413104', 
-      '412203', '412213', '412403', '412205', '412207', '412205', '413130', '411024', '411003', '411003', 
-      '411003', '410502', '412301', '411042', '410502', '412214', '410504', '410502', '411042', '413116', 
-      '410301', '412106', '412102', '410502', '413105', '412402', '412108', '412205', '412205', '410504', 
-      '411048', '412203', '412203', '413114', '412409', '412203', '412205', '410505', '412212', '412301', 
-      '412404', '411042', '412412', '412303', '412207', '412108', '412205', '412209', '412108', '411048', 
-      '411048', '410509', '412216', '412207', '412202', '412103', '412103', '412303', '411038', '410501', 
-      '410505', '411023', '412108', '412201', '410511', '412107', '413104', '413802', '410505', '410501', 
-      '412213', '410402', '410512', '412219', '410401', '410509', '410502', '411003', '412406', '413103', 
-      '410503', '412103', '411042', '411047', '411030', '410401', '410401', '413110', '413132', '410510', 
-      '412201', '412216', '411002', '411019', '413130', '412409', '412219', '410501', '410515', '412206', 
-      '412311', '413130', '410405', '412108', '413115', '413115', '412206', '412104', '412218', '413110', 
-      '410503', '412409', '412211', '412311', '412305', '411023', '411011', '412107', '412410', '410502', 
-      '412213', '412307', '412307', '412213', '412105', '411037', '411057', '411018', '412303', '413102', 
-      '413102', '413802', '412220', '411016', '411028', '412304', '412107', '412107', '412105', '413110', 
-      '412208', '411036', '411036', '412304', '412306', '411042', '411048', '411008', '411023', '411045', 
-      '411001', '412402', '412410', '411002', '411041', '412108', '410405', '412203', '413801', '411030', 
-      '410504', '410503', '412213', '412206', '412214', '411052', '412104', '412206', '412303', '411018', 
-      '412206', '412409', '412211', '413132', '411031', '412102', '412220', '413120', '410505', '412209', 
-      '410504', '410502', '412210', '413114', '412102', '413102', '410502', '412406', '412210', '413114', 
-      '410506', '412101', '411042', '412409', '410504', '411044', '412403', '412212', '412203', '410505', 
-      '413132', '410505', '412301', '413110', '412303', '412301', '412206', '412107', '412203', '412104', 
-      '410504', '412406', '410512', '412409', '412311', '410502', '411009', '411009', '413130', '412206', 
-      '412219', '412108', '410406', '412216', '410512', '410509', '412308', '412409', '410503', '412401', 
-      '410501', '412408', '413102', '412412', '410504', '412301', '412303', '410505', '411017', '411018', 
-      '410504', '412216', '411017', '412305', '411042', '412104', '412206', '410509', '412108', '411019', 
-      '411001', '411001', '411002', '411001', '411001', '411005', '410302', '412207', '412214', '413105', 
-      '412104', '410505', '410509', '410502', '412104', '412305', '413114', '411020', '411042', '412209', 
-      '412211', '410504', '412303', '410501', '411030', '411011', '413130', '412101', '411002', '412206', 
-      '413114', '410505', '411042', '412409', '412219', '412107', '412114', '413801', '411030', '411005', 
-      '412404', '411001', '412211', '411030', '412109', '412202', '412213', '410515', '412303', '412408', 
-      '411037', '412101', '412208', '410505', '412206', '411027', '411042', '413102', '413104', '413104', 
-      '413103', '412205', '411028', '412301', '412106', '413133', '412401', '412218', '412404', '411030', 
-      '413114', '412108', '413130', '413103', '410506', '412208', '412206', '412202', '412205', '410516', 
-      '413801', '413110', '412210', '413102', '412402', '412107', '410505', '410511', '413114', '413102', 
-      '412210', '411016', '411005', '410406', '411023', '412205', '412301', '410501', '413116', '412202', 
-      '411002', '412105', '412306', '412301', '410502', '413102', '412301', '411022', '412204', '413103', 
-      '411021', '411042', '411042', '411037', '412208', '410405', '412106', '412218', '410506', '412208', 
-      '410507', '410509', '412409', '412114', '412213', '410502', '412211', '413102', '412205', '412107', 
-      '413104', '412104', '412207', '411019', '411019', '412110', '410512', '410509', '412206', '410513', 
-      '412402', '412312', '412409', '413104', '412412', '410507', '413102', '413102', '412211', '411042', 
-      '410506', '412308', '412202', '410502', '412206', '411023', '412402', '410502', '413106', '412207', 
-      '412106', '412106', '412411', '411041', '412206', '410501', '412412', '410503', '412103', '410510', 
-      '412211', '412401', '411014', '412216', '412308', '412207', '410504', '412305', '412301', '410505', 
-      '410507', '411042', '413120', '412206', '412212', '412209', '412215', '412205', '410501', '412312', 
-      '410405', '412212', '412205', '412206', '412206', '412404', '411032', '410507', '411015', '412208', 
-      '413120', '412104', '411057', '412306', '410501', '413114', '412207', '412303', '412213', '411040', 
-      '411058', '412404', '413105', '412213', '411044', '412214', '412214', '410504', '410502', '410505', 
-      '411006', '411001'
-    ];
-    
-    if (!allowedPincodes.includes(address.pincode)) {
-      return alert("Sorry! We currently deliver only to selected areas. Please check the pincode.");
-    }
-
-    if (address.city.trim().toLowerCase() !== 'pune'.toLowerCase()) {
-      return alert("Sorry! We currently deliver only in City (Pune)");
-    }
-        
-  
-    try {
-      // 🔁 Step 1: Fetch actual cart from backend
-      const cartRes = await axios.get(`https://peghouse.in/api/cart/${userId}`);
-      const cartItems = cartRes.data.items;
-  
-      if (!cartItems || cartItems.length === 0) {
-        return alert("Your cart is empty!");
-      }
-  
-      // 🛒 Step 2: Format items
-      const formattedItems = cartItems.map((item: any) => ({
-        productId: item.productId?._id || item.productId || item._id,
-        name: item.name,
-        image: item.image,
-        price: item.price,
-        quantity: item.quantity
-      }));
-  
-      const orderTotal = items.reduce((sum: number, item: CartItem) => sum + item.price * item.quantity, 0);
-      // Calculate 20% fee on Drinks only
-      const drinksFee = items.reduce((sum, item) => {
-        const isDrink = item.productId?.category === 'Drinks';
-        if (isDrink) {
-          return sum + item.price * item.quantity * 0.20;
-        }
-        return sum;
-      }, 0);
-      const deliveryCharges = 100;
-      const platform = 12;
-      const gst = 18;
-      const gstAmount = ((orderTotal+drinksFee) * gst) / 100;
-      const totalAmount = orderTotal + deliveryCharges + platform + gstAmount+drinksFee;
-      
-      // Store order data in localStorage instead of creating an order
-      const orderData = {
-        userId,
-        items: formattedItems,
-        address,
-        totalAmount
-      };
-      
-      // Save order details to localStorage
-      localStorage.setItem('pendingOrderData', JSON.stringify(orderData));
-      
-      // Navigate to payment page without creating an order
-      navigate('/payment');
-    } catch (error) {
-      console.error("Order preparation failed", error);
-      alert("Something went wrong while preparing your order");
+  const handleCashOnDeliveryChange = () => {
+    if (!isCashOnDelivery) {
+      setIsCashOnDelivery(true);
+      setTransactionId('');
+      setIsScreenshotUploaded(false);
     }
   };
-  
-  
+
+  const handleOnlinePaymentSelect = () => {
+    setIsCashOnDelivery(false);
+  };
+
+  const handleTransactionIdChange = (value: string) => {
+    setTransactionId(value);
+    if (value.trim().length > 0) {
+      setIsCashOnDelivery(false);
+    }
+  };
+
+  const handleScreenshotChange = (value: boolean) => {
+    setIsScreenshotUploaded(value);
+    if (value) {
+      setIsCashOnDelivery(false);
+    }
+  };
+
+  useEffect(() => {
+    const fetchCart = async () => {
+      const userId = localStorage.getItem('userId');
+      if (!userId) return;
+      try {
+        const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
+        setItems(res.data.items || []);
+      } catch (err) {
+        console.error('Cart fetch error:', err);
+      }
+    };
+
+    fetchCart();
+
+    const pendingOrderData = localStorage.getItem('pendingOrderData');
+    if (pendingOrderData) {
+      try {
+        const orderData = JSON.parse(pendingOrderData);
+        setPendingOrder(orderData);
+      } catch (err) {
+        console.error('Failed to parse pending order data:', err);
+        alert('There was an issue with your order. Please try again.');
+        navigate('/checkout');
+      }
+    } else {
+      alert('No order information found. Please complete the checkout process first.');
+      navigate('/checkout');
+    }
+
+    if (paymentMethodRef.current) {
+      setTimeout(() => {
+        paymentMethodRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  }, [navigate]);
+
+const getDrinksFeeRate = () => {
+  const now = new Date();
+  const indianTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  const hour = indianTime.getHours();
+
+  // Apply 100% between 11 PM (23) to 2 AM (2)
+  return (hour >= 23 || hour < 2) ? 1.0 : 0.20;
+};
+
+
+  const drinksFeeRate = getDrinksFeeRate();
+  const orderTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  const drinksFee = items.reduce((sum, item) => {
+    const isDrink = item.productId?.category === 'Drinks';
+    if (isDrink) {
+      return sum + item.price * item.quantity * drinksFeeRate;
+    }
+    return sum;
+  }, 0);
+
+  const deliveryCharges = orderTotal > 500 ? 0 : 100;
+  const platform = 12.0;
+  const gst = 18.0;
+  const gstAmount = (orderTotal + drinksFee) * gst / 100;
+  const total = orderTotal + drinksFee + deliveryCharges + platform + gstAmount;
+
+  const isOnlinePaymentValid = isScreenshotUploaded || transactionId.trim().length > 0;
+  const isFormValid = (isOnlinePaymentValid && !isCashOnDelivery) || (isCashOnDelivery && !isOnlinePaymentValid);
+
+  const handlePaymentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!pendingOrder) {
+      alert('No order information found. Please complete the checkout process first.');
+      navigate('/checkout');
+      return;
+    }
+
+    if (!isFormValid) {
+      return alert('Please either provide payment details (transaction ID or screenshot) or select Cash on Delivery.');
+    }
+
+    try {
+      setIsLoading(true);
+
+      const finalOrderData = {
+        userId: pendingOrder.userId,
+        address: pendingOrder.address,
+        items: pendingOrder.items,
+        totalAmount: total,
+      };
+
+      const createOrderResponse = await axios.post('https://peghouse.in/api/orders', finalOrderData, {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!createOrderResponse.data?.order?._id) {
+        throw new Error('Failed to create order');
+      }
+
+      const orderId = createOrderResponse.data.order._id;
+      localStorage.setItem('latestOrderId', orderId);
+
+      const paymentResponse = await axios.put(
+        `https://peghouse.in/api/orders/${orderId}/pay`,
+        {
+          screenshotUploaded: isScreenshotUploaded,
+          paymentProof: isScreenshotUploaded ? 'placeholder.jpg' : '',
+          transactionId: transactionId || null,
+          isCashOnDelivery,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        }
+      );
+
+      if (paymentResponse.data.message === 'Payment status updated successfully') {
+        localStorage.removeItem('pendingOrderData');
+        const userId = localStorage.getItem('userId');
+        if (userId) {
+          await axios.post('https://peghouse.in/api/cart/clear', { userId });
+          localStorage.removeItem('cartItems');
+          if (typeof window !== "undefined") {
+            const event = new CustomEvent("clearCartContext");
+            window.dispatchEvent(event);
+          }
+        }
+        navigate('/order-success');
+      } else {
+        console.error("Payment failed:", paymentResponse.data);
+        alert('Payment failed. Please try again.');
+      }
+    } catch (err: any) {
+      console.error('Order/Payment error:', err?.response?.data || err);
+      alert('Something went wrong while processing your order. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white p-4 flex items-center">
-        <ArrowLeft className="cursor-pointer" onClick={() => navigate(-1)} />
-        <h1 className="text-xl font-semibold mx-auto">Checkout</h1>
+      <div className="bg-white px-4 py-4 flex items-center shadow-md">
+        <button onClick={() => navigate('/checkout')} className="p-2">
+          <ArrowLeft size={24} />
+        </button>
+        <h1 className="text-2xl font-semibold text-center flex-1">Payment</h1>
       </div>
 
-      <div className="max-w-3xl mx-auto p-4">
-        {/* Delivery Address */}
-        <div className="bg-white rounded-lg p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center">
-              <MapPin className="text-gray-600 mr-2" />
-              <h2 className="text-lg font-semibold">Delivery Address</h2>
-            </div>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                <input
-                  type="text"
-                  value={address.fullName}
-                  onChange={(e) => setAddress({ ...address, fullName: e.target.value })}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                <input
-                    type="tel"
-                    value={address.phone}
-                    onChange={(e) => {
-                      const phone = e.target.value;
-                      // Update phone and check if it's valid
-                      if (phone.length <= 10) {
-                        setAddress({ ...address, phone });
-                      }
-                    }}
-                    className={`w-full px-4 py-3 rounded-lg border ${address.phone.length !== 10 ? 'border-red-500' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                    required
-                    maxLength={10}
-                    placeholder="Enter 10-digit phone number"
-                  />
-                    {address.phone.length !== 10 && address.phone.length > 0 && (
-                    <p className="text-red-500 text-sm">Phone number must be exactly 10 digits.</p>
-                  )}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Street Address</label>
-              <input
-                type="text"
-                value={address.street}
-                onChange={(e) => setAddress({ ...address, street: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
-                <input
-                  type="text"
-                  value={address.city}
-                  readOnly
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:outline-none cursor-not-allowed"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
-                <input
-                  type="text"
-                  value={address.state}
-                  readOnly
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:outline-none cursor-not-allowed"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Pincode</label>
-              <input
-                type="text"
-                value={address.pincode}
-                readOnly
-                className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:outline-none cursor-not-allowed"
-              />
-            </div>
-          </form>
-        </div>
-
-        {/* Order Summary */}
-        <div className="bg-white rounded-lg p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
-          <div className="space-y-4">
-            {items.map((item, index) => (
-              <div key={index} className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <img 
-                    src={item.image} 
-                    alt={item.name}
-                    className="w-16 h-16 object-cover rounded-lg mr-4"
-                  />
-                  <div>
-                    <h3 className="font-medium">{item.name}</h3>
-                    <p className="text-gray-600">Quantity: {item.quantity}</p>
-                 {item.productId?.category === 'Drinks' && (
-  <p className="text-sm text-red-600 mt-1">
-    + ₹{(item.price * item.quantity * serviceFeeRate).toFixed(2)} Service Fee ({(serviceFeeRate * 100).toFixed(0)}%)
-  </p>
-)}
-
-                  </div>
-                </div>
-                <div className="text-right">
-                <p className="font-medium">₹{(item.price * item.quantity).toFixed(2)}</p>
-                  {item.productId?.category === 'Drinks' && (
-                    <p className="text-xs text-gray-500">
-                      (₹{item.price.toFixed(2)} × {item.quantity})
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="border-t mt-4 pt-4 space-y-2">
-            <div className="flex justify-between text-gray-600">
-              <span>Subtotal</span>
-              <span>₹{orderTotal.toFixed(2)}</span>
-            </div>
-          <div className="flex justify-between text-gray-600">
-  <span>Drinks Service Fee ({(serviceFeeRate * 100).toFixed(0)}%)</span>
-  <span>₹{drinksFee.toFixed(2)}</span>
-</div>
-
-            <div className="flex justify-between text-gray-600">
-              <span>Delivery Fee</span>
-              <span>₹{deliveryCharges.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-gray-600">
-              <span>Platform Fee</span>
-              <span>₹{platform.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-gray-600">
-              <span>GST (18%)</span>
-              <span>₹{gstAmount.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between font-semibold text-lg pt-2">
-              <span>Total</span>
-              <span>₹{total.toFixed(2)}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Proceed to Payment Button */}
-        <button
-          onClick={handleSubmit}
-          className="w-full bg-blue-600 text-white py-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center"
+      <div className="max-w-lg mx-auto px-4 py-6 md:px-8 md:py-6">
+        <div
+          ref={paymentMethodRef}
+          className="bg-white rounded-xl p-5 mb-6 shadow-lg animate-pulse-once border-2 border-blue-100"
         >
-          <span>Proceed to Payment</span>
-          <ChevronRight className="ml-2" />
+          <h2 className="text-xl font-semibold mb-4 text-blue-800">Select Payment Method</h2>
+          <div className="flex flex-col gap-4">
+            <label className={`flex items-center p-4 border-2 rounded-lg ${!isCashOnDelivery ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}>
+              <input
+                type="radio"
+                name="paymentMethod"
+                checked={!isCashOnDelivery}
+                onChange={handleOnlinePaymentSelect}
+                className="w-5 h-5 mr-4 accent-blue-600"
+              />
+              <span className="font-medium text-lg">Online Payment</span>
+            </label>
+
+            <label className={`flex items-center p-4 border-2 rounded-lg ${isCashOnDelivery ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}>
+              <input
+                type="radio"
+                name="paymentMethod"
+                checked={isCashOnDelivery}
+                onChange={handleCashOnDeliveryChange}
+                className="w-5 h-5 mr-4 accent-blue-600"
+              />
+              <span className="font-medium text-lg">Cash on Delivery</span>
+            </label>
+          </div>
+        </div>
+
+        {!isCashOnDelivery && (
+          <div className="mb-6 text-center">
+            <h2 className="text-lg font-semibold mb-2">Scan QR to Pay</h2>
+            <img
+              src="/qr.jpg"
+              alt="Admin QR Code"
+              className="mx-auto w-48 h-48 object-contain border border-gray-200 rounded-lg shadow"
+            />
+            <p className="text-sm text-gray-500 mt-2">Use any UPI app to scan & pay</p>
+          </div>
+        )}
+
+        {!isCashOnDelivery && (
+          <div className="bg-white rounded-xl p-6 mb-6 shadow-lg">
+            <h2 className="text-lg font-semibold mb-4">Payment Details</h2>
+            <div className="mb-4">
+              <label htmlFor="transactionId" className="block text-gray-700 mb-2">Enter Transaction ID</label>
+              <input
+                id="transactionId"
+                type="text"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                placeholder="Transaction ID"
+                value={transactionId}
+                onChange={(e) => handleTransactionIdChange(e.target.value)}
+              />
+            </div>
+
+            <div className="mb-4">
+              <h3 className="text-gray-700 mb-2">Payment Screenshot (OPTIONAL)</h3>
+              <a
+                href="https://drive.google.com/drive/folders/1i09WZAT0qd57MV9KMecAI6Rdvcon7TUF?usp=sharing"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline"
+              >
+                UPLOAD PAYMENT SCREENSHOT HERE
+              </a>
+              <div className="mt-4">
+                <input
+                  type="checkbox"
+                  id="paymentScreenshotCheckbox"
+                  checked={isScreenshotUploaded}
+                  onChange={() => handleScreenshotChange(!isScreenshotUploaded)}
+                />
+                <label htmlFor="paymentScreenshotCheckbox" className="ml-2 text-gray-700">
+                  I have Entered the Transaction ID or Uploaded the Payment Screenshot
+                </label>
+              </div>
+            </div>
+
+            <div className={`text-sm mt-2 ${isPaymentDetailsProvided ? 'text-green-600' : 'text-gray-500'}`}>
+              {isPaymentDetailsProvided ? '✓ Payment details provided' : ''}
+            </div>
+          </div>
+        )}
+
+        <div className="bg-white rounded-xl p-6 mb-6 shadow-md">
+          <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Subtotal</span>
+              <span className="font-semibold">₹{orderTotal.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Drinks Service Fee ({drinksFeeRate * 100}%)</span>
+              <span className="font-semibold">₹{drinksFee.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Delivery Fee</span>
+              <span className="font-semibold">₹{deliveryCharges.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Platform Fee</span>
+              <span className="font-semibold">₹{platform.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">GST (18%)</span>
+              <span className="font-semibold">₹{gstAmount.toFixed(2)}</span>
+            </div>
+            <div className="pt-3 mt-1 border-t">
+              <div className="flex justify-between items-center">
+                <span className="text-xl font-semibold">Total</span>
+                <span className="text-xl font-semibold">₹{total.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 mb-6 shadow-md">
+          <h3 className="text-lg font-semibold mb-2">Cancellation Policy</h3>
+          <p className="text-gray-600 text-sm">
+            Orders cannot be cancelled once packed for delivery. In case of unexpected delays, a refund will be provided, if applicable.
+          </p>
+        </div>
+
+        <button
+          onClick={handlePaymentSubmit}
+          disabled={!isFormValid || isLoading}
+          className={`w-full py-4 rounded-xl font-semibold text-lg transition-colors ${
+            isFormValid && !isLoading ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+          }`}
+        >
+          {isLoading ? 'Processing...' : 'Place Order & Submit Payment'}
         </button>
       </div>
     </div>
   );
-}
+};
 
-export default Checkout;
+export default Payment;
