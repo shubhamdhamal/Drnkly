@@ -27,9 +27,6 @@ const Cart = () => {
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // Shop Closed Modal
-  const [showShopClosed, setShowShopClosed] = useState(false);
-
   // Initialize Facebook Pixel
   useEffect(() => {
     // Add Facebook Pixel base code
@@ -280,19 +277,6 @@ const Cart = () => {
   const gst = (total + drinksFee) * 0.18;
   const finalTotal = total + drinksFee + shipping + platformFee + gst;
 
-  // Helper to check if Indian time is between 2:00 AM and 10:00 AM
-  function isShopClosed() {
-    // Get current time in Asia/Kolkata
-    const now = new Date();
-    // Convert to IST (Asia/Kolkata, UTC+5:30)
-    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-    const istOffset = 5.5 * 60 * 60 * 1000;
-    const ist = new Date(utc + istOffset);
-    const hours = ist.getHours();
-    // 2:00 <= hours < 10:00
-    return hours >= 2 && hours < 10;
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-1 py-1 sm:px-1 lg:px-1">
@@ -458,10 +442,6 @@ const Cart = () => {
 
               <button
                 onClick={() => {
-                  if (isShopClosed()) {
-                    setShowShopClosed(true);
-                    return;
-                  }
                   // Track InitiateCheckout event for Facebook Pixel
                   if (window && (window as any).fbq) {
                     (window as any).fbq('track', 'InitiateCheckout', {
@@ -484,29 +464,6 @@ const Cart = () => {
             </div>
           )}
         </div>
-
-        {/* Shop Closed Modal */}
-        {showShopClosed && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full text-center">
-              <div className="flex flex-col items-center mb-4">
-                <AlertTriangle className="text-yellow-500 mb-2" size={32} />
-                <h3 className="text-lg font-bold mb-2">Shop Closed</h3>
-              </div>
-              <p className="mb-6 text-gray-700">
-                Orders are not accepted between 2:00 AM and 10:00 AM.<br />
-                You can place your order after 10:00 AM.<br />
-                Thank you
-              </p>
-              <button
-                onClick={() => setShowShopClosed(false)}
-                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                OK
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* <p style={{ display: 'none' }}>
           Sound file should be placed at: {process.env.PUBLIC_URL}/notification-sound.mp3
