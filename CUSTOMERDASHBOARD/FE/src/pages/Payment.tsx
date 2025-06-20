@@ -12,11 +12,17 @@ const Payment = () => {
   const [isCashOnDelivery, setIsCashOnDelivery] = useState(false);
   const [pendingOrder, setPendingOrder] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Reference for payment method section
   const paymentMethodRef = useRef<HTMLDivElement>(null);
 
+  // Derived state to check if payment details are provided
   const isPaymentDetailsProvided = isScreenshotUploaded || transactionId.trim().length > 0;
 
+  // Handle Cash on Delivery change
   const handleCashOnDeliveryChange = () => {
+    // If Cash on Delivery is already selected, don't allow deselection
+    // User must select the other option to change
     if (!isCashOnDelivery) {
       setIsCashOnDelivery(true);
       setTransactionId('');
@@ -24,10 +30,12 @@ const Payment = () => {
     }
   };
 
+  // Handle Online Payment selection
   const handleOnlinePaymentSelect = () => {
     setIsCashOnDelivery(false);
   };
 
+  // Handle Transaction ID change
   const handleTransactionIdChange = (value: string) => {
     setTransactionId(value);
     if (value.trim().length > 0) {
@@ -35,6 +43,7 @@ const Payment = () => {
     }
   };
 
+  // Handle Screenshot change
   const handleScreenshotChange = (value: boolean) => {
     setIsScreenshotUploaded(value);
     if (value) {
@@ -42,10 +51,12 @@ const Payment = () => {
     }
   };
 
+  // 🔁 Fetch cart items and pending order data
   useEffect(() => {
     const fetchCart = async () => {
       const userId = localStorage.getItem('userId');
       if (!userId) return;
+
       try {
         const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
         setItems(res.data.items || []);
@@ -55,7 +66,8 @@ const Payment = () => {
     };
 
     fetchCart();
-
+    
+    // Get pending order data from localStorage
     const pendingOrderData = localStorage.getItem('pendingOrderData');
     if (pendingOrderData) {
       try {
@@ -67,10 +79,12 @@ const Payment = () => {
         navigate('/checkout');
       }
     } else {
+      // If no pending order data, redirect back to checkout
       alert('No order information found. Please complete the checkout process first.');
       navigate('/checkout');
     }
-
+    
+    // Scroll to payment method section on component mount
     if (paymentMethodRef.current) {
       setTimeout(() => {
         paymentMethodRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -78,33 +92,24 @@ const Payment = () => {
     }
   }, [navigate]);
 
-const getDrinksFeeRate = () => {
-  const now = new Date();
-  const indianTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-  const hour = indianTime.getHours();
-
-  // Apply 100% between 11 PM (23) to 2 AM (2)
-  return (hour >= 23 || hour < 2) ? 1.0 : 0.20;
-};
-
-
-  const drinksFeeRate = getDrinksFeeRate();
   const orderTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
+  // Calculate 20% fee on Drinks only
   const drinksFee = items.reduce((sum, item) => {
     const isDrink = item.productId?.category === 'Drinks';
     if (isDrink) {
-      return sum + item.price * item.quantity * drinksFeeRate;
+      return sum + item.price * item.quantity * 0.20;
     }
     return sum;
   }, 0);
 
-  const deliveryCharges = orderTotal > 500 ? 0 : 100;
+    let deliveryCharges = orderTotal > 500 ? 0 : 100;
   const platform = 12.0;
   const gst = 18.0;
   const gstAmount = (orderTotal + drinksFee) * gst / 100;
   const total = orderTotal + drinksFee + deliveryCharges + platform + gstAmount;
 
+  // Validation: Check if exactly one payment method is selected
   const isOnlinePaymentValid = isScreenshotUploaded || transactionId.trim().length > 0;
   const isFormValid = (isOnlinePaymentValid && !isCashOnDelivery) || (isCashOnDelivery && !isOnlinePaymentValid);
 
@@ -123,27 +128,30 @@ const getDrinksFeeRate = () => {
 
     try {
       setIsLoading(true);
-
+      
+      // Step 1: Create the actual order first
+    
       const finalOrderData = {
-        userId: pendingOrder.userId,
-        address: pendingOrder.address,
-        items: pendingOrder.items,
-        totalAmount: total,
-      };
+  userId: pendingOrder.userId,
+  address: pendingOrder.address,
+  items: pendingOrder.items,
+  totalAmount: total, // ✅ calculated from frontend including deliveryCharges
+};
 
-      const createOrderResponse = await axios.post('https://peghouse.in/api/orders', finalOrderData, {
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-
-      if (!createOrderResponse.data?.order?._id) {
+const createOrderResponse = await axios.post('https://peghouse.in/api/orders', finalOrderData, {
+  headers: {
+    'Content-Type': 'application/json',
+  }
+});
+      
+      if (!createOrderResponse.data || !createOrderResponse.data.order || !createOrderResponse.data.order._id) {
         throw new Error('Failed to create order');
       }
-
+      
       const orderId = createOrderResponse.data.order._id;
       localStorage.setItem('latestOrderId', orderId);
 
+      // Step 2: Update payment status for the newly created order
       const paymentResponse = await axios.put(
         `https://peghouse.in/api/orders/${orderId}/pay`,
         {
@@ -159,24 +167,34 @@ const getDrinksFeeRate = () => {
         }
       );
 
-      if (paymentResponse.data.message === 'Payment status updated successfully') {
-        localStorage.removeItem('pendingOrderData');
-        const userId = localStorage.getItem('userId');
-        if (userId) {
-          await axios.post('https://peghouse.in/api/cart/clear', { userId });
-          localStorage.removeItem('cartItems');
-          if (typeof window !== "undefined") {
-            const event = new CustomEvent("clearCartContext");
-            window.dispatchEvent(event);
-          }
-        }
-        navigate('/order-success');
-      } else {
+     if (paymentResponse.data.message === 'Payment status updated successfully') {
+  // ✅ Clear pending order data
+  localStorage.removeItem('pendingOrderData');
+
+  // ✅ Clear cart from backend
+  const userId = localStorage.getItem('userId');
+  if (userId) {
+    await axios.post('https://peghouse.in/api/cart/clear', { userId });
+
+    // ✅ Clear cart context and localStorage
+    localStorage.removeItem('cartItems'); // if used anywhere
+
+    if (typeof window !== "undefined") {
+      const event = new CustomEvent("clearCartContext");
+      window.dispatchEvent(event);
+    }
+  }
+
+  // ✅ Go to success page
+  navigate('/order-success');
+} else {
         console.error("Payment failed:", paymentResponse.data);
         alert('Payment failed. Please try again.');
       }
-    } catch (err: any) {
-      console.error('Order/Payment error:', err?.response?.data || err);
+    } catch (err: unknown) {
+      console.error('Order/Payment error:', err instanceof Error && err.hasOwnProperty('response') 
+        ? (err as any).response?.data 
+        : err);
       alert('Something went wrong while processing your order. Please try again.');
     } finally {
       setIsLoading(false);
@@ -185,6 +203,7 @@ const getDrinksFeeRate = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Header */}
       <div className="bg-white px-4 py-4 flex items-center shadow-md">
         <button onClick={() => navigate('/checkout')} className="p-2">
           <ArrowLeft size={24} />
@@ -193,7 +212,8 @@ const getDrinksFeeRate = () => {
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-6 md:px-8 md:py-6">
-        <div
+        {/* Payment Method Selection - Prominent and first in order */}
+        <div 
           ref={paymentMethodRef}
           className="bg-white rounded-xl p-5 mb-6 shadow-lg animate-pulse-once border-2 border-blue-100"
         >
@@ -209,7 +229,7 @@ const getDrinksFeeRate = () => {
               />
               <span className="font-medium text-lg">Online Payment</span>
             </label>
-
+            
             <label className={`flex items-center p-4 border-2 rounded-lg ${isCashOnDelivery ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}>
               <input
                 type="radio"
@@ -222,63 +242,75 @@ const getDrinksFeeRate = () => {
             </label>
           </div>
         </div>
-
+        
+        {/* QR Section - Only visible if online payment is selected */}
         {!isCashOnDelivery && (
-          <div className="mb-6 text-center">
-            <h2 className="text-lg font-semibold mb-2">Scan QR to Pay</h2>
-            <img
+        <div className="mb-6 text-center">
+          <h2 className="text-lg font-semibold mb-2">Scan QR to Pay</h2>
+          <img
               src="/qr.jpg"
-              alt="Admin QR Code"
-              className="mx-auto w-48 h-48 object-contain border border-gray-200 rounded-lg shadow"
-            />
-            <p className="text-sm text-gray-500 mt-2">Use any UPI app to scan & pay</p>
-          </div>
+            alt="Admin QR Code"
+            className="mx-auto w-48 h-48 object-contain border border-gray-200 rounded-lg shadow"
+          />
+          <p className="text-sm text-gray-500 mt-2">Use any UPI app to scan & pay</p>
+        </div>
         )}
 
+        {/* Online Payment Details - Only visible if online payment is selected */}
         {!isCashOnDelivery && (
-          <div className="bg-white rounded-xl p-6 mb-6 shadow-lg">
+        <div className="bg-white rounded-xl p-6 mb-6 shadow-lg">
             <h2 className="text-lg font-semibold mb-4">Payment Details</h2>
+            
+            {/* Transaction ID input */}
             <div className="mb-4">
               <label htmlFor="transactionId" className="block text-gray-700 mb-2">Enter Transaction ID</label>
-              <input
+          <input
                 id="transactionId"
-                type="text"
+            type="text"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                placeholder="Transaction ID"
-                value={transactionId}
+            placeholder="Transaction ID"
+            value={transactionId}
                 onChange={(e) => handleTransactionIdChange(e.target.value)}
-              />
-            </div>
+          />
+        </div>
 
+            {/* Screenshot upload section */}
             <div className="mb-4">
               <h3 className="text-gray-700 mb-2">Payment Screenshot (OPTIONAL)</h3>
-              <a
-                href="https://drive.google.com/drive/folders/1i09WZAT0qd57MV9KMecAI6Rdvcon7TUF?usp=sharing"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 underline"
-              >
-                UPLOAD PAYMENT SCREENSHOT HERE
-              </a>
-              <div className="mt-4">
-                <input
-                  type="checkbox"
-                  id="paymentScreenshotCheckbox"
-                  checked={isScreenshotUploaded}
+          <a
+            href="https://drive.google.com/drive/folders/1i09WZAT0qd57MV9KMecAI6Rdvcon7TUF?usp=sharing"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 underline"
+          >
+            UPLOAD PAYMENT SCREENSHOT HERE
+          </a>
+          <div className="mt-4">
+            <input
+              type="checkbox"
+              id="paymentScreenshotCheckbox"
+              checked={isScreenshotUploaded}
                   onChange={() => handleScreenshotChange(!isScreenshotUploaded)}
-                />
-                <label htmlFor="paymentScreenshotCheckbox" className="ml-2 text-gray-700">
-                  I have Entered the Transaction ID or Uploaded the Payment Screenshot
-                </label>
-              </div>
-            </div>
+            />
+            <label
+              htmlFor="paymentScreenshotCheckbox"
+              className="ml-2 text-gray-700"
+            >
+              I have Entered the Transaction ID or Uploaded the Payment Screenshot
+            </label>
+          </div>
+        </div>
 
+            {/* Visual indicator showing payment details status */}
             <div className={`text-sm mt-2 ${isPaymentDetailsProvided ? 'text-green-600' : 'text-gray-500'}`}>
-              {isPaymentDetailsProvided ? '✓ Payment details provided' : ''}
+              {isPaymentDetailsProvided 
+                ? '✓ Payment details provided' 
+                : ''}
             </div>
           </div>
         )}
 
+        {/* Order Summary */}
         <div className="bg-white rounded-xl p-6 mb-6 shadow-md">
           <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
           <div className="space-y-3">
@@ -287,7 +319,7 @@ const getDrinksFeeRate = () => {
               <span className="font-semibold">₹{orderTotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Drinks Service Fee ({drinksFeeRate * 100}%)</span>
+              <span className="text-gray-600">Drinks Service Fee (20%)</span>
               <span className="font-semibold">₹{drinksFee.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
@@ -311,6 +343,7 @@ const getDrinksFeeRate = () => {
           </div>
         </div>
 
+        {/* Cancellation Policy */}
         <div className="bg-white rounded-xl p-6 mb-6 shadow-md">
           <h3 className="text-lg font-semibold mb-2">Cancellation Policy</h3>
           <p className="text-gray-600 text-sm">
@@ -318,11 +351,14 @@ const getDrinksFeeRate = () => {
           </p>
         </div>
 
+        {/* Pay Now Button */}
         <button
           onClick={handlePaymentSubmit}
           disabled={!isFormValid || isLoading}
           className={`w-full py-4 rounded-xl font-semibold text-lg transition-colors ${
-            isFormValid && !isLoading ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            isFormValid && !isLoading
+              ? 'bg-blue-600 text-white hover:bg-blue-700' 
+              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
           }`}
         >
           {isLoading ? 'Processing...' : 'Place Order & Submit Payment'}
