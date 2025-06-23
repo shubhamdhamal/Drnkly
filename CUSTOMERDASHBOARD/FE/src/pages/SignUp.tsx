@@ -156,6 +156,17 @@ function SignUp() {
     }
   };
 
+  const handleGoogleSignUp = async () => {
+    try {
+      setSignupMethod('google');
+      // Redirect to Google OAuth endpoint
+      window.location.href = 'https://peghouse.in/api/auth/google';
+    } catch (error) {
+      console.error('Google signup error:', error);
+      setError('Failed to sign up with Google. Please try again.');
+    }
+  };
+
   const handleSendOtp = async () => {
     if (!formData.email || !validateEmail(formData.email)) {
       setError('Please enter a valid email address.');
@@ -182,7 +193,7 @@ function SignUp() {
           otpInputRef.current?.focus();
         }, 100);
       }
-    } catch (err: any) {
+    } catch (err) {
       // Clear success message and set error message
       setOtpSuccess('');
       setError(err.response?.data?.message || 'Error sending OTP. Please try again.');
@@ -292,7 +303,30 @@ function SignUp() {
             {/* Step 1: Email Verification */}
             {step === 1 && (
               <div className="space-y-6 animate-fadeIn">
-                {/* Removed Google Sign Up button */}
+                {/* Google Sign Up */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={handleGoogleSignUp}
+                    className="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-200 text-gray-700 py-3 px-4 rounded-xl font-medium hover:bg-gray-50 hover:border-gray-300 hover:shadow-md transition-all duration-300 group"
+                  >
+                    <img 
+                      src="https://www.google.com/favicon.ico" 
+                      alt="Google" 
+                      className="w-5 h-5 group-hover:scale-110 transition-transform duration-200"
+                    />
+                    <span>Continue with Google</span>
+                  </button>
+
+                  <div className="relative my-6">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-4 bg-white text-gray-500">or continue with email</span>
+                    </div>
+                  </div>
+                </div>
 
                 {/* Email Input */}
                 <div className="space-y-2">
