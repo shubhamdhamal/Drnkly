@@ -535,6 +535,8 @@ function Products() {
   // Handle category click to show sub-brands for all categories
   const handleCategoryClick = (category: string) => {
     setSelectedCategory(category);
+    setSearchQuery(''); // Clear search bar
+    setShowSearchResults(false); // Hide search results
     showSubBrandsForCategory(category);
   };
 
