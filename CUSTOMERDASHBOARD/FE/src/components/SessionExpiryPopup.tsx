@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, X, Clock } from 'lucide-react';
-import { SESSION_EXPIRED_EVENT } from '../utils/sessionManager';
+import { SESSION_EXPIRED_EVENT, SESSION_TIMEOUT } from '../utils/sessionManager';
 import { sessionManager } from '../utils/sessionManager';
 
 const SessionExpiryPopup: React.FC = () => {
@@ -11,13 +11,25 @@ const SessionExpiryPopup: React.FC = () => {
 
   useEffect(() => {
     const handleSessionExpired = () => {
-      setIsVisible(true);
+      const sessionStartTime = localStorage.getItem('sessionStartTime');
+      if (sessionStartTime) {
+        const elapsed = Date.now() - parseInt(sessionStartTime);
+        // Show popup only if elapsed time is between 1 hour and 1 hour + 1 second
+        if (elapsed >= SESSION_TIMEOUT && elapsed <= SESSION_TIMEOUT + 1000) {
+          setIsVisible(true);
+        } else {
+          setIsVisible(false);
+        }
+      }
     };
 
+    // Check every second
+    const interval = setInterval(handleSessionExpired, 1000);
     window.addEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
 
     return () => {
       window.removeEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
+      clearInterval(interval);
     };
   }, []);
 
@@ -73,7 +85,7 @@ const SessionExpiryPopup: React.FC = () => {
         </div>
         
         <p className="text-gray-600 mb-6">
-          Your session has expired due to inactivity. Please log in again to continue using the application.
+          Your session has expired after 1 hour of activity. Please log in again to continue using the application.
         </p>
 
         <button
