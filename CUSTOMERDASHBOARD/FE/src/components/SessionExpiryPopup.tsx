@@ -87,4 +87,4 @@ const SessionExpiryPopup: React.FC = () => {
   );
 };
 
-export default SessionExpiryPopup; 
+export default SessionExpiryPopup;
