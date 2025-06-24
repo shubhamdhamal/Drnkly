@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Menu, Home, Users, AlertCircle, Truck as TruckDelivery,
-  BarChart2, Settings, Bell, FileText, DollarSign
+  BarChart2, Settings, Bell, FileText, DollarSign, Gift
 } from 'lucide-react';
 
 import Login from './components/Login';
@@ -14,6 +14,7 @@ import Analytics from './components/Analytics';
 import PaymentSettings from './components/PaymentSettings';
 import Reports from './components/Reports';
 import Payouts from './components/Payouts';
+import Offers from './pages/Offers';
 
 interface NavStats {
   vendors: number;
@@ -165,6 +166,7 @@ useEffect(() => {
       case 'settings': return <PaymentSettings />;
       case 'reports': return <Reports />;
       case 'payouts': return <Payouts />;
+      case 'offers': return <Offers />;
       default: return <Dashboard />;
     }
   };
@@ -243,6 +245,7 @@ useEffect(() => {
         >
           <nav className="h-full overflow-y-auto">
             <NavItem icon={<Home />} label="Dashboard" active={currentPage === 'dashboard'} onClick={() => handleNavigation('dashboard')} count={null} />
+            <NavItem icon={<Gift />} label="Offers" active={currentPage === 'offers'} onClick={() => handleNavigation('offers')} count={null} />
             <NavItem icon={<Users />} label="Vendors" active={currentPage === 'vendors'} onClick={() => handleNavigation('vendors')} count={navStats.vendors} />
             <NavItem icon={<AlertCircle />} label="Issues" active={currentPage === 'issues'} onClick={() => handleNavigation('issues')} count={navStats.issues} />
             <NavItem icon={<TruckDelivery />} label="Orders" active={currentPage === 'orders'} onClick={() => handleNavigation('orders')} count={navStats.orders} />
