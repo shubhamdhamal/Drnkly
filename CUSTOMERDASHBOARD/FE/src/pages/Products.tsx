@@ -180,7 +180,7 @@ const CartPopup: React.FC<CartPopupProps> = ({ isOpen, onClose, onViewCart }) =>
 // Remove mock Food products data and replace with empty array
 const mockFoodProducts: Product[] = [];
 
-// Custom category order
+// Helper: category sort order
 const CATEGORY_ORDER = [
   'drinks',
   'cigarette',
@@ -670,12 +670,19 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
     }
   };
 
-  // Custom sort for All Products
+  // The modified filter products function with sorting by category type
   const filterProducts = () => {
     let filtered = [...products];
 
-    // Remove Food from all lists
-    filtered = filtered.filter(product => product.category.toLowerCase() !== 'food');
+    // Remove Food unless sunrise+Food
+    const params = new URLSearchParams(location.search);
+    const storeParam = params.get('store');
+    const categoryParam = params.get('category');
+    const isSunriseFood = storeParam === 'sunrise' && (categoryParam?.toLowerCase() === 'food');
+
+    if (!isSunriseFood) {
+      filtered = filtered.filter(product => product.category.toLowerCase() !== 'food');
+    }
 
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(product =>
@@ -703,55 +710,26 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
       );
     }
 
-    // Custom sort for 'all' category
+    // Custom sort for 'All Products' (selectedCategory === 'all')
     if (selectedCategory === 'all') {
-      // Group products by category
-      const grouped: { [key: string]: Product[] } = {};
-      filtered.forEach(product => {
-        const cat = product.category.toLowerCase();
-        if (!grouped[cat]) grouped[cat] = [];
-        grouped[cat].push(product);
+      filtered.sort((a, b) => {
+        const aCat = a.category.toLowerCase();
+        const bCat = b.category.toLowerCase();
+        const aIdx = CATEGORY_ORDER.indexOf(aCat) === -1 ? 99 : CATEGORY_ORDER.indexOf(aCat);
+        const bIdx = CATEGORY_ORDER.indexOf(bCat) === -1 ? 99 : CATEGORY_ORDER.indexOf(bCat);
+        if (aIdx !== bIdx) return aIdx - bIdx;
+        // If same category, sort by price low to high
+        return a.price - b.price;
       });
-      // Drinks sorted by price low to high
-      const drinks = (grouped['drinks'] || []).sort((a, b) => a.price - b.price);
-      // Other categories in order
-      const cigarette = grouped['cigarette'] || [];
-      const softDrinks = grouped['soft drinks'] || [];
-      const snacks = grouped['snacks'] || [];
-      const glassPlates = grouped['glass/plates'] || [];
-      // All other categories
-      const others = Object.keys(grouped)
-        .filter(cat => !CATEGORY_ORDER.includes(cat))
-        .map(cat => grouped[cat])
-        .flat();
-      // Concatenate in order
-      return [
-        ...drinks,
-        ...cigarette,
-        ...softDrinks,
-        ...snacks,
-        ...glassPlates,
-        ...others
-      ];
+    } else if ([
+      'drinks', 'cigarette', 'soft drinks', 'snacks', 'glass/plates'
+    ].includes(selectedCategory.toLowerCase()) || sortMethod === 'volume') {
+      // For these categories, sort by price low to high
+      return filterByVolume(filtered);
+    } else {
+      return filterByPrice(filtered);
     }
 
-    // For other categories, use default sort
-    if ([
-      'drinks',
-      'cigarette',
-      'soft drinks',
-      'snacks',
-      'glass/plates'
-    ].includes(selectedCategory.toLowerCase())) {
-      // Drinks sorted by price low to high
-      if (selectedCategory.toLowerCase() === 'drinks') {
-        return filtered.sort((a, b) => a.price - b.price);
-      }
-      // Others: no special sort
-      return filtered;
-    }
-
-    // Default
     return filtered;
   };
 
