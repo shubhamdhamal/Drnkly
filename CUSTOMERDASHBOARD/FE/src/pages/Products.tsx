@@ -180,6 +180,15 @@ const CartPopup: React.FC<CartPopupProps> = ({ isOpen, onClose, onViewCart }) =>
 // Remove mock Food products data and replace with empty array
 const mockFoodProducts: Product[] = [];
 
+// Custom category order
+const CATEGORY_ORDER = [
+  'drinks',
+  'cigarette',
+  'soft drinks',
+  'snacks',
+  'glass/plates'
+];
+
 function Products() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -661,9 +670,12 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
     }
   };
 
-  // The modified filter products function with sorting by category type
+  // Custom sort for All Products
   const filterProducts = () => {
     let filtered = [...products];
+
+    // Remove Food from all lists
+    filtered = filtered.filter(product => product.category.toLowerCase() !== 'food');
 
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(product =>
@@ -691,12 +703,56 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
       );
     }
 
-    // Apply sorting based on category type
-    if (['drinks', 'soft drinks'].includes(selectedCategory.toLowerCase()) || sortMethod === 'volume') {
-      return filterByVolume(filtered);
-    } else {
-      return filterByPrice(filtered);
+    // Custom sort for 'all' category
+    if (selectedCategory === 'all') {
+      // Group products by category
+      const grouped: { [key: string]: Product[] } = {};
+      filtered.forEach(product => {
+        const cat = product.category.toLowerCase();
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(product);
+      });
+      // Drinks sorted by price low to high
+      const drinks = (grouped['drinks'] || []).sort((a, b) => a.price - b.price);
+      // Other categories in order
+      const cigarette = grouped['cigarette'] || [];
+      const softDrinks = grouped['soft drinks'] || [];
+      const snacks = grouped['snacks'] || [];
+      const glassPlates = grouped['glass/plates'] || [];
+      // All other categories
+      const others = Object.keys(grouped)
+        .filter(cat => !CATEGORY_ORDER.includes(cat))
+        .map(cat => grouped[cat])
+        .flat();
+      // Concatenate in order
+      return [
+        ...drinks,
+        ...cigarette,
+        ...softDrinks,
+        ...snacks,
+        ...glassPlates,
+        ...others
+      ];
     }
+
+    // For other categories, use default sort
+    if ([
+      'drinks',
+      'cigarette',
+      'soft drinks',
+      'snacks',
+      'glass/plates'
+    ].includes(selectedCategory.toLowerCase())) {
+      // Drinks sorted by price low to high
+      if (selectedCategory.toLowerCase() === 'drinks') {
+        return filtered.sort((a, b) => a.price - b.price);
+      }
+      // Others: no special sort
+      return filtered;
+    }
+
+    // Default
+    return filtered;
   };
 
   // Update the productContainerStyle to make cards larger
