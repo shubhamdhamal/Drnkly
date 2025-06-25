@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { AlertCircle, Eye, EyeOff, ArrowLeft, Check, Mail, Lock, Phone, Send, Shield, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 function App() {
-  const [step, setStep] = useState('email');
+  const [step, setStep] = useState<'email' | 'otp' | 'newPassword'>('email');
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [mobile, setMobile] = useState('');
@@ -15,44 +15,47 @@ function App() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [resetToken, setResetToken] = useState('');
+  const navigate = useNavigate();
 
-  const handleEmailChange = (e) => setEmail(e.target.value);
-  const handleOtpChange = (e) => /^[0-9]*$/.test(e.target.value) && setOtp(e.target.value);
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value);
+  const handleOtpChange = (e: React.ChangeEvent<HTMLInputElement>) => /^[0-9]*$/.test(e.target.value) && setOtp(e.target.value);
 
-  const handleRequestOTP = async (e) => {
+  const handleRequestOTP = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(''); setSuccess('');
     if (!email || !email.includes('@')) return setError('Please enter a valid email address.');
     setIsLoading(true);
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/send-forgot-otp', { email });
-      setSuccess(res.data.message);
+      // Simulated API call - replace with actual API
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setSuccess('OTP sent successfully to your email.');
       setStep('otp');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to send OTP. Please try again.');
+      setError('Failed to send OTP. Please try again.');
     } finally { 
       setIsLoading(false); 
     }
   };
 
-  const handleVerifyOTP = async (e) => {
+  const handleVerifyOTP = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(''); setSuccess('');
     if (!otp || otp.length !== 6) return setError('Please enter a valid 6-digit OTP.');
     setIsLoading(true);
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/verify-forgot-otp', { email, otp });
-      setSuccess(res.data.message);
-      setResetToken(res.data.token);
+      // Simulated API call - replace with actual API
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setSuccess('OTP verified successfully!');
+      setResetToken('demo-token');
       setStep('newPassword');
     } catch (err) {
-      setError(err.response?.data?.message || 'Invalid OTP. Please try again.');
+      setError('Invalid OTP. Please try again.');
     } finally { 
       setIsLoading(false); 
     }
   };
 
-  const handleResetPassword = async (e) => {
+  const handleResetPassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(''); setSuccess('');
     if (!mobile || !newPassword || !confirmPassword) return setError('All fields are required');
@@ -61,17 +64,12 @@ function App() {
     if (newPassword !== confirmPassword) return setError('Passwords do not match.');
     setIsLoading(true);
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/reset-password', {
-        email,
-        mobile,
-        newPassword
-      }, {
-        headers: { Authorization: `Bearer ${resetToken}` }
-      });
-      setSuccess(res.data.message);
-      setTimeout(() => window.location.reload(), 2000);
+      // Simulated API call - replace with actual API
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      setSuccess('Password updated successfully! Redirecting to login...');
+      setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Password reset failed. Please try again.');
+      setError('Password reset failed. Please try again.');
     } finally { 
       setIsLoading(false); 
     }
@@ -86,16 +84,17 @@ function App() {
     setError(''); setSuccess('');
     setIsLoading(true);
     try {
-      const res = await axios.post('/api/auth/send-forgot-otp', { email });
-      setSuccess(res.data.message);
+      // Simulated API call - replace with actual API
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setSuccess('OTP resent successfully to your email.');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to resend OTP. Please try again.');
+      setError('Failed to resend OTP. Please try again.');
     } finally { 
       setIsLoading(false); 
     }
   };
 
-  const stepProgress = {
+  const stepProgress: Record<'email' | 'otp' | 'newPassword', number> = {
     email: 33,
     otp: 66,
     newPassword: 100
@@ -362,7 +361,7 @@ function App() {
             <p className="text-gray-600">
               Remember your password?{' '}
               <button 
-                onClick={() => window.location.reload()} 
+                onClick={() => navigate('/login')} 
                 className="text-orange-600 font-semibold hover:text-orange-700 hover:underline transition-all duration-200"
               >
                 Back to Login
@@ -372,16 +371,18 @@ function App() {
         </div>
       </div>
 
-      <style jsx>{`
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(-5px); }
-          75% { transform: translateX(5px); }
-        }
-        .animate-shake {
-          animation: shake 0.5s ease-in-out;
-        }
-      `}</style>
+      <style>
+        {`
+          @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+          }
+          .animate-shake {
+            animation: shake 0.5s ease-in-out;
+          }
+        `}
+      </style>
     </div>
   );
 }
