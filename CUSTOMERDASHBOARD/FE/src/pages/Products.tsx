@@ -161,7 +161,7 @@ const CartPopup: React.FC<CartPopupProps> = ({ isOpen, onClose, onViewCart }) =>
               {/* Service Fee Progress Bar */}
               <div className="mt-4">
                 <div className="flex justify-between items-center mb-1">
-                  <span className="text-sm font-medium text-gray-700">Service Fee</span>
+                  <span className="text-sm font-medium text-gray-700">Shiping Fee</span>
                   {isFree ? (
                     <span className="text-green-600 font-semibold">FREE!</span>
                   ) : (
@@ -178,7 +178,7 @@ const CartPopup: React.FC<CartPopupProps> = ({ isOpen, onClose, onViewCart }) =>
                   </span>
                 </div>
                 {!isFree && (
-                  <div className="text-xs text-gray-500 mt-1">Add products worth ₹{amountLeft} more to get <span className="text-green-600 font-semibold">FREE Service Fee</span>!</div>
+                  <div className="text-xs text-gray-500 mt-1">Add products worth ₹{amountLeft} more to get <span className="text-green-600 font-semibold">Shiping Fee</span>!</div>
                 )}
               </div>
             </div>
