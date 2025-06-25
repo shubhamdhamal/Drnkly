@@ -494,7 +494,7 @@ const Cart = () => {
                 <h3 className="text-lg font-bold mb-2">Shop Closed</h3>
               </div>
               <p className="mb-6 text-gray-700">
-                Orders are not accepted between 2:00 AM and 10:00 AM.<br />
+                Orders are not accepted between 2:00 AM to 10:00 AM.<br />
                 You can place your order after 10:00 AM.<br />
                 Thank you
               </p>
