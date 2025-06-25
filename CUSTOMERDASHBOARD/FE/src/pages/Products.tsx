@@ -335,7 +335,7 @@ function Products() {
       
       // Special handling for Old Monk promotion
       if (searchParam.toLowerCase().includes('old monk')) {
-        setSelectedCategory('drinks');
+        setSelectedCategory('all');
         if (products.length > 0) {
           const oldMonkProducts = products.filter(p => 
             p.name.toLowerCase().includes('old monk') || 
