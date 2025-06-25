@@ -21,6 +21,44 @@ const Navigation: React.FC<NavigationProps> = ({ isChatOpen, setIsChatOpen }) =>
   const navigate = useNavigate();
   const location = useLocation();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentFooterIndex, setCurrentFooterIndex] = useState(0);
+
+  // Footer messages - alternating English and Marathi
+  const footerMessages = [
+    // English messages
+    "No service fees on orders above ₹500!",
+    "Enjoy free service charges when you spend over ₹500.",
+    "Orders ₹500 and up come with zero service fees.",
+    "Say goodbye to service fees – just order for ₹500 or more!",
+    "Get your service fee waived on all orders above ₹500.",
+    "Spend ₹500 or more and skip the service charges.",
+    "Big orders, no extra fees – service fee is free over ₹500.",
+    "Service charges? Not when you order for ₹500+!",
+    "Shop for ₹500 or more and enjoy free service fees.",
+    "Service fee? We've got it covered on all ₹500+ orders.",
+    // Marathi messages
+    "₹५०० पेक्षा जास्त खरेदीवर सर्व्हिस फी बिलात समाविष्ट नाही.",
+    "आता ₹५०० किंवा त्याहून अधिकच्या ऑर्डरसाठी कोणतीही सर्व्हिस फी लागणार नाही!",
+    "₹५००+ च्या ऑर्डरवर तुम्हाला सर्व्हिस चार्ज फ्री मिळेल.",
+    "मोठ्या ऑर्डरवर मोठी बचत – ₹५००च्या पुढे सर्व्हिस फी शून्य!",
+    "₹५०० पेक्षा जास्त खर्च करा आणि सर्व्हिस फीला गुडबाय करा!",
+    "फक्त ₹५००च्या वरची ऑर्डर द्या, सर्व्हिस फी पूर्णपणे माफ!",
+    "तुमची ऑर्डर ₹५००च्या पुढे गेली की सर्व्हिस चार्ज शून्य होतो.",
+    "₹५००+ च्या खरेदीवर सर्व्हिस फीच्या झंझटीपासून मुक्तता.",
+    "आता ₹५००पेक्षा जास्त ऑर्डरवर सर्व्हिस फी काहीच लागणार नाही.",
+    "₹५००च्या पुढे खरेदी केल्यावर तुमची सर्व्हिस फी आमच्याकडून."
+  ];
+
+  // Rotate footer messages every 6 seconds (slower)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentFooterIndex((prevIndex) => 
+        prevIndex === footerMessages.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 6000);
+
+    return () => clearInterval(interval);
+  }, [footerMessages.length]);
 
   // Check if user is logged in
   useEffect(() => {
@@ -74,6 +112,24 @@ const Navigation: React.FC<NavigationProps> = ({ isChatOpen, setIsChatOpen }) =>
 
   return (
     <>
+      {/* Add CSS animation */}
+      <style>
+        {`
+          @keyframes slideInOut {
+            0% { transform: translateX(100%); opacity: 0; }
+            10% { transform: translateX(0); opacity: 1; }
+            90% { transform: translateX(0); opacity: 1; }
+            100% { transform: translateX(-100%); opacity: 0; }
+          }
+          
+          .footer-message {
+            animation: slideInOut 6s ease-in-out infinite;
+            white-space: nowrap;
+            overflow: hidden;
+          }
+        `}
+      </style>
+      
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 z-40">
         <div className="max-w-lg mx-auto px-4 py-2 flex justify-between items-center">
@@ -122,7 +178,21 @@ const Navigation: React.FC<NavigationProps> = ({ isChatOpen, setIsChatOpen }) =>
             />
           )}
         </div>
-        <div className="py-1 text-center text-red-500 text-sm font-semibold">
+        {/* Rotating Promotional Message */}
+        <div className="py-1 text-center text-red-600 text-xs font-medium bg-white border-t border-gray-200 overflow-hidden">
+          <p 
+            className="footer-message"
+            style={{
+              margin: 0,
+              padding: '1px 6px',
+              display: 'inline-block'
+            }}
+          >
+            {footerMessages[currentFooterIndex]}
+          </p>
+        </div>
+        {/* Health Warning */}
+        <div className="py-1 text-center text-red-500 text-xs font-semibold bg-white">
         🚭 तुमच्या कुटुंबासाठी मद्यपान आणि धूम्रपान सोडा 🚯
         </div>
       </nav>
