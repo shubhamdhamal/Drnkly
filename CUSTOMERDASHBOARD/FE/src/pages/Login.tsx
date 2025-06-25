@@ -13,7 +13,7 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { sessionManager } from '../utils/sessionManager';
@@ -37,6 +37,44 @@ function App() {
   const [isSkipped, setIsSkipped] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loginMethod, setLoginMethod] = useState<'mobile' | 'email'>('mobile');
+  const [currentFooterIndex, setCurrentFooterIndex] = useState(0);
+
+  // Footer messages - alternating English and Marathi
+  const footerMessages = [
+    // English messages
+    "No service fees on orders above ₹500!",
+    "Enjoy free service charges when you spend over ₹500.",
+    "Orders ₹500 and up come with zero service fees.",
+    "Say goodbye to service fees – just order for ₹500 or more!",
+    "Get your service fee waived on all orders above ₹500.",
+    "Spend ₹500 or more and skip the service charges.",
+    "Big orders, no extra fees – service fee is free over ₹500.",
+    "Service charges? Not when you order for ₹500+!",
+    "Shop for ₹500 or more and enjoy free service fees.",
+    "Service fee? We've got it covered on all ₹500+ orders.",
+    // Marathi messages
+    "₹५०० पेक्षा जास्त खरेदीवर सर्व्हिस फी बिलात समाविष्ट नाही.",
+    "आता ₹५०० किंवा त्याहून अधिकच्या ऑर्डरसाठी कोणतीही सर्व्हिस फी लागणार नाही!",
+    "₹५००+ च्या ऑर्डरवर तुम्हाला सर्व्हिस चार्ज फ्री मिळेल.",
+    "मोठ्या ऑर्डरवर मोठी बचत – ₹५००च्या पुढे सर्व्हिस फी शून्य!",
+    "₹५०० पेक्षा जास्त खर्च करा आणि सर्व्हिस फीला गुडबाय करा!",
+    "फक्त ₹५००च्या वरची ऑर्डर द्या, सर्व्हिस फी पूर्णपणे माफ!",
+    "तुमची ऑर्डर ₹५००च्या पुढे गेली की सर्व्हिस चार्ज शून्य होतो.",
+    "₹५००+ च्या खरेदीवर सर्व्हिस फीच्या झंझटीपासून मुक्तता.",
+    "आता ₹५००पेक्षा जास्त ऑर्डरवर सर्व्हिस फी काहीच लागणार नाही.",
+    "₹५००च्या पुढे खरेदी केल्यावर तुमची सर्व्हिस फी आमच्याकडून."
+  ];
+
+  // Rotate footer messages every 6 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentFooterIndex((prevIndex) => 
+        prevIndex === footerMessages.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 6000);
+
+    return () => clearInterval(interval);
+  }, [footerMessages.length]);
 
   const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -118,7 +156,6 @@ function App() {
 
   const handleSkipLogin = () => {
     localStorage.setItem('isSkippedLogin', 'true');
-    setIsSkipped(true);
     window.dispatchEvent(new Event('storage'));
     navigate('/dashboard');
   };
@@ -349,10 +386,31 @@ function App() {
                   </span>
                 )}
               </button>
+
+              {/* Divider */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-200"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-3 bg-white/80 text-gray-500 font-medium">Or continue with</span>
+                </div>
+              </div>
+
+              {/* Google Login Button */}
+              <button
+                type="button"
+                onClick={handleGoogleLogin}
+                className="w-full flex items-center justify-center gap-2 bg-white border-2 border-gray-200 text-gray-700 py-3 px-4 rounded-xl font-semibold hover:bg-gray-50 hover:border-gray-300 transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-lg hover:shadow-xl group"
+              >
+                <div className="w-5 h-5 bg-gradient-to-br from-red-500 via-yellow-500 to-blue-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">G</span>
+                </div>
+                <span className="group-hover:text-gray-900 transition-colors">Sign in with Google</span>
+              </button>
             </form>
 
             {/* Skip Login Button */}
-            {!isSkipped && (
               <div className="mt-4 text-center">
                 <button
                   onClick={handleSkipLogin}
@@ -361,7 +419,6 @@ function App() {
                   Skip Login and Proceed →
                 </button>
               </div>
-            )}
 
             {/* Footer Links */}
             <div className="mt-4 text-center space-y-2">
@@ -381,6 +438,22 @@ function App() {
                 >
                   Forgot Password?
                 </button>
+              </p>
+            </div>
+          </div>
+
+          {/* Rotating Promotional Footer */}
+          <div className="mt-4 p-3 bg-white border-2 border-red-200 rounded-xl animate-fade-in-up animation-delay-300">
+            <div className="text-center">
+              <p 
+                className="text-red-600 text-sm font-semibold"
+                style={{
+                  animation: 'slideInOut 6s ease-in-out infinite',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden'
+                }}
+              >
+                {footerMessages[currentFooterIndex]}
               </p>
             </div>
           </div>
@@ -557,7 +630,7 @@ function App() {
       )}
 
       {/* Custom CSS for animations */}
-      <style jsx>{`
+      <style>{`
         @keyframes blob {
           0% { transform: translate(0px, 0px) scale(1); }
           33% { transform: translate(30px, -50px) scale(1.1); }
@@ -593,12 +666,19 @@ function App() {
           25% { transform: translateX(-5px); }
           75% { transform: translateX(5px); }
         }
+        @keyframes slideInOut {
+          0% { transform: translateX(100%); opacity: 0; }
+          10% { transform: translateX(0); opacity: 1; }
+          90% { transform: translateX(0); opacity: 1; }
+          100% { transform: translateX(-100%); opacity: 0; }
+        }
         .animate-blob { animation: blob 7s infinite; }
         .animate-fade-in-up { animation: fade-in-up 0.6s ease-out; }
         .animate-fade-in { animation: fade-in 0.3s ease-out; }
         .animate-scale-in { animation: scale-in 0.3s ease-out; }
         .animate-shake { animation: shake 0.5s ease-in-out; }
         .animation-delay-200 { animation-delay: 0.2s; }
+        .animation-delay-300 { animation-delay: 0.3s; }
         .animation-delay-400 { animation-delay: 0.4s; }
         .animation-delay-2000 { animation-delay: 2s; }
         .animation-delay-4000 { animation-delay: 4s; }
