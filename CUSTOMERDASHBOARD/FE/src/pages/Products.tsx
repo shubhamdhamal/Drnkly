@@ -88,6 +88,12 @@ const CartPopup: React.FC<CartPopupProps> = ({ isOpen, onClose, onViewCart }) =>
   const deliveryCharge = 40; // Fixed delivery charge
   const total = subtotal + deliveryCharge;
 
+  // Calculate progress toward free service fee
+  const FREE_SERVICE_THRESHOLD = 500;
+  const progress = Math.min((subtotal / FREE_SERVICE_THRESHOLD) * 100, 100);
+  const amountLeft = Math.max(FREE_SERVICE_THRESHOLD - subtotal, 0);
+  const isFree = subtotal >= FREE_SERVICE_THRESHOLD;
+
   // Get the 3 most recently added items
   const recentItems = [...items].slice(-3).reverse();
   const remainingCount = items.length - recentItems.length;
@@ -151,6 +157,29 @@ const CartPopup: React.FC<CartPopupProps> = ({ isOpen, onClose, onViewCart }) =>
               <div className="flex justify-between font-medium mt-1">
                 <span>Subtotal:</span>
                 <span>₹{subtotal}</span>
+              </div>
+              {/* Service Fee Progress Bar */}
+              <div className="mt-4">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-sm font-medium text-gray-700">Service Fee</span>
+                  {isFree ? (
+                    <span className="text-green-600 font-semibold">FREE!</span>
+                  ) : (
+                    <span className="text-gray-600 text-xs">Add ₹{amountLeft} more</span>
+                  )}
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-3 relative overflow-hidden">
+                  <div
+                    className={`h-3 rounded-full transition-all duration-300 ${isFree ? 'bg-green-500' : 'bg-orange-400'}`}
+                    style={{ width: `${progress}%` }}
+                  ></div>
+                  <span className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-semibold text-white">
+                    {Math.round(progress)}%
+                  </span>
+                </div>
+                {!isFree && (
+                  <div className="text-xs text-gray-500 mt-1">Add products worth ₹{amountLeft} more to get <span className="text-green-600 font-semibold">FREE Service Fee</span>!</div>
+                )}
               </div>
             </div>
           </>
@@ -506,25 +535,46 @@ function Products() {
     };
   }, []);
 
-  // Get sub-brands for a specific category
+  // Update getSubBrandsForCategory to handle Food with no brands
   const getSubBrandsForCategory = (category: string) => {
     // Create a map of brands and their images for the selected category
     const brandMap = new Map<string, string>();
-    
+    const foodProducts: Product[] = [];
+
     products.forEach(product => {
-      if (product.category.toLowerCase() === category.toLowerCase() && product.brand) {
-        if (!brandMap.has(product.brand)) {
-          brandMap.set(product.brand, product.image);
+      if (product.category.toLowerCase() === category.toLowerCase()) {
+        if (product.brand) {
+          if (!brandMap.has(product.brand)) {
+            brandMap.set(product.brand, product.image);
+          }
+        } else if (category.toLowerCase() === 'food') {
+          // If no brand, use product name as sub-brand for Food
+          foodProducts.push(product);
         }
       }
     });
-    
-    // Convert to SubBrand array
-    return Array.from(brandMap).map(([name, image]) => ({
-      name,
-      image,
-      category
-    }));
+
+    // If there are brands, show brands as sub-brands
+    if (brandMap.size > 0) {
+      return Array.from(brandMap).map(([name, image]) => ({
+        name,
+        image,
+        category
+      }));
+    }
+
+    // If no brands for Food, show each unique product as a sub-brand
+    if (category.toLowerCase() === 'food' && foodProducts.length > 0) {
+      // Use product name and image as sub-brand
+      const uniqueProducts = Array.from(new Map(foodProducts.map(p => [p.name, p])).values());
+      return uniqueProducts.map(product => ({
+        name: product.name,
+        image: product.image,
+        category: 'food'
+      }));
+    }
+
+    return [];
   };
 
   // Separate function to show sub-brands that can be called from useEffect and click handler
@@ -546,7 +596,7 @@ function Products() {
     setSelectedCategory(category);
     setSearchQuery(''); // Clear search bar
     setShowSearchResults(false); // Hide search results
-    showSubBrandsForCategory(category);
+    showSubBrandsForCategory(category); // This will work for Food too
   };
 
   // Handle back from sub-brands
@@ -674,11 +724,12 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
   const filterProducts = () => {
     let filtered = [...products];
 
-    // Remove Food unless sunrise+Food
+    // Remove Food unless sunrise+Food or Food category is selected
     const params = new URLSearchParams(location.search);
     const storeParam = params.get('store');
     const categoryParam = params.get('category');
-    const isSunriseFood = storeParam === 'sunrise' && (categoryParam?.toLowerCase() === 'food');
+    const isFoodCategory = selectedCategory.toLowerCase() === 'food';
+    const isSunriseFood = (storeParam === 'sunrise' && categoryParam?.toLowerCase() === 'food') || isFoodCategory;
 
     if (!isSunriseFood) {
       filtered = filtered.filter(product => product.category.toLowerCase() !== 'food');
