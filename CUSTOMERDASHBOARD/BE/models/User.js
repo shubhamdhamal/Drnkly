@@ -11,6 +11,11 @@ const userSchema = new mongoose.Schema({
   idProof: { type: String }, 
   selfDeclaration: { type: Boolean, required: true },
   status: { type: String, enum: ['Pending', 'Verified', 'Rejected'], default: 'Pending' },
+  location: {
+    latitude: { type: Number },
+    longitude: { type: Number },
+    timestamp: { type: Date },
+  },
   createdAt: { type: Date, default: Date.now }
 });
 
