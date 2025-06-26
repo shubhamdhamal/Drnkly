@@ -253,13 +253,14 @@ exports.signup = async (req, res) => {
 
 // ✅ User Login with status check
 exports.login = async (req, res) => {
-  const { identifier, password } = req.body;
+  const { identifier, password, location } = req.body;
 
   if (!identifier || !password) {
     return res.status(400).json({ message: 'Please provide email/mobile and password.' });
   }
 
   try {
+    // ✅ Find user by mobile or email
     const user = await User.findOne({
       $or: [
         { mobile: identifier },
@@ -280,13 +281,26 @@ exports.login = async (req, res) => {
       return res.status(403).json({ message: 'Your account is not verified yet.' });
     }
 
+    // ✅ Check password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
+    // ✅ Store location if provided
+    if (location?.latitude && location?.longitude) {
+      user.location = {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        timestamp: location.timestamp || new Date()
+      };
+      await user.save();
+    }
+
+    // ✅ Generate JWT
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
+    // ✅ Respond with token & user
     return res.status(200).json({
       message: 'Login successful',
       token,
