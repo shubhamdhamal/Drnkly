@@ -81,30 +81,92 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [userInfo, setUserInfo] = useState({
     name: '',
-    phone: ''
+    phone: '',
+    address: '',
+    location: {
+    latitude: null,
+    longitude: null,
+  }
   });
   const navigate = useNavigate();  // Initialize useNavigate hook
   const [isChatOpen, setIsChatOpen] = useState(false);
   const phoneInputRef = useRef<HTMLInputElement>(null);
     // Fetch user profile data using useEffect
-    useEffect(() => {
-      const fetchUserProfile = async () => {
-        try {
-          const userId = localStorage.getItem('userId'); // Replace with your actual auth logic
-          const response = await axios.get(`https://peghouse.in/api/users/${userId}`);
-          const user = response.data;
-  
-          setUserInfo({
-            name: user.name,
-            phone: user.mobile
-          });
-        } catch (error) {
-          console.error('Failed to fetch profile', error);
-        }
-      };
-  
-      fetchUserProfile();
-    }, []);  // Empty dependency array ensures this effect runs only once
+
+
+
+useEffect(() => {
+  const fetchUserProfile = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      const response = await axios.get(`https://peghouse.in/api/users/${userId}`);
+      const user = response.data;
+
+      // If you have latitude and longitude from DB:
+      const latitude = user.latitude;
+      const longitude = user.longitude;
+
+      let address = '';
+      if (latitude && longitude) {
+  const userId = localStorage.getItem('userId');
+  const geoRes = await axios.get('http://localhost:5000/api/addresses/reverse-geocode/location', {
+    params: { latitude, longitude, userId },
+  });
+  address = geoRes.data.address || '';
+}
+
+
+      setUserInfo({
+        name: user.name,
+        phone: user.mobile,
+        address: address || user.address || '',
+        location: {
+          latitude,
+          longitude,
+        },
+      });
+    } catch (error) {
+      console.error('❌ Failed to fetch profile:', error);
+    }
+  };
+
+  fetchUserProfile();
+}, []);
+
+// Add this just below userInfo fetch in useEffect
+const fetchSavedAddresses = async () => {
+  try {
+    const userId = localStorage.getItem('userId');
+    const response = await axios.get(`http://localhost:5000/api/addresses/${userId}`);
+    const saved = response.data;
+
+    // Format into same shape you're using
+    const formatted = saved.map((addr: any) => ({
+      id: addr._id,
+      address: addr.address,
+      city: addr.city,
+      pincode: addr.pincode,
+      type: addr.type || 'Other'
+    }));
+
+    setAddresses(prev => {
+      // Avoid duplication with profile address (primary)
+      const nonPrimary = formatted.filter((a: any) => a.type !== 'Primary');
+      return [
+        { id: 'primary', address: userInfo.address, city: '', pincode: '', type: 'Primary' },
+        ...nonPrimary
+      ];
+    });
+  } catch (err) {
+    console.error('❌ Failed to fetch addresses:', err);
+  }
+};
+
+useEffect(() => {
+  fetchSavedAddresses();
+}, [userInfo.address]);
+
+ // Empty dependency array ensures this effect runs only once
   const [chatMessages, setChatMessages] = useState<Message[]>([
     { 
       text: "Hello! 👋 Welcome to Liquor Shop. How can I help you today?\n\nनमस्कार! लिकर शॉपमध्ये आपले स्वागत आहे. मी आपली कशी मदत करू शकतो?", 
@@ -377,13 +439,26 @@ const Profile = () => {
   };
 
   // Add new address
-  const addNewAddress = () => {
-    if (newAddress.address && newAddress.city && newAddress.pincode) {
-      const newId = `addr-${Date.now()}`;
-      setAddresses(prev => [...prev, {
-        id: newId,
+const addNewAddress = async () => {
+  if (newAddress.address && newAddress.city && newAddress.pincode) {
+    try {
+      const userId = localStorage.getItem('userId');
+      const res = await axios.post('http://localhost:5000/api/addresses', {
+        userId,
         ...newAddress
+      });
+
+      const saved = res.data;
+
+      setAddresses(prev => [...prev, {
+        id: saved._id,
+        address: saved.address,
+        city: saved.city,
+        pincode: saved.pincode,
+        type: saved.type
       }]);
+
+      // Reset form
       setNewAddress({
         address: '',
         city: '',
@@ -391,13 +466,43 @@ const Profile = () => {
         type: 'Home'
       });
       setShowAddAddress(false);
+    } catch (err) {
+      console.error('❌ Failed to save address:', err);
+      alert('Failed to save address. Please try again.');
     }
-  };
+  } else {
+    alert('Please fill all fields');
+  }
+};
+
 
   // Delete address
   const deleteAddress = (id: string) => {
     setAddresses(prev => prev.filter(addr => addr.id !== id));
   };
+
+  // Sync profile address to addresses list
+  useEffect(() => {
+    if (userInfo.address) {
+      setAddresses(prev => {
+        // If already present as primary, don't add again
+        if (prev.length > 0 && prev[0].type === 'Primary') {
+          // Update if changed
+          if (prev[0].address !== userInfo.address) {
+            const updated = [...prev];
+            updated[0] = { ...updated[0], address: userInfo.address };
+            return updated;
+          }
+          return prev;
+        }
+        // Add as first address
+        return [
+          { id: 'primary', address: userInfo.address, city: '', pincode: '', type: 'Primary' },
+          ...prev.filter(addr => addr.id !== 'primary')
+        ];
+      });
+    }
+  }, [userInfo.address]);
 
   const Header = () => {
     const navigate = useNavigate();
@@ -502,7 +607,7 @@ const Profile = () => {
                     autoFocus
                   />
                 </div>
-                <div>
+                <div className="mb-3">
                   <label className="block text-gray-700 text-sm font-medium mb-1" htmlFor="phone">Phone Number</label>
                   <input
                     id="phone"
@@ -517,14 +622,6 @@ const Profile = () => {
                     pattern="[0-9]*"
                     maxLength={10}
                     ref={phoneInputRef}
-                    onBlur={(e) => {
-                      // Prevent losing focus when clicking inside the input
-                      if (e.relatedTarget !== document.body) {
-                        setTimeout(() => {
-                          phoneInputRef.current?.focus();
-                        }, 10);
-                      }
-                    }}
                   />
                   {userInfo.phone && userInfo.phone.length !== 10 && (
                     <p className="text-red-500 text-sm mt-1">
@@ -532,6 +629,17 @@ const Profile = () => {
                     </p>
                   )}
                 </div>
+                <input
+  id="address"
+  type="text"
+  name="address"
+  value={userInfo.address}
+  onChange={handleUserInfoChange}
+  className="block w-full rounded border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+  placeholder="Address"
+  autoComplete="street-address"
+/>
+
                 <div className="mt-4">
                   <button
                     id="saveProfileButton"
@@ -554,6 +662,7 @@ const Profile = () => {
               <div>
                 <h2 className="text-2xl font-bold text-gray-800">{userInfo.name}</h2>
                 <p className="text-gray-600 text-lg">{userInfo.phone}</p>
+                <p className="text-gray-600 text-base mt-1">{userInfo.address}</p>
                 <div className="mt-2 flex items-center">
                   <span className="bg-green-500 w-2 h-2 rounded-full mr-2"></span>
                   <span className="text-xs text-gray-500">Verified User</span>
@@ -576,14 +685,13 @@ const Profile = () => {
   };
 
   // Card component for the main menu options
-  interface FeatureCardProps {
+  type FeatureCardProps = {
     icon: React.ReactNode;
     title: string;
     onClick: () => void;
-    color: string;
-  }
+  };
 
-  const FeatureCard = ({ icon, title, onClick, color }: FeatureCardProps) => (
+  const FeatureCard = ({ icon, title, onClick }: FeatureCardProps) => (
     <div 
       className="flex-1 bg-white p-4 rounded-lg shadow-md border border-gray-200 cursor-pointer hover:shadow-lg hover:bg-gray-50 transition-all min-w-[110px]"
       onClick={onClick}
@@ -692,19 +800,20 @@ const Profile = () => {
                     <div className="flex justify-between items-start">
                       <div>
                         <div className="flex items-center mb-2">
-                          <span className="bg-indigo-100 text-indigo-800 text-xs font-medium px-2 py-1 rounded">
-                            {addr.type}
-                          </span>
+                          <span className={`bg-indigo-100 text-indigo-800 text-xs font-medium px-2 py-1 rounded ${addr.type === 'Primary' ? 'bg-green-100 text-green-800' : ''}`}>{addr.type === 'Primary' ? 'Profile Address' : addr.type}</span>
                         </div>
-                        <p className="text-gray-800 font-medium">{addr.address}</p>
-                        <p className="text-gray-600">{addr.city} - {addr.pincode}</p>
+                        <p className="text-gray-800 font-medium">{typeof addr.address === 'string' ? addr.address : addr.address?.address || 'N/A'}</p>
+
+                        {addr.city || addr.pincode ? <p className="text-gray-600">{addr.city} {addr.pincode && `- ${addr.pincode}`}</p> : null}
                       </div>
-                      <button 
-                        onClick={() => deleteAddress(addr.id)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <X size={20} />
-                      </button>
+                      {addr.type !== 'Primary' && (
+                        <button 
+                          onClick={() => deleteAddress(addr.id)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <X size={20} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -927,19 +1036,16 @@ const Profile = () => {
                   icon={<ShoppingBag size={24} className="text-indigo-600" />}
                   title="My Orders"
                   onClick={handleOrdersClick}
-                  color="bg-white"
                 />
                 <FeatureCard 
                   icon={<MapPin size={24} className="text-indigo-600" />}
                   title="My Addresses"
                   onClick={() => setActiveTab('addresses')}
-                  color="bg-white"
                 />
                 <FeatureCard 
                   icon={<MessageCircle size={24} className="text-indigo-600" />}
                   title="Support"
                   onClick={() => setIsChatOpen(true)}
-                  color="bg-white"
                 />
               </div>
             </div>
