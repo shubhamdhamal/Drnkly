@@ -45,75 +45,51 @@ function App() {
     }
   };
 
-const handleLogin = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setIsLoading(true);
-  setError('');
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
 
-  if (!agreedToTerms) {
-    setError('Please agree to the Terms & Govt. Regulations.');
-    setIsLoading(false);
-    return;
-  }
+    if (!agreedToTerms) {
+      setError('Please agree to the Terms & Govt. Regulations.');
+      setIsLoading(false);
+      return;
+    }
 
-  const identifier = loginMethod === 'mobile' ? mobile : email;
+    const identifier = loginMethod === 'mobile' ? mobile : email;
 
-  if (!identifier || (loginMethod === 'mobile' && identifier.length !== 10)) {
-    setError('Please enter a valid mobile number or email.');
-    setIsLoading(false);
-    return;
-  }
+    if (!identifier || (loginMethod === 'mobile' && identifier.length !== 10)) {
+      setError('Please enter a valid mobile number or email.');
+      setIsLoading(false);
+      return;
+    }
 
-  if (!password.trim()) {
-    setError('Please enter your password.');
-    setIsLoading(false);
-    return;
-  }
+    if (!password.trim()) {
+      setError('Please enter your password.');
+      setIsLoading(false);
+      return;
+    }
 
-  try {
-    // ✅ Get live location first
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const latitude = position.coords.latitude;
-        const longitude = position.coords.longitude;
-        const timestamp = new Date().toISOString();
+    try {
+      const response = await axios.post('https://peghouse.in/api/auth/login', {
+        identifier,
+        password,
+      });
+ 
+      if (response.data.message === 'Login successful') {
+        sessionManager.setSession(response.data.token, response.data.user);
+        localStorage.removeItem('isSkippedLogin');
+        localStorage.removeItem('oldMonkOfferShown');
+        window.dispatchEvent(new Event('storage'));
 
-        
-
-        // ✅ Send login data + location to backend
-        const response = await axios.post('https://peghouse.in/api/auth/login', {
-          identifier,
-          password,
-          location: {
-            latitude,
-            longitude,
-            timestamp,
-          }
-        });
-
-        if (response.data.message === 'Login successful') {
-          sessionManager.setSession(response.data.token, response.data.user);
-          localStorage.removeItem('isSkippedLogin');
-          localStorage.removeItem('oldMonkOfferShown');
-
-          // ✅ Save location to localStorage
-          localStorage.setItem('userLocation', JSON.stringify({ latitude, longitude, timestamp }));
-          localStorage.setItem('locationGranted', 'true');
-
-          // ✅ Notify and redirect
-          window.dispatchEvent(new Event('storage'));
+        if (localStorage.getItem('locationGranted') === 'true') {
           navigate('/dashboard');
+        } else {
+          setShowLocationPopup(true);
         }
-      },
-      (error) => {
-        console.error('❌ Error fetching location:', error.message);
-        setError('Please enable location access to proceed.');
-        setShowLocationPopup(true); // optional
-        setIsLoading(false);
       }
-    );
-  } catch (error: any) {
-    const msg = error?.response?.data?.message;
+    } catch (error: any) {
+      const msg = error?.response?.data?.message;
 
     if (msg === 'User not found') {
       setError('No account found with this email or mobile number.');
@@ -126,10 +102,10 @@ const handleLogin = async (e: React.FormEvent) => {
     } else {
       setError('Something went wrong. Please try again.');
     }
-    setIsLoading(false);
+    } finally {
+      setIsLoading(false);
   }
-};
-
+  };
 
   const handleLogout = () => {
     sessionManager.clearSession();
@@ -372,28 +348,6 @@ const handleLogin = async (e: React.FormEvent) => {
                     <span>Sign In</span>
                   </span>
                 )}
-              </button>
-
-              {/* Divider */}
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-3 bg-white/80 text-gray-500 font-medium">Or continue with</span>
-                </div>
-              </div>
-
-              {/* Google Login Button */}
-              <button
-                type="button"
-                onClick={handleGoogleLogin}
-                className="w-full flex items-center justify-center gap-2 bg-white border-2 border-gray-200 text-gray-700 py-3 px-4 rounded-xl font-semibold hover:bg-gray-50 hover:border-gray-300 transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-lg hover:shadow-xl group"
-              >
-                <div className="w-5 h-5 bg-gradient-to-br from-red-500 via-yellow-500 to-blue-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">G</span>
-                </div>
-                <span className="group-hover:text-gray-900 transition-colors">Sign in with Google</span>
               </button>
             </form>
 
