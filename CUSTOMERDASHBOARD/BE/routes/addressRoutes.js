@@ -1,19 +1,26 @@
-// routes/addressRoutes.js
 const express = require('express');
 const router = express.Router();
 const {
   getAddressFromCoordinates,
   getUserAddresses,
-  addManualAddress
+  addManualAddress,
+  updateAddress,
+  deleteAddress
 } = require('../controllers/addressController');
 
-// GET: reverse geocode from lat/lng and save
+// GET: Reverse geocode from lat/lng and save
 router.get('/reverse-geocode/location', getAddressFromCoordinates);
 
-// GET: get all addresses of a user
+// GET: Get all addresses of a user
 router.get('/:userId', getUserAddresses);
 
-// POST: add a new address manually
+// POST: Add a new address manually
 router.post('/', addManualAddress);
+
+// PUT: Update an existing address by ID
+router.put('/:addressId', updateAddress);
+
+// DELETE: Delete an address by ID
+router.delete('/:addressId', deleteAddress);
 
 module.exports = router;
