@@ -109,7 +109,7 @@ useEffect(() => {
       let address = '';
       if (latitude && longitude) {
   const userId = localStorage.getItem('userId');
-  const geoRes = await axios.get('http://localhost:5000/api/addresses/reverse-geocode/location', {
+  const geoRes = await axios.get('https://peghouse.in/api/addresses/reverse-geocode/location', {
     params: { latitude, longitude, userId },
   });
   address = geoRes.data.address || '';
@@ -137,7 +137,7 @@ useEffect(() => {
 const fetchSavedAddresses = async () => {
   try {
     const userId = localStorage.getItem('userId');
-    const response = await axios.get(`http://localhost:5000/api/addresses/${userId}`);
+    const response = await axios.get(`https://peghouse.in/api/addresses/${userId}`);
     const saved = response.data;
 
     // Format into same shape you're using
@@ -443,7 +443,7 @@ const addNewAddress = async () => {
   if (newAddress.address && newAddress.city && newAddress.pincode) {
     try {
       const userId = localStorage.getItem('userId');
-      const res = await axios.post('http://localhost:5000/api/addresses', {
+      const res = await axios.post('https://peghouse.in/api/addresses', {
         userId,
         ...newAddress
       });
@@ -477,9 +477,20 @@ const addNewAddress = async () => {
 
 
   // Delete address
-  const deleteAddress = (id: string) => {
+const deleteAddress = async (id: string) => {
+  const confirmDelete = window.confirm("Are you sure you want to delete this address?");
+  if (!confirmDelete) return;
+
+  try {
+    await axios.delete(`https://peghouse.in/api/addresses/${id}`);
     setAddresses(prev => prev.filter(addr => addr.id !== id));
-  };
+    alert("Address deleted successfully.");
+  } catch (err) {
+    console.error("❌ Failed to delete address:", err);
+    alert("Failed to delete address. Please try again.");
+  }
+};
+
 
   // Sync profile address to addresses list
   useEffect(() => {
