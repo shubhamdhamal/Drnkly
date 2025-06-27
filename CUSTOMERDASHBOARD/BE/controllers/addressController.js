@@ -1,8 +1,7 @@
-// controllers/addressController.js
 const Address = require('../models/Address');
 const axios = require('axios');
 
-// Save address using reverse geocoding
+// 🔄 Reverse Geocoding & Save
 exports.getAddressFromCoordinates = async (req, res) => {
   const { latitude, longitude, userId } = req.query;
 
@@ -52,7 +51,7 @@ exports.getAddressFromCoordinates = async (req, res) => {
   }
 };
 
-// Get all addresses by user ID
+// 📄 Get all addresses for a user
 exports.getUserAddresses = async (req, res) => {
   try {
     const userId = req.params.userId;
@@ -64,7 +63,7 @@ exports.getUserAddresses = async (req, res) => {
   }
 };
 
-// Manually add a new address
+// ➕ Manually add an address
 exports.addManualAddress = async (req, res) => {
   const { userId, address, city, pincode, type } = req.body;
 
@@ -86,5 +85,42 @@ exports.addManualAddress = async (req, res) => {
   } catch (err) {
     console.error('❌ Error saving manual address:', err.message);
     res.status(500).json({ message: 'Failed to add address' });
+  }
+};
+
+// ✏️ Update address by ID
+exports.updateAddress = async (req, res) => {
+  const { addressId } = req.params;
+  const { address, city, pincode, type } = req.body;
+
+  try {
+    const updated = await Address.findByIdAndUpdate(
+      addressId,
+      { address, city, pincode, type },
+      { new: true }
+    );
+
+    if (!updated) return res.status(404).json({ message: 'Address not found' });
+
+    res.status(200).json({ message: 'Address updated successfully', address: updated });
+  } catch (err) {
+    console.error('❌ Error updating address:', err.message);
+    res.status(500).json({ message: 'Failed to update address' });
+  }
+};
+
+// 🗑️ Delete address by ID
+exports.deleteAddress = async (req, res) => {
+  const { addressId } = req.params;
+
+  try {
+    const deleted = await Address.findByIdAndDelete(addressId);
+
+    if (!deleted) return res.status(404).json({ message: 'Address not found' });
+
+    res.status(200).json({ message: 'Address deleted successfully' });
+  } catch (err) {
+    console.error('❌ Error deleting address:', err.message);
+    res.status(500).json({ message: 'Failed to delete address' });
   }
 };
