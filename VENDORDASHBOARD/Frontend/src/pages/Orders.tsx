@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Eye, Check, X, Search, Bell, Truck } from 'lucide-react';
 import axios from 'axios';
+import { Bell, Check, Eye, Search, Truck, X } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import Button from '../components/Button';
 import Input from '../components/Input';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { toast } from 'react-toastify';
 
 interface OrderItem {
   productId: string;
@@ -76,28 +76,23 @@ const Orders: React.FC = () => {
       });
 
       const fetchedOrders: Order[] = res.data.orders.map((order) => ({
-  id: order.orderId,
-  orderNumber: order.orderNumber,
-  customerName: order.customerName || order.deliveryAddress?.fullName || 'Customer',
-  customerPhone: order.customerPhone || order.deliveryAddress?.phone || '',
-  customerAddress:
-    order.customerAddress ||
-    `${order.deliveryAddress?.street || ''}, ${order.deliveryAddress?.city || ''}, ${order.deliveryAddress?.state || ''} - ${order.deliveryAddress?.pincode || ''}`,
-  items: order.items.map((item) => ({
-    productId: item.productId,
-    name: item.name,
-    quantity: item.quantity,
-    price: item.price,
-    status: item.status,
-  })),
-  totalAmount: order.totalAmount || 0,
-  paymentStatus: order.paymentStatus || 'pending',
-  transactionId: order.transactionId || '',
-  paymentProof: order.paymentProof || '',
-  createdAt: order.createdAt,
-  readyForPickup: order.readyForPickup || false,
-}));
-
+        id: order.orderId,
+        orderNumber: order.orderNumber,
+        customerName: order.deliveryAddress?.fullName || 'Customer',
+        items: order.items.map((item) => ({
+          productId: item.productId,
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          status: item.status,
+        })),
+        totalAmount: order.totalAmount || 0,
+        paymentStatus: order.paymentStatus || 'pending',
+        transactionId: order.transactionId || '',
+        paymentProof: order.paymentProof || '',
+        createdAt: order.createdAt,
+        readyForPickup: order.readyForPickup || false,
+      }));
 
       setOrders(fetchedOrders);
     } catch (err) {
@@ -265,17 +260,12 @@ const Orders: React.FC = () => {
 
   // Update the liveOrders filter logic
   const liveOrders = orders.filter(order => {
-    // Show orders that have any pending items or are partially accepted
     const hasPendingItems = order.items.some(item => item.status === 'pending');
-    const hasAcceptedItems = order.items.some(item => item.status === 'accepted');
-    const hasNoHandedOverItems = !order.items.some(item => item.status === 'handedOver');
+    const allItemsAccepted = order.items.every(item => item.status === 'accepted');
+    const allItemsHandedOverOrDelivered = order.items.every(item => item.status === 'handedOver' || (item.status as string) === 'delivered');
     const isNotReadyForPickup = !order.readyForPickup;
-    
-    // Only show orders that:
-    // 1. Have pending items OR are partially accepted
-    // 2. Have no handed-over items
-    // 3. Are not ready for pickup
-    return ((hasPendingItems || hasAcceptedItems) && hasNoHandedOverItems && isNotReadyForPickup);
+    // Only show orders that have at least one pending item, are not fully accepted, and are not handed over/delivered
+    return (hasPendingItems && !allItemsAccepted && !allItemsHandedOverOrDelivered && isNotReadyForPickup);
   }).filter((order) => {
     const matchesSearch =
       order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -288,21 +278,19 @@ const Orders: React.FC = () => {
     // First check if either order is new
     const aIsNew = newOrders.some(newOrder => newOrder.id === a.id);
     const bIsNew = newOrders.some(newOrder => newOrder.id === b.id);
-    
     if (aIsNew && !bIsNew) return -1;
     if (!aIsNew && bIsNew) return 1;
-    
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
+  // Update the pastOrders filter logic
   const pastOrders = orders.filter(order => {
-    // Show orders that have any handed over items
-    const hasHandedOverItems = order.items.some(item => item.status === 'handedOver');
+    // Show orders that have all items handed over or delivered, or are in handedOverOrders
+    const allItemsHandedOverOrDelivered = order.items.every(item => item.status === 'handedOver' || (item.status as string) === 'delivered');
     const allItemsRejected = order.items.every(item => item.status === 'rejected');
     const isHandedOverInStorage = JSON.parse(localStorage.getItem('handedOverOrders') || '[]')
       .some((handedOver: any) => handedOver.orderId === order.id);
-    
-    return hasHandedOverItems || allItemsRejected || isHandedOverInStorage;
+    return allItemsHandedOverOrDelivered || allItemsRejected || isHandedOverInStorage;
   }).filter((order) => {
     const matchesSearch =
       order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -316,16 +304,13 @@ const Orders: React.FC = () => {
     const handedOverOrders = JSON.parse(localStorage.getItem('handedOverOrders') || '[]');
     const aHandedOver = handedOverOrders.find((order: any) => order.orderId === a.id);
     const bHandedOver = handedOverOrders.find((order: any) => order.orderId === b.id);
-    
     // If both orders were handed over, sort by handed over time
     if (aHandedOver && bHandedOver) {
       return new Date(bHandedOver.handedOverAt).getTime() - new Date(aHandedOver.handedOverAt).getTime();
     }
-    
     // If only one order was handed over, put it first
     if (aHandedOver) return -1;
     if (bHandedOver) return 1;
-    
     // If neither was handed over, sort by creation time
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
@@ -525,60 +510,10 @@ const Orders: React.FC = () => {
       }
 
       // Update the orders state to move the order to past orders
-      setOrders(prev => {
-        // First, update the order status in the current orders list
-        const updatedOrders = prev.map(o => {
-          if (o.id === order.id) {
-            return {
-              ...o,
-              items: o.items.map(item => ({
-                ...item,
-                status: item.status === 'accepted' ? 'handedOver' : item.status
-              }))
-            };
-          }
-          return o;
-        });
-
-        // Store the handed over order in localStorage
-        const handedOverOrders = JSON.parse(localStorage.getItem('handedOverOrders') || '[]');
-        const newHandedOverOrders = [
-          ...handedOverOrders,
-          {
-            orderId: order.id,
-            orderNumber: order.orderNumber,
-            handedOverAt: new Date().toISOString(),
-            customerName: order.customerName,
-            totalAmount: order.totalAmount,
-            items: order.items.map(item => ({
-              productId: item.productId,
-              name: item.name,
-              quantity: item.quantity,
-              price: item.price,
-              status: 'handedOver'
-            }))
-          }
-        ];
-        localStorage.setItem('handedOverOrders', JSON.stringify(newHandedOverOrders));
-
-        // Ensure the order is in the list for past orders section
-        const orderExists = updatedOrders.some(o => o.id === order.id);
-        if (!orderExists) {
-          updatedOrders.push({
-            ...order,
-            items: order.items.map(item => ({
-              ...item,
-              status: 'handedOver'
-            }))
-          });
-        }
-
-        return updatedOrders;
-      });
+      setOrders(prev => prev.filter(o => o.id !== order.id));
 
       // Show success message
       toast.success('Order handed over to delivery successfully!');
-      
       // Refresh orders to ensure everything is in sync
       fetchOrders();
     } catch (err) {
@@ -817,13 +752,6 @@ const Orders: React.FC = () => {
               )}
             </h3>
             <p style={{ color: '#666', fontSize: '14px' }}>{order.customerName}</p>
-            <p style={{ fontSize: '14px', color: '#888' }}>
-  <strong>Mobile:</strong> {order.customerPhone}
-</p>
-<p style={{ fontSize: '14px', color: '#888' }}>
-  <strong>Address:</strong> {order.customerAddress}
-</p>
-
             <p style={{ marginTop: '2px', fontSize: '14px', color: '#888' }}>
   <strong>Placed On:</strong> {new Date(order.createdAt).toLocaleString()}
 </p>
