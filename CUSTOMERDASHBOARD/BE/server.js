@@ -11,6 +11,8 @@ const userRoutes = require('./routes/userRoutes');
 const productRoutes = require('./routes/productRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const orderRoutes = require('./routes/orderRoutes');
+const addressRoutes = require('./routes/addressRoutes');
+
 
 dotenv.config();         // ✅ Load environment variables
 connectDB();             // ✅ Connect to MongoDB
@@ -40,7 +42,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api', orderRoutes);         // General route (like /api/orders)
 app.use('/api/issues', issueRoutes);
-
+app.use('/api/addresses', addressRoutes);
 
 // ✅ Health check route
 app.get('/', (req, res) => {
