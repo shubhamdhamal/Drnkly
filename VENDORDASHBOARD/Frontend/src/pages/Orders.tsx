@@ -113,6 +113,11 @@ const Orders: React.FC = () => {
     fetchOrders();
     requestNotificationPermission();
     
+    // Add polling for fallback auto-refresh
+    pollingIntervalRef.current = setInterval(() => {
+      fetchOrders();
+    }, 30000); // 30 seconds
+
     return () => {
       if (wsRef.current) {
         wsRef.current.close();
@@ -157,6 +162,16 @@ const Orders: React.FC = () => {
       // Set as new order for notification
       setNewOrders(prevNew => [newOrder, ...prevNew]);
       showOrderNotification([newOrder]);
+      
+      // Play notification sound for 5 seconds
+      if (audioRef.current) {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch(() => {});
+        setTimeout(() => {
+          audioRef.current && audioRef.current.pause();
+          audioRef.current && (audioRef.current.currentTime = 0);
+        }, 5000);
+      }
       
       return updatedOrders;
     });
