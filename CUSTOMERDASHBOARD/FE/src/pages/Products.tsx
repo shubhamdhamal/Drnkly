@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Wine, Search, ShoppingCart, ChevronDown, ArrowLeft, ShoppingBag, X, ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
-import { useCart } from '../context/CartContext';
-import CartCounter from '../components/CartCounter';
 import axios from 'axios';
+import { ArrowLeft, ChevronDown, ChevronRight, LogOut, Search, ShoppingBag, ShoppingCart, Wine, X } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import CartCounter from '../components/CartCounter';
+import { useCart } from '../context/CartContext';
 
 interface Category {
   _id: string;
@@ -243,6 +243,7 @@ function Products() {
   const searchResultsRef = useRef<HTMLDivElement>(null);
   const [canGoBack, setCanGoBack] = useState(false);
   const [canGoForward, setCanGoForward] = useState(false);
+  const [appliedOffers, setAppliedOffers] = useState<{[productId: string]: {discount?: string, description?: string, offerTitle?: string}} | null>(null);
 
   // Enhanced search function with debouncing
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
@@ -407,6 +408,30 @@ function Products() {
           // If coming from Sunrise, include all products
           setProducts(productRes.data);
           setCategories(categoryRes.data);
+        }
+
+        // Read applied offers from localStorage
+        const offersRaw = localStorage.getItem('appliedOffers');
+        if (offersRaw) {
+          try {
+            const offersArr = JSON.parse(offersRaw);
+            // Map productId to offer details
+            const offerMap: {[productId: string]: {discount?: string, description?: string, offerTitle?: string}} = {};
+            offersArr.forEach((ao: any) => {
+              ao.productIds.forEach((pid: string) => {
+                offerMap[pid] = {
+                  discount: ao.offerDetails?.discount,
+                  description: ao.offerDetails?.description,
+                  offerTitle: ao.offerDetails?.title
+                };
+              });
+            });
+            setAppliedOffers(offerMap);
+          } catch (e) {
+            setAppliedOffers(null);
+          }
+        } else {
+          setAppliedOffers(null);
         }
       } catch (err: unknown) {
         if (err instanceof Error) {
@@ -863,6 +888,8 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
   return (
     <div className="container mx-auto bg-white min-h-screen pb-20">
       {/* Add style tag for hover effects */}
@@ -1014,6 +1041,19 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
                         <div className="text-sm font-semibold text-[#cd6839] mt-1">
                           ₹{product.price}
                         </div>
+                        {appliedOffers && appliedOffers[product._id] && (
+                          <div className="mt-1 text-xs text-green-700 font-semibold bg-green-50 rounded px-1 py-0.5">
+                            {appliedOffers[product._id].discount && (
+                              <span>Offer: {appliedOffers[product._id].discount}</span>
+                            )}
+                            {appliedOffers[product._id].description && (
+                              <span className="block text-green-600">{appliedOffers[product._id].description}</span>
+                            )}
+                            {appliedOffers[product._id].offerTitle && (
+                              <span className="block text-green-800 font-bold">{appliedOffers[product._id].offerTitle}</span>
+                            )}
+                          </div>
+                        )}
                       </div>
                       <div className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <ChevronRight size={16} className="text-[#cd6839]" />
@@ -1341,6 +1381,13 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
                       }}
                     />
                   )}
+                  
+                  {/* Offer badge on image */}
+                  {appliedOffers && appliedOffers[product._id] && (
+                    <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg z-10">
+                      OFFER
+                    </div>
+                  )}
                 </div>
                 
                 <div className="px-1">
@@ -1354,16 +1401,67 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
                         <span className="text-[10px] font-medium bg-blue-50 text-blue-600 py-0.5 px-1 rounded">
                           {product.volume} ml
                         </span>
-                        <span className="text-[13px] font-bold text-[#cd6839]">
-                          ₹{product.price}
-                        </span>
+                        <div className="text-right">
+                          {appliedOffers && appliedOffers[product._id] && appliedOffers[product._id].discount ? (
+                            <div>
+                              <span className="text-[11px] line-through text-gray-500">
+                                ₹{product.price}
+                              </span>
+                              <div className="text-[13px] font-bold text-green-600">
+                                ₹{(() => {
+                                  const percentageMatch = (appliedOffers[product._id].discount || '').match(/(\d+)%/);
+                                  if (percentageMatch) {
+                                    const percentage = parseInt(percentageMatch[1]);
+                                    const discount = (product.price * percentage) / 100;
+                                    return Math.round(product.price - discount);
+                                  }
+                                  return product.price;
+                                })()}
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-[13px] font-bold text-[#cd6839]">
+                              ₹{product.price}
+                            </span>
+                          )}
+                        </div>
                       </>
                     ) : (
-                      <span className="text-[13px] font-bold text-[#cd6839] w-full text-center">
-                        ₹{product.price}
-                      </span>
+                      <div className="w-full text-center">
+                        {appliedOffers && appliedOffers[product._id] && appliedOffers[product._id].discount ? (
+                          <div>
+                            <span className="text-[11px] line-through text-gray-500">
+                              ₹{product.price}
+                            </span>
+                            <div className="text-[13px] font-bold text-green-600">
+                              ₹{(() => {
+                                const percentageMatch = (appliedOffers[product._id].discount || '').match(/(\d+)%/);
+                                if (percentageMatch) {
+                                  const percentage = parseInt(percentageMatch[1]);
+                                  const discount = (product.price * percentage) / 100;
+                                  return Math.round(product.price - discount);
+                                }
+                                return product.price;
+                              })()}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-[13px] font-bold text-[#cd6839]">
+                            ₹{product.price}
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
+                  
+                  {/* Show applied offer if exists - compact version */}
+                  {appliedOffers && appliedOffers[product._id] && (
+                    <div className="mt-1 p-1 bg-green-50 border border-green-200 rounded text-center">
+                      <div className="text-[9px] font-bold text-green-800">
+                        🎉 {appliedOffers[product._id].discount || 'OFFER'}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               
@@ -1411,6 +1509,7 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
             flex-direction: column !important;
             height: 100% !important;
             min-height: 200px !important;
+            max-height: 280px !important;
             background: white !important;
             border-radius: 8px !important;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
@@ -1442,8 +1541,26 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
           .product-card button {
             margin-top: auto !important;
           }
+
+          /* Ensure content doesn't overflow */
+          .product-card > div {
+            overflow: hidden !important;
+          }
+
+          /* Limit text overflow */
+          .product-card .text-\[13px\] {
+            max-height: 2.6em !important;
+            overflow: hidden !important;
+            display: -webkit-box !important;
+            -webkit-line-clamp: 2 !important;
+            -webkit-box-orient: vertical !important;
+          }
         `}
       </style>
+
+      <button onClick={() => { audioRef.current && audioRef.current.play(); }}>
+        Test Notification Sound
+      </button>
     </div>
   );
 }
