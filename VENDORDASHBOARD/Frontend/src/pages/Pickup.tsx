@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { Package, Truck, CheckCircle, Users } from 'lucide-react';
-import Button from '../components/Button';
 import axios from 'axios';
+import { Package, Truck, Users } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import Button from '../components/Button';
 
 interface PickupOrder {
   productId: string;
@@ -40,6 +40,7 @@ const Pickup: React.FC = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<PickupOrder[]>([]);
   const [groupedOrders, setGroupedOrders] = useState<GroupedOrder[]>([]);
+  const [loading, setLoading] = useState(true);
   const wsRef = useRef<WebSocket | null>(null);
 
   const groupOrdersByCustomer = (orders: PickupOrder[]): GroupedOrder[] => {
@@ -82,10 +83,16 @@ const Pickup: React.FC = () => {
 
     fetchPickupOrders();
 
+    // Add polling for fallback auto-refresh
+    const pollingInterval = setInterval(() => {
+      fetchPickupOrders();
+    }, 30000); // 30 seconds
+
     return () => {
       if (wsRef.current) {
         wsRef.current.close();
       }
+      clearInterval(pollingInterval);
     };
   }, []);
 
@@ -118,6 +125,7 @@ const Pickup: React.FC = () => {
 
   const fetchPickupOrders = async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem('authToken');
       const res = await axios.get<ApiResponse>('https://vendor.peghouse.in/api/vendor/ready-for-pickup', {
         headers: { Authorization: `Bearer ${token}` },
@@ -140,16 +148,12 @@ const Pickup: React.FC = () => {
         return !isHandedOverInAPI && !isHandedOverInStorage;
       });
       
-      // Sort orders by time
-      const sortedOrders = filteredOrders.sort((a: PickupOrder, b: PickupOrder) => {
-        const timeA = a.acceptedAt ? new Date(a.acceptedAt).getTime() : new Date(a.readyTime).getTime();
-        const timeB = b.acceptedAt ? new Date(b.acceptedAt).getTime() : new Date(b.readyTime).getTime();
-        return timeB - timeA;
-      });
-      
-      setOrders(sortedOrders);
-      setGroupedOrders(groupOrdersByCustomer(sortedOrders));
+      // No unnecessary sorting, just show as received
+      setOrders(filteredOrders);
+      setGroupedOrders(groupOrdersByCustomer(filteredOrders));
+      setLoading(false);
     } catch (err) {
+      setLoading(false);
       console.error('Failed to fetch pickup orders', err);
       toast.error('Failed to load pickup orders');
     }
@@ -307,7 +311,36 @@ const Pickup: React.FC = () => {
     <div style={{ padding: '24px', fontFamily: 'sans-serif' }}>
       <h1 style={{ fontSize: '24px', fontWeight: 600, marginBottom: '20px' }}>Ready for Pickup</h1>
 
-      {groupedOrders.length === 0 ? (
+      {loading ? (
+        <div style={{ display: 'grid', gap: '24px' }}>
+          {[1,2,3].map((_, idx) => (
+            <div key={idx} style={{
+              padding: '20px',
+              background: '#f5f5f5',
+              borderRadius: '12px',
+              border: '1px solid #e0e0e0',
+              position: 'relative',
+              minHeight: '120px',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              animation: 'skeletonPulse 1.2s infinite ease-in-out'
+            }}>
+              <div style={{ width: '40%', height: '18px', background: '#e0e0e0', borderRadius: '6px', marginBottom: '12px' }} />
+              <div style={{ width: '60%', height: '14px', background: '#e0e0e0', borderRadius: '6px', marginBottom: '8px' }} />
+              <div style={{ width: '30%', height: '14px', background: '#e0e0e0', borderRadius: '6px', marginBottom: '8px' }} />
+              <div style={{ width: '50%', height: '14px', background: '#e0e0e0', borderRadius: '6px' }} />
+            </div>
+          ))}
+          <style>{`
+            @keyframes skeletonPulse {
+              0% { opacity: 1; }
+              50% { opacity: 0.5; }
+              100% { opacity: 1; }
+            }
+          `}</style>
+        </div>
+      ) : groupedOrders.length === 0 ? (
         <p style={{ textAlign: 'center', color: '#666', padding: '24px' }}>No orders ready for pickup</p>
       ) : (
         <div style={{ 
@@ -362,7 +395,7 @@ const Pickup: React.FC = () => {
                       <strong>Total Amount:</strong> ₹{group.totalAmount.toFixed(2)}
                     </p>
                     <p style={{ margin: '4px 0', fontSize: '14px' }}>
-                      <strong>Ready by:</strong> {new Date(group.readyTime).toLocaleTimeString()}
+                      <strong>Ready by:</strong> {group.readyTime ? new Date(group.readyTime).toLocaleTimeString() : '-'}
                     </p>
                   </div>
                   <Package className="w-8 h-8 text-blue-600" />
