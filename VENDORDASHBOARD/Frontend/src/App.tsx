@@ -32,13 +32,41 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 function App() {
+  // Session timeout logic (30 minutes)
+  React.useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in ms
+
+    const resetTimer = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        localStorage.removeItem('authToken');
+        window.location.href = '/login';
+      }, SESSION_TIMEOUT);
+    };
+
+    // List of events to listen for
+    const events = ['mousemove', 'keydown', 'mousedown', 'touchstart'];
+    events.forEach(event => window.addEventListener(event, resetTimer));
+    resetTimer(); // Start timer on mount
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      events.forEach(event => window.removeEventListener(event, resetTimer));
+    };
+  }, []);
+
   return (
     <Router>
       <Routes>
-        <Route path="/welcome" element={<Welcome />} />
+        <Route path="/welcome" element={
+          <ProtectedRoute>
+            <Welcome />
+          </ProtectedRoute>
+        } />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Registration />} />
-        <Route path="/" element={<Navigate to="/welcome" replace />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
 
         {/* Protected Routes */}
         <Route path="/dashboard" element={
