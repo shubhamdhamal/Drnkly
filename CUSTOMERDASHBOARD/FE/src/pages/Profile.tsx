@@ -1,26 +1,24 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { 
-  ShoppingBag, 
-  MessageCircle, 
-  MapPin, 
-  User,
-  LogOut,
-  CreditCard,
-  Search,
-  ChevronDown,
-  Check,
-  ChevronRight,
-  Edit2,
-  Wine,
-  FileText,
-  Shield,
-  X,
-  Send,
-  BookOpen
-} from 'lucide-react';
 import axios from 'axios';
+import {
+  BookOpen,
+  ChevronDown,
+  ChevronRight,
+  CreditCard,
+  Edit2,
+  FileText,
+  LogOut,
+  MapPin,
+  MessageCircle,
+  Send,
+  Shield,
+  ShoppingBag,
+  User,
+  Wine,
+  X
+} from 'lucide-react';
 
 // Define Message interface to fix the error
 interface Message {
@@ -84,89 +82,102 @@ const Profile = () => {
     phone: '',
     address: '',
     location: {
-    latitude: null,
-    longitude: null,
-  }
+      latitude: null,
+      longitude: null,
+    }
   });
-  const navigate = useNavigate();  // Initialize useNavigate hook
+  const navigate = useNavigate();
   const [isChatOpen, setIsChatOpen] = useState(false);
   const phoneInputRef = useRef<HTMLInputElement>(null);
-    // Fetch user profile data using useEffect
+  
+  // Add missing state variables
+  const [addresses, setAddresses] = useState<{id: string, address: string, city: string, pincode: string, type: string}[]>([]);
+  const [showAddAddress, setShowAddAddress] = useState(false);
+  const [newAddress, setNewAddress] = useState({
+    address: '',
+    city: '',
+    pincode: '',
+    type: 'Home'
+  });
+  const [editingAddress, setEditingAddress] = useState<string | null>(null);
+  const [editAddressData, setEditAddressData] = useState({
+    address: '',
+    city: '',
+    pincode: '',
+    type: 'Home'
+  });
 
+  // Fetch user profile data using useEffect
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const userId = localStorage.getItem('userId');
+        const response = await axios.get(`https://peghouse.in/api/users/${userId}`);
+        const user = response.data;
 
+        // If you have latitude and longitude from DB:
+        const latitude = user.latitude;
+        const longitude = user.longitude;
 
-useEffect(() => {
-  const fetchUserProfile = async () => {
+        let address = '';
+        if (latitude && longitude) {
+          const geoRes = await axios.get('http://localhost:5000/api/addresses/reverse-geocode/location', {
+            params: { latitude, longitude, userId },
+          });
+          address = geoRes.data.address || '';
+        }
+
+        setUserInfo({
+          name: user.name,
+          phone: user.mobile,
+          address: address || user.address || '',
+          location: {
+            latitude,
+            longitude,
+          },
+        });
+      } catch (error) {
+        console.error('❌ Failed to fetch profile:', error);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
+
+  // Add this just below userInfo fetch in useEffect
+  const fetchSavedAddresses = async () => {
     try {
       const userId = localStorage.getItem('userId');
-      const response = await axios.get(`https://peghouse.in/api/users/${userId}`);
-      const user = response.data;
+      const response = await axios.get(`http://localhost:5000/api/addresses/${userId}`);
+      const saved = response.data;
 
-      // If you have latitude and longitude from DB:
-      const latitude = user.latitude;
-      const longitude = user.longitude;
+      // Format into same shape you're using
+      const formatted = saved.map((addr: any) => ({
+        id: addr._id,
+        address: addr.address,
+        city: addr.city,
+        pincode: addr.pincode,
+        type: addr.type || 'Other'
+      }));
 
-      let address = '';
-      if (latitude && longitude) {
-  const userId = localStorage.getItem('userId');
-  const geoRes = await axios.get('https://peghouse.in/api/addresses/reverse-geocode/location', {
-    params: { latitude, longitude, userId },
-  });
-  address = geoRes.data.address || '';
-}
-
-
-      setUserInfo({
-        name: user.name,
-        phone: user.mobile,
-        address: address || user.address || '',
-        location: {
-          latitude,
-          longitude,
-        },
+      setAddresses(prev => {
+        // Avoid duplication with profile address (primary)
+        const nonPrimary = formatted.filter((a: any) => a.type !== 'Primary');
+        return [
+          { id: 'primary', address: userInfo.address, city: '', pincode: '', type: 'Primary' },
+          ...nonPrimary
+        ];
       });
-    } catch (error) {
-      console.error('❌ Failed to fetch profile:', error);
+    } catch (err) {
+      console.error('❌ Failed to fetch addresses:', err);
     }
   };
 
-  fetchUserProfile();
-}, []);
+  useEffect(() => {
+    fetchSavedAddresses();
+  }, [userInfo.address]);
 
-// Add this just below userInfo fetch in useEffect
-const fetchSavedAddresses = async () => {
-  try {
-    const userId = localStorage.getItem('userId');
-    const response = await axios.get(`https://peghouse.in/api/addresses/${userId}`);
-    const saved = response.data;
-
-    // Format into same shape you're using
-    const formatted = saved.map((addr: any) => ({
-      id: addr._id,
-      address: addr.address,
-      city: addr.city,
-      pincode: addr.pincode,
-      type: addr.type || 'Other'
-    }));
-
-    setAddresses(prev => {
-      // Avoid duplication with profile address (primary)
-      const nonPrimary = formatted.filter((a: any) => a.type !== 'Primary');
-      return [
-        { id: 'primary', address: userInfo.address, city: '', pincode: '', type: 'Primary' },
-        ...nonPrimary
-      ];
-    });
-  } catch (err) {
-    console.error('❌ Failed to fetch addresses:', err);
-  }
-};
-
-useEffect(() => {
-  fetchSavedAddresses();
-}, [userInfo.address]);
-
- // Empty dependency array ensures this effect runs only once
+  // Empty dependency array ensures this effect runs only once
   const [chatMessages, setChatMessages] = useState<Message[]>([
     { 
       text: "Hello! 👋 Welcome to Liquor Shop. How can I help you today?\n\nनमस्कार! लिकर शॉपमध्ये आपले स्वागत आहे. मी आपली कशी मदत करू शकतो?", 
@@ -178,10 +189,12 @@ useEffect(() => {
     }
   ]);
   const [chatInput, setChatInput] = useState('');
-    // The click handler for navigating to the Order History page
-    const handleOrdersClick = () => {
-      navigate('/order-history');  // Navigate to the OrderHistory page
-    };
+
+  // The click handler for navigating to the Order History page
+  const handleOrdersClick = () => {
+    navigate('/order-history');  // Navigate to the OrderHistory page
+  };
+
   const locations = [
     'Mumbai, Maharashtra',
     'Delhi, NCR',
@@ -295,8 +308,6 @@ useEffect(() => {
       }
     }
   };
-  
-  
 
   const generateAIResponse = (input: string): string => {
     const lowerInput = input.toLowerCase();
@@ -419,16 +430,6 @@ useEffect(() => {
     </div>
   );
 
-  // Add address state
-  const [addresses, setAddresses] = useState<{id: string, address: string, city: string, pincode: string, type: string}[]>([]);
-  const [showAddAddress, setShowAddAddress] = useState(false);
-  const [newAddress, setNewAddress] = useState({
-    address: '',
-    city: '',
-    pincode: '',
-    type: 'Home'
-  });
-
   // Handle address input changes
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -439,55 +440,87 @@ useEffect(() => {
   };
 
   // Add new address
-const addNewAddress = async () => {
-  if (newAddress.address && newAddress.city && newAddress.pincode) {
-    try {
-      const userId = localStorage.getItem('userId');
-      const res = await axios.post('https://peghouse.in/api/addresses', {
-        userId,
-        ...newAddress
-      });
+  const addNewAddress = async () => {
+    if (newAddress.address && newAddress.city && newAddress.pincode) {
+      try {
+        const userId = localStorage.getItem('userId');
+        const res = await axios.post('http://localhost:5000/api/addresses', {
+          userId,
+          ...newAddress
+        });
 
-      const saved = res.data;
+        const saved = res.data;
 
-      setAddresses(prev => [...prev, {
-        id: saved._id,
-        address: saved.address,
-        city: saved.city,
-        pincode: saved.pincode,
-        type: saved.type
-      }]);
+        setAddresses(prev => [...prev, {
+          id: saved._id,
+          address: saved.address,
+          city: saved.city,
+          pincode: saved.pincode,
+          type: saved.type
+        }]);
 
-      // Reset form
-      setNewAddress({
-        address: '',
-        city: '',
-        pincode: '',
-        type: 'Home'
-      });
-      setShowAddAddress(false);
-    } catch (err) {
-      console.error('❌ Failed to save address:', err);
-      alert('Failed to save address. Please try again.');
+        // Reset form
+        setNewAddress({
+          address: '',
+          city: '',
+          pincode: '',
+          type: 'Home'
+        });
+        setShowAddAddress(false);
+        alert('Address saved successfully!');
+      } catch (err) {
+        console.error('❌ Failed to save address:', err);
+        alert('Failed to save address. Please try again.');
+      }
+    } else {
+      alert('Please fill all required fields');
     }
-  } else {
-    alert('Please fill all fields');
-  }
-};
-
+  };
 
   // Delete address
-const deleteAddress = async (id: string) => {
-  const confirmDelete = window.confirm("Are you sure you want to delete this address?");
-  if (!confirmDelete) return;
+  const deleteAddress = async (id: string) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this address?");
+    if (!confirmDelete) return;
 
-  try {
-    await axios.delete(`https://peghouse.in/api/addresses/${id}`);
-    setAddresses(prev => prev.filter(addr => addr.id !== id));
-    alert("Address deleted successfully.");
-  } catch (err) {
-    console.error("❌ Failed to delete address:", err);
-    alert("Failed to delete address. Please try again.");
+    try {
+      await axios.delete(`http://localhost:5000/api/addresses/${id}`);
+      setAddresses(prev => prev.filter(addr => addr.id !== id));
+      alert("Address deleted successfully.");
+    } catch (err) {
+      console.error("❌ Failed to delete address:", err);
+      alert("Failed to delete address. Please try again.");
+    }
+  };
+
+  // Edit address functionality
+  const handleEditAddress = (address: any) => {
+    setEditingAddress(address.id);
+    setEditAddressData({
+      address: address.address,
+      city: address.city,
+      pincode: address.pincode,
+      type: address.type
+    });
+  };
+
+const updateAddress = async () => {
+  if (editingAddress && editAddressData.address && editAddressData.city && editAddressData.pincode) {
+    try {
+      const res = await axios.put(`http://localhost:5000/api/addresses/${editingAddress}`, editAddressData);
+
+      // Update local state with returned address
+      setAddresses(prev => prev.map(addr =>
+        addr.id === editingAddress
+          ? { ...addr, ...res.data.address }  // Make sure `res.data.address` contains updated fields
+          : addr
+      ));
+
+      setEditingAddress(null);
+      alert('Address updated successfully!');
+    } catch (err) {
+      console.error('❌ Failed to update address:', err);
+      alert('Failed to update address. Please try again.');
+    }
   }
 };
 
@@ -641,15 +674,15 @@ const deleteAddress = async (id: string) => {
                   )}
                 </div>
                 <input
-  id="address"
-  type="text"
-  name="address"
-  value={userInfo.address}
-  onChange={handleUserInfoChange}
-  className="block w-full rounded border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-  placeholder="Address"
-  autoComplete="street-address"
-/>
+                  id="address"
+                  type="text"
+                  name="address"
+                  value={userInfo.address}
+                  onChange={handleUserInfoChange}
+                  className="block w-full rounded border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Address"
+                  autoComplete="street-address"
+                />
 
                 <div className="mt-4">
                   <button
@@ -811,20 +844,33 @@ const deleteAddress = async (id: string) => {
                     <div className="flex justify-between items-start">
                       <div>
                         <div className="flex items-center mb-2">
-                          <span className={`bg-indigo-100 text-indigo-800 text-xs font-medium px-2 py-1 rounded ${addr.type === 'Primary' ? 'bg-green-100 text-green-800' : ''}`}>{addr.type === 'Primary' ? 'Profile Address' : addr.type}</span>
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${
+                            addr.type === 'Primary' ? 'bg-green-100 text-green-800' : 'bg-indigo-100 text-indigo-800'
+                          }`}>
+                            {addr.type === 'Primary' ? 'Profile Address' : addr.type}
+                          </span>
                         </div>
-                        <p className="text-gray-800 font-medium">{typeof addr.address === 'string' ? addr.address : addr.address?.address || 'N/A'}</p>
-
-                        {addr.city || addr.pincode ? <p className="text-gray-600">{addr.city} {addr.pincode && `- ${addr.pincode}`}</p> : null}
+                        <p className="text-gray-800 font-medium">{addr.address}</p>
+                        {(addr.city || addr.pincode) && (
+                          <p className="text-gray-600">{addr.city} {addr.pincode && `- ${addr.pincode}`}</p>
+                        )}
                       </div>
-                      {addr.type !== 'Primary' && (
+                      <div className="flex gap-2">
                         <button 
-                          onClick={() => deleteAddress(addr.id)}
-                          className="text-red-500 hover:text-red-700"
+                          onClick={() => handleEditAddress(addr)}
+                          className="text-blue-500 hover:text-blue-700"
                         >
-                          <X size={20} />
+                          <Edit2 size={16} />
                         </button>
-                      )}
+                        {addr.type !== 'Primary' && (
+                          <button 
+                            onClick={() => deleteAddress(addr.id)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <X size={16} />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -903,6 +949,82 @@ const deleteAddress = async (id: string) => {
                     >
                       <span className="mr-2">+</span> Add New Address
                     </button>
+                  </div>
+                )}
+
+                {/* Edit Address Modal */}
+                {editingAddress && (
+                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl p-8 max-w-md w-full max-h-[90vh] overflow-y-auto">
+                      <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-2xl font-bold text-gray-800">Edit Address</h2>
+                        <button
+                          onClick={() => setEditingAddress(null)}
+                          className="text-gray-500 hover:text-gray-700 transition-colors"
+                        >
+                          <X size={24} />
+                        </button>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-gray-700 text-sm font-medium mb-1">Address Type</label>
+                          <select
+                            value={editAddressData.type}
+                            onChange={(e) => setEditAddressData(prev => ({ ...prev, type: e.target.value }))}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          >
+                            <option value="Home">Home</option>
+                            <option value="Work">Work</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-gray-700 text-sm font-medium mb-1">Full Address</label>
+                          <input
+                            type="text"
+                            value={editAddressData.address}
+                            onChange={(e) => setEditAddressData(prev => ({ ...prev, address: e.target.value }))}
+                            placeholder="Flat/House No., Building, Street"
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-gray-700 text-sm font-medium mb-1">City</label>
+                          <input
+                            type="text"
+                            value={editAddressData.city}
+                            onChange={(e) => setEditAddressData(prev => ({ ...prev, city: e.target.value }))}
+                            placeholder="City"
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-gray-700 text-sm font-medium mb-1">PIN Code</label>
+                          <input
+                            type="text"
+                            value={editAddressData.pincode}
+                            onChange={(e) => setEditAddressData(prev => ({ ...prev, pincode: e.target.value }))}
+                            placeholder="PIN Code"
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          />
+                        </div>
+                        <div className="flex space-x-3 pt-2">
+                          <button
+                            onClick={updateAddress}
+                            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+                          >
+                            Update Address
+                          </button>
+                          <button
+                            onClick={() => setEditingAddress(null)}
+                            className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
               </>
