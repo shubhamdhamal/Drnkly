@@ -410,35 +410,34 @@ const Pickup: React.FC = () => {
         <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT" type="audio/wav" />
       </audio>
 
-{/* Enhanced Notification Popup */}
-{showNotification && (
-  <div 
-    onClick={handleNotificationClick}
-    className="fixed top-6 right-6 z-50 cursor-pointer transform transition-all duration-300 hover:scale-105"
-    style={{
-      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-      color: 'white',
-      padding: '20px 24px',
-      borderRadius: '16px',
-      boxShadow: '0 8px 32px rgba(16, 185, 129, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)',
-      animation: 'slideInRight 0.5s ease-out, pulse 2s infinite',
-      minWidth: '320px',
-      maxWidth: '400px'
-    }}
-  >
-    <div className="flex items-start gap-4">
-      <div className="flex-shrink-0">
-        <Package size={28} className="animate-bounce" />
-      </div>
-      <div className="flex-1">
-        <h4 className="font-bold text-lg mb-2">📦 Pickup Ready!</h4>
-        <p className="text-sm opacity-90 mb-3">{notificationMessage}</p>
-        <p className="text-xs opacity-75">👆 Click to dismiss</p>
-      </div>
-    </div>
-  </div>
-)}
-
+      {/* Enhanced Notification Popup */}
+      {showNotification && (
+        <div 
+          onClick={handleNotificationClick}
+          className="fixed top-6 right-6 z-50 cursor-pointer transform transition-all duration-300 hover:scale-105"
+          style={{
+            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+            color: 'white',
+            padding: '20px 24px',
+            borderRadius: '16px',
+            boxShadow: '0 8px 32px rgba(16, 185, 129, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+            animation: 'slideInRight 0.5s ease-out, pulse 2s infinite',
+            minWidth: '320px',
+            maxWidth: '400px'
+          }}
+        >
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0">
+              <Package size={28} className="animate-bounce" />
+            </div>
+            <div className="flex-1">
+              <h4 className="font-bold text-lg mb-2">📦 Pickup Ready!</h4>
+              <p className="text-sm opacity-90 mb-3">{notificationMessage}</p>
+              <p className="text-xs opacity-75">👆 Click to dismiss</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Enhanced Header */}
       <div className="bg-white shadow-xl border-b border-gray-200">
