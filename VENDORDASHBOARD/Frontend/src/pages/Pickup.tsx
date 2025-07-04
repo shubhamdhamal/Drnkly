@@ -425,7 +425,7 @@ const Pickup: React.FC = () => {
             minWidth: '320px',
             maxWidth: '400px'
           }}
-        >
+        
           <div className="flex items-start gap-4">
             <div className="flex-shrink-0">
               <Package size={28} className="animate-bounce" />
