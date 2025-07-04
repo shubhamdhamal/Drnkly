@@ -1,10 +1,88 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Eye, Check, X, Search, Bell, Truck, Clock, Package, User, Phone, MapPin, Calendar, CreditCard, Hash } from 'lucide-react';
 import axios from 'axios';
-import { Bell, Check, Eye, Search, Truck, X } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
-import Button from '../components/Button';
-import Input from '../components/Input';
+import { useNavigate, useLocation } from 'react-router-dom';
+
+// Button Component
+interface ButtonProps {
+  children: React.ReactNode;
+  variant?: 'primary' | 'secondary' | 'danger' | 'success';
+  icon?: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+}
+
+const Button: React.FC<ButtonProps> = ({ 
+  children, 
+  variant = 'primary', 
+  icon, 
+  onClick, 
+  disabled = false,
+  className = ''
+}) => {
+  const baseStyles = "inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed";
+  
+  const variantStyles = {
+    primary: "bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg",
+    secondary: "bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300",
+    danger: "bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg",
+    success: "bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg"
+  };
+
+  return (
+    <button
+      className={`${baseStyles} ${variantStyles[variant]} ${className}`}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      {icon}
+      {children}
+    </button>
+  );
+};
+
+// Input Component
+interface InputProps {
+  placeholder?: string;
+  icon?: React.ReactNode;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  style?: React.CSSProperties;
+}
+
+const Input: React.FC<InputProps> = ({ placeholder, icon, value, onChange, style }) => {
+  return (
+    <div className="relative" style={style}>
+      {icon && (
+        <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+          {icon}
+        </div>
+      )}
+      <input
+        type="text"
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        className={`w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+          icon ? 'pl-10' : ''
+        }`}
+      />
+    </div>
+  );
+};
+
+// Toast notification function
+const toast = {
+  success: (message: string) => {
+    console.log('Success:', message);
+    // You can implement a proper toast library here
+  },
+  error: (message: string) => {
+    console.log('Error:', message);
+    // You can implement a proper toast library here
+  }
+};
 
 interface OrderItem {
   productId: string;
@@ -19,21 +97,30 @@ interface Order {
   orderNumber: string;
   id: string;
   customerName: string;
+  customerPhone?: string;
+  customerAddress?: string;
   items: OrderItem[];
   totalAmount: number;
   paymentStatus: 'paid' | 'pending';
   paymentProof?: string;
   createdAt: string;
   readyForPickup?: boolean;
-  
 }
 
 interface ApiResponse {
   orders: Array<{
     orderId: string;
     orderNumber: string;
+    customerName?: string;
+    customerPhone?: string;
+    customerAddress?: string;
     deliveryAddress?: {
       fullName: string;
+      phone?: string;
+      street?: string;
+      city?: string;
+      state?: string;
+      pincode?: string;
     };
     items: Array<{
       productId: string;
@@ -55,18 +142,84 @@ const Orders: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('All Orders');
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [error, setError] = useState('');
   const [newOrders, setNewOrders] = useState<Order[]>([]);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const lastOrdersCountRef = useRef(0);
+  const [audioEnabled, setAudioEnabled] = useState(false);
+  const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const pastOrdersRef = useRef<HTMLDivElement>(null);
+
+  // Initialize audio context
+  const initializeAudio = async () => {
+    try {
+      const context = new (window.AudioContext || (window as any).webkitAudioContext)();
+      
+      // Resume context if it's suspended
+      if (context.state === 'suspended') {
+        await context.resume();
+      }
+      
+      setAudioContext(context);
+      setAudioEnabled(true);
+      
+      // Test sound to confirm it's working
+      playNotificationSound(context);
+      
+      console.log('Audio initialized successfully');
+      return true;
+    } catch (error) {
+      console.error('Failed to initialize audio:', error);
+      return false;
+    }
+  };
+
+  // Play notification sound
+  const playNotificationSound = (context?: AudioContext) => {
+    const ctx = context || audioContext;
+    if (!ctx || !audioEnabled) return;
+
+    try {
+      // Create oscillator for beep sound
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      
+      // Set frequency and volume
+      oscillator.frequency.setValueAtTime(800, ctx.currentTime);
+      oscillator.frequency.setValueAtTime(600, ctx.currentTime + 0.1);
+      oscillator.frequency.setValueAtTime(800, ctx.currentTime + 0.2);
+      
+      gainNode.gain.setValueAtTime(0, ctx.currentTime);
+      gainNode.gain.setValueAtTime(0.3, ctx.currentTime + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+      
+      oscillator.start(ctx.currentTime);
+      oscillator.stop(ctx.currentTime + 0.3);
+      
+      console.log('Sound played successfully');
+    } catch (error) {
+      console.error('Failed to play sound:', error);
+    }
+  };
+
+  // Enable audio on user interaction
+  const enableAudio = async () => {
+    if (!audioEnabled) {
+      const success = await initializeAudio();
+      if (success) {
+        toast.success('Sound notifications enabled!');
+      } else {
+        toast.error('Failed to enable sound notifications');
+      }
+    }
+  };
 
   const fetchOrders = async () => {
     try {
@@ -78,7 +231,11 @@ const Orders: React.FC = () => {
       const fetchedOrders: Order[] = res.data.orders.map((order) => ({
         id: order.orderId,
         orderNumber: order.orderNumber,
-        customerName: order.deliveryAddress?.fullName || 'Customer',
+        customerName: order.customerName || order.deliveryAddress?.fullName || 'Customer',
+        customerPhone: order.customerPhone || order.deliveryAddress?.phone || '',
+        customerAddress:
+          order.customerAddress ||
+          `${order.deliveryAddress?.street || ''}, ${order.deliveryAddress?.city || ''}, ${order.deliveryAddress?.state || ''} - ${order.deliveryAddress?.pincode || ''}`,
         items: order.items.map((item) => ({
           productId: item.productId,
           name: item.name,
@@ -113,11 +270,9 @@ const Orders: React.FC = () => {
     fetchOrders();
     requestNotificationPermission();
     
-    // Add polling for fallback auto-refresh
-    pollingIntervalRef.current = setInterval(() => {
-      fetchOrders();
-    }, 30000); // 30 seconds
-
+    // Set up auto-refresh every 30 seconds
+    pollingIntervalRef.current = setInterval(fetchOrders, 30000);
+    
     return () => {
       if (wsRef.current) {
         wsRef.current.close();
@@ -125,18 +280,19 @@ const Orders: React.FC = () => {
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
       }
+      if (audioContext) {
+        audioContext.close();
+      }
     };
   }, []);
 
   useEffect(() => {
     // Handle navigation from pickup page
     if (location.state?.scrollToPastOrders) {
-      // Wait for orders to load
       setTimeout(() => {
         if (pastOrdersRef.current) {
           pastOrdersRef.current.scrollIntoView({ behavior: 'smooth' });
           
-          // Highlight the specific order if orderNumber is provided
           if (location.state.orderNumber) {
             const orderElement = document.getElementById(`order-${location.state.orderNumber}`);
             if (orderElement) {
@@ -153,56 +309,39 @@ const Orders: React.FC = () => {
 
   const handleNewOrder = (newOrder: Order) => {
     setOrders(prev => {
-      // Remove the order if it already exists
       const filteredOrders = prev.filter(o => o.id !== newOrder.id);
-      
-      // Add new order at the beginning of the array
       const updatedOrders = [newOrder, ...filteredOrders];
       
-      // Set as new order for notification
       setNewOrders(prevNew => [newOrder, ...prevNew]);
       showOrderNotification([newOrder]);
-      
-      // Play notification sound for 5 seconds
-      if (audioRef.current) {
-        audioRef.current.currentTime = 0;
-        audioRef.current.play().catch(() => {});
-        setTimeout(() => {
-          audioRef.current && audioRef.current.pause();
-          audioRef.current && (audioRef.current.currentTime = 0);
-        }, 5000);
-      }
       
       return updatedOrders;
     });
   };
 
-  // Add a helper function to check if this is the last pending item in an order
   const isLastPendingItem = (order: Order, currentItemId: string): boolean => {
     const pendingItems = order.items.filter(item => item.status === 'pending');
     return pendingItems.length === 1 && pendingItems[0].productId === currentItemId;
   };
 
-  // Update the updateOrderStatus function
   const updateOrderStatus = async (
     orderId: string,
     productId: string,
     status: 'accepted' | 'rejected' | 'handedOver'
   ) => {
+    enableAudio(); // Enable audio on user interaction
+    
     const token = localStorage.getItem('authToken');
 
     try {
-      // Find the current order
       const currentOrder = orders.find(order => order.id === orderId);
       if (!currentOrder) {
         toast.error('Order not found');
         return;
       }
 
-      // If accepting an item, check if it's the last pending item
       const shouldRedirectToPickup = status === 'accepted' && isLastPendingItem(currentOrder, productId);
 
-      // Update the status
       const response = await axios.put(
         `https://vendor.peghouse.in/api/vendor/orders/${orderId}/status`,
         { productId, status },
@@ -214,7 +353,6 @@ const Orders: React.FC = () => {
       );
 
       if (response.status === 200) {
-        // Update the order in the state
         setOrders((prev) => {
           const updatedOrders = prev.map((order) =>
             order.id === orderId
@@ -228,7 +366,6 @@ const Orders: React.FC = () => {
               : order
           );
 
-          // If all items are now accepted, remove the order from the list
           const updatedOrder = updatedOrders.find(o => o.id === orderId);
           if (updatedOrder && updatedOrder.items.every(item => item.status === 'accepted')) {
             return updatedOrders.filter(o => o.id !== orderId);
@@ -237,9 +374,7 @@ const Orders: React.FC = () => {
           return updatedOrders;
         });
 
-        // If this was the last pending item and it was accepted, handle pickup
         if (shouldRedirectToPickup) {
-          // Mark order as ready for pickup
           const pickupResponse = await axios.put(
             `https://vendor.peghouse.in/api/vendor/orders/${orderId}/ready-for-pickup`,
             { 
@@ -252,12 +387,9 @@ const Orders: React.FC = () => {
 
           if (pickupResponse.status === 200) {
             toast.success('Order accepted and ready for pickup!');
-            
-            // Navigate to pickup page
             navigate('/pickup');
           }
         } else if (status === 'accepted') {
-          // If it's not the last item, just show a success message
           toast.success('Item accepted successfully!');
         } else if (status === 'handedOver') {
           toast.success('Order handed over to delivery successfully!');
@@ -270,17 +402,18 @@ const Orders: React.FC = () => {
   };
 
   const toggleView = (id: string) => {
+    enableAudio(); // Enable audio on user interaction
     setExpandedOrderId((prev) => (prev === id ? null : id));
   };
 
-  // Update the liveOrders filter logic
+  // Live orders - only show orders with pending items (not accepted or handed over)
   const liveOrders = orders.filter(order => {
     const hasPendingItems = order.items.some(item => item.status === 'pending');
-    const allItemsAccepted = order.items.every(item => item.status === 'accepted');
-    const allItemsHandedOverOrDelivered = order.items.every(item => item.status === 'handedOver' || (item.status as string) === 'delivered');
+    const hasNoAcceptedItems = !order.items.some(item => item.status === 'accepted');
+    const hasNoHandedOverItems = !order.items.some(item => item.status === 'handedOver');
     const isNotReadyForPickup = !order.readyForPickup;
-    // Only show orders that have at least one pending item, are not fully accepted, and are not handed over/delivered
-    return (hasPendingItems && !allItemsAccepted && !allItemsHandedOverOrDelivered && isNotReadyForPickup);
+    
+    return hasPendingItems && hasNoAcceptedItems && hasNoHandedOverItems && isNotReadyForPickup;
   }).filter((order) => {
     const matchesSearch =
       order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -290,22 +423,22 @@ const Orders: React.FC = () => {
       );
     return matchesSearch;
   }).sort((a, b) => {
-    // First check if either order is new
     const aIsNew = newOrders.some(newOrder => newOrder.id === a.id);
     const bIsNew = newOrders.some(newOrder => newOrder.id === b.id);
+    
     if (aIsNew && !bIsNew) return -1;
     if (!aIsNew && bIsNew) return 1;
+    
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
-  // Update the pastOrders filter logic
   const pastOrders = orders.filter(order => {
-    // Show orders that have all items handed over or delivered, or are in handedOverOrders
-    const allItemsHandedOverOrDelivered = order.items.every(item => item.status === 'handedOver' || (item.status as string) === 'delivered');
+    const hasHandedOverItems = order.items.some(item => item.status === 'handedOver');
     const allItemsRejected = order.items.every(item => item.status === 'rejected');
     const isHandedOverInStorage = JSON.parse(localStorage.getItem('handedOverOrders') || '[]')
       .some((handedOver: any) => handedOver.orderId === order.id);
-    return allItemsHandedOverOrDelivered || allItemsRejected || isHandedOverInStorage;
+    
+    return hasHandedOverItems || allItemsRejected || isHandedOverInStorage;
   }).filter((order) => {
     const matchesSearch =
       order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -315,29 +448,26 @@ const Orders: React.FC = () => {
       );
     return matchesSearch;
   }).sort((a, b) => {
-    // Get handed over timestamps from localStorage
     const handedOverOrders = JSON.parse(localStorage.getItem('handedOverOrders') || '[]');
     const aHandedOver = handedOverOrders.find((order: any) => order.orderId === a.id);
     const bHandedOver = handedOverOrders.find((order: any) => order.orderId === b.id);
-    // If both orders were handed over, sort by handed over time
+    
     if (aHandedOver && bHandedOver) {
       return new Date(bHandedOver.handedOverAt).getTime() - new Date(aHandedOver.handedOverAt).getTime();
     }
-    // If only one order was handed over, put it first
+    
     if (aHandedOver) return -1;
     if (bHandedOver) return 1;
-    // If neither was handed over, sort by creation time
+    
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
-  // Show notification for new orders - improved notification message
   const showOrderNotification = (newOrders: Order[]) => {
     const orderCount = newOrders.length;
     const pendingCount = newOrders.filter(order => 
       order.items.some(item => item.status === 'pending')
     ).length;
     
-    // More detailed notification message
     let message = '';
     if (pendingCount > 0) {
       const firstOrder = newOrders[0];
@@ -358,12 +488,10 @@ const Orders: React.FC = () => {
     setNotificationMessage(message);
     setShowNotification(true);
     
-    // Auto-hide notification after 30 seconds instead of 15
     setTimeout(() => {
       setShowNotification(false);
-    }, 30000); // 30 seconds
+    }, 30000);
     
-    // Try to use browser notifications if allowed
     if ("Notification" in window && Notification.permission === "granted") {
       new Notification("Drnkly - नवीन ऑर्डर आली आहे!", {
         body: message,
@@ -371,44 +499,29 @@ const Orders: React.FC = () => {
       });
     }
 
-    // Play notification sound
-    if (audioRef.current) {
-      // Reset the audio to the beginning
-      audioRef.current.currentTime = 0;
+    // Play notification sound multiple times
+    if (audioEnabled && audioContext) {
+      console.log('Playing notification sound for new order');
       
-      // Play the sound multiple times for better attention
-      let playCount = 0;
-      const maxPlays = 3;
-      
-      const playSound = () => {
-        if (playCount < maxPlays) {
-          audioRef.current?.play().catch(err => console.error("Failed to play sound:", err));
-          playCount++;
-        }
-      };
-      
-      // Play immediately
-      playSound();
-      
-      // Play again after 3 seconds
-      setTimeout(playSound, 3000);
-      
-      // Play one more time after 6 seconds
-      setTimeout(playSound, 6000);
+      // Play sound 5 times with intervals
+      for (let i = 0; i < 5; i++) {
+        setTimeout(() => {
+          playNotificationSound();
+        }, i * 800); // 0.8 second intervals
+      }
+    } else {
+      console.log('Audio not enabled or context not available');
     }
   };
 
-  // Handle notification click - scroll to new orders
   const handleNotificationClick = () => {
+    enableAudio();
     setShowNotification(false);
     if (newOrders.length > 0) {
-      // Expand the first new order
       setExpandedOrderId(newOrders[0].id);
-      // Scroll to the first new order element
       const orderElement = document.getElementById(`order-${newOrders[0].id}`);
       if (orderElement) {
         orderElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        // Add highlight effect
         orderElement.classList.add('highlight-order');
         setTimeout(() => {
           orderElement.classList.remove('highlight-order');
@@ -417,26 +530,23 @@ const Orders: React.FC = () => {
     }
   };
 
-  // Request notification permission
   const requestNotificationPermission = () => {
     if ("Notification" in window && Notification.permission !== "granted") {
       Notification.requestPermission();
     }
   };
 
-  // Update the handleOrderAccept function
   const handleOrderAccept = async (order: Order) => {
+    enableAudio();
     try {
       const token = localStorage.getItem('authToken');
       
-      // Update all pending items to accepted
       const updatePromises = order.items
         .filter(item => item.status === 'pending')
         .map(item => updateOrderStatus(order.id, item.productId, 'accepted'));
       
       await Promise.all(updatePromises);
       
-      // After all items are accepted, mark order as ready for pickup
       const response = await axios.put(
         `https://vendor.peghouse.in/api/vendor/orders/${order.id}/ready-for-pickup`,
         { 
@@ -448,12 +558,8 @@ const Orders: React.FC = () => {
       );
       
       if (response.status === 200) {
-        // Remove the order from the orders list since it's no longer a live order
         setOrders(prev => prev.filter(o => o.id !== order.id));
-        
         toast.success('Order accepted and ready for pickup!');
-        
-        // Navigate to pickup page
         navigate('/pickup');
       }
     } catch (err) {
@@ -462,32 +568,19 @@ const Orders: React.FC = () => {
     }
   };
 
-  // Check if all items in an order are accepted
-  const areAllItemsAccepted = (order: Order) => {
-    return order.items.every(item => item.status === 'accepted');
-  };
-
-  // Check if any item in an order is still pending
   const hasAnyPendingItem = (order: Order) => {
     return order.items.some(item => item.status === 'pending');
   };
 
-  // Check if any item in an order is handed over
   const hasAnyHandedOverItem = (order: Order) => {
     return order.items.some(item => item.status === 'handedOver');
   };
 
-  // Check if all items in an order are handed over
-  const areAllItemsHandedOver = (order: Order) => {
-    return order.items.every(item => item.status === 'handedOver');
-  };
-
-  // Function to handle handover of all items in an order
   const handleOrderHandover = async (order: Order) => {
+    enableAudio();
     try {
       const token = localStorage.getItem('authToken');
       
-      // Update all accepted items to handed over
       const updatePromises = order.items
         .filter(item => item.status === 'accepted')
         .map(item => 
@@ -500,7 +593,6 @@ const Orders: React.FC = () => {
       
       await Promise.all(updatePromises);
 
-      // Add order to payouts tracking
       try {
         await axios.post(
           'https://vendor.peghouse.in/api/vendor/payouts/track',
@@ -524,12 +616,55 @@ const Orders: React.FC = () => {
         console.error('Failed to track order in payouts:', payoutErr);
       }
 
-      // Update the orders state to move the order to past orders
-      setOrders(prev => prev.filter(o => o.id !== order.id));
+      setOrders(prev => {
+        const updatedOrders = prev.map(o => {
+          if (o.id === order.id) {
+            return {
+              ...o,
+              items: o.items.map(item => ({
+                ...item,
+                status: item.status === 'accepted' ? 'handedOver' : item.status
+              }))
+            };
+          }
+          return o;
+        });
 
-      // Show success message
+        const handedOverOrders = JSON.parse(localStorage.getItem('handedOverOrders') || '[]');
+        const newHandedOverOrders = [
+          ...handedOverOrders,
+          {
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+            handedOverAt: new Date().toISOString(),
+            customerName: order.customerName,
+            totalAmount: order.totalAmount,
+            items: order.items.map(item => ({
+              productId: item.productId,
+              name: item.name,
+              quantity: item.quantity,
+              price: item.price,
+              status: 'handedOver'
+            }))
+          }
+        ];
+        localStorage.setItem('handedOverOrders', JSON.stringify(newHandedOverOrders));
+
+        const orderExists = updatedOrders.some(o => o.id === order.id);
+        if (!orderExists) {
+          updatedOrders.push({
+            ...order,
+            items: order.items.map(item => ({
+              ...item,
+              status: 'handedOver'
+            }))
+          });
+        }
+
+        return updatedOrders;
+      });
+
       toast.success('Order handed over to delivery successfully!');
-      // Refresh orders to ensure everything is in sync
       fetchOrders();
     } catch (err) {
       console.error('Failed to hand over order', err);
@@ -537,10 +672,9 @@ const Orders: React.FC = () => {
     }
   };
 
-  // Function to handle rejection of all items in an order
   const handleOrderReject = async (order: Order) => {
+    enableAudio();
     try {
-      // Update all pending items to rejected
       const updatePromises = order.items
         .filter(item => item.status === 'pending')
         .map(item => updateOrderStatus(order.id, item.productId, 'rejected'));
@@ -553,141 +687,6 @@ const Orders: React.FC = () => {
     }
   };
 
-  // Function to get order status
-  const getOrderStatus = (order: Order) => {
-    if (areAllItemsHandedOver(order)) return 'Handed Over';
-    if (areAllItemsAccepted(order)) return 'Ready for Pickup';
-    if (hasAnyPendingItem(order)) return 'Pending';
-    if (order.items.some(item => item.status === 'rejected')) return 'Partially Rejected';
-    return 'Processing';
-  };
-
-  // Function to get order status color
-  const getOrderStatusColor = (order: Order) => {
-    const status = getOrderStatus(order);
-    switch (status) {
-      case 'Handed Over': return '#4caf50';
-      case 'Ready for Pickup': return '#2196f3';
-      case 'Pending': return '#ff9800';
-      case 'Partially Rejected': return '#f44336';
-      default: return '#666';
-    }
-  };
-
-  // Function to get order background color
-  const getOrderBackgroundColor = (order: Order) => {
-    const status = getOrderStatus(order);
-    switch (status) {
-      case 'Handed Over': return '#e8f5e9';
-      case 'Ready for Pickup': return '#e3f2fd';
-      case 'Pending': return '#fff3e0';
-      case 'Partially Rejected': return '#ffebee';
-      default: return '#f9f9f9';
-    }
-  };
-
-  // Function to render order items
-  const renderOrderItems = (order: Order) => {
-    const pendingItems = order.items.filter(item => item.status === 'pending');
-    const acceptedItems = order.items.filter(item => item.status === 'accepted');
-    
-    return (
-      <div style={{ marginTop: '16px', borderTop: '1px solid #eee', paddingTop: '12px' }}>
-        {pendingItems.length > 0 && acceptedItems.length > 0 && (
-          <div style={{ 
-            background: '#e3f2fd', 
-            padding: '8px 12px', 
-            borderRadius: '4px', 
-            marginBottom: '12px',
-            fontSize: '14px',
-            color: '#1976d2'
-          }}>
-            {pendingItems.length} items pending acceptance
-          </div>
-        )}
-        
-        {order.items.map((item, index) => (
-          <div
-            key={index}
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              fontSize: '14px',
-              marginBottom: '10px',
-              padding: '8px',
-              background: item.status === 'handedOver' ? '#e8f5e9' : 
-                         item.status === 'accepted' ? '#e3f2fd' :
-                         item.status === 'pending' ? '#fff3e0' : '#ffebee',
-              borderRadius: '4px'
-            }}
-          >
-            <span>
-              {item.quantity}x {item.name}
-              <span
-                style={{
-                  marginLeft: '12px',
-                  fontStyle: 'italic',
-                  color: item.status === 'handedOver' ? '#4caf50' :
-                         item.status === 'accepted' ? '#2196f3' :
-                         item.status === 'pending' ? '#ff9800' : '#f44336'
-                }}
-              >
-                ({item.status})
-              </span>
-            </span>
-            <span>₹{item.price}</span>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  // Function to render order actions
-  const renderOrderActions = (order: Order) => {
-    return (
-      <div style={{ display: 'flex', gap: '10px', marginTop: '16px', flexWrap: 'wrap' }}>
-        <Button
-          variant="secondary"
-          icon={<Eye className="w-4 h-4" />}
-          onClick={() => toggleView(order.id)}
-        >
-          {expandedOrderId === order.id ? 'Hide' : 'View'}
-        </Button>
-
-        {hasAnyPendingItem(order) && (
-          <>
-            <Button
-              variant="primary"
-              icon={<Check className="w-4 h-4" />}
-              onClick={() => handleOrderAccept(order)}
-            >
-              Accept All
-            </Button>
-            <Button
-              variant="danger"
-              icon={<X className="w-4 h-4" />}
-              onClick={() => handleOrderReject(order)}
-            >
-              Reject All
-            </Button>
-          </>
-        )}
-
-        {areAllItemsAccepted(order) && !hasAnyHandedOverItem(order) && (
-          <Button
-            variant="primary"
-            icon={<Truck className="w-4 h-4" />}
-            onClick={() => handleOrderHandover(order)}
-          >
-            Hand Over All
-          </Button>
-        )}
-      </div>
-    );
-  };
-
-  // Function to render order card
   const renderOrderCard = (order: Order, index: number, isPastOrder: boolean = false) => {
     const hasHandedOverItems = order.items.some(item => item.status === 'handedOver');
     const hasRejectedItems = order.items.some(item => item.status === 'rejected');
@@ -695,197 +694,263 @@ const Orders: React.FC = () => {
     const allItemsRejected = order.items.every(item => item.status === 'rejected');
     const hasPendingItems = order.items.some(item => item.status === 'pending');
     const hasAcceptedItems = order.items.some(item => item.status === 'accepted');
+    const isNewOrder = newOrders.some(newOrder => newOrder.id === order.id);
 
     return (
       <div
         key={order.id}
         id={`order-${order.id}`}
-        className={`${newOrders.some(newOrder => newOrder.id === order.id) ? 'new-order' : ''} ${isPastOrder ? 'past-order' : 'live-order'}`}
+        className={`order-card ${isNewOrder ? 'new-order' : ''} ${isPastOrder ? 'past-order' : 'live-order'}`}
         style={{
-          background: allItemsHandedOver ? '#e8f5e9' : 
-                     allItemsRejected ? '#ffebee' :
-                     hasHandedOverItems ? '#f1f8e9' : '#f9f9f9',
-          borderRadius: '10px',
-          padding: '16px',
-          marginBottom: '20px',
-          boxShadow: '0 0 8px rgba(0,0,0,0.05)',
-          border: newOrders.some(newOrder => newOrder.id === order.id) 
+          background: allItemsHandedOver ? 'linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)' : 
+                     allItemsRejected ? 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)' :
+                     hasHandedOverItems ? 'linear-gradient(135deg, #f1f8e9 0%, #dcedc8 100%)' : 
+                     'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+          borderRadius: '16px',
+          padding: '24px',
+          marginBottom: '24px',
+          boxShadow: isNewOrder 
+            ? '0 8px 32px rgba(255, 87, 34, 0.2), 0 0 0 2px #ff5722' 
+            : '0 4px 20px rgba(0, 0, 0, 0.08)',
+          border: isNewOrder 
             ? '2px solid #ff5722' 
             : isPastOrder 
               ? '1px solid #e0e0e0'
               : '1px solid transparent',
-          opacity: isPastOrder ? 0.9 : 1,
+          opacity: isPastOrder ? 0.95 : 1,
+          transition: 'all 0.3s ease',
+          position: 'relative',
+          overflow: 'hidden'
         }}
+        onClick={enableAudio}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <div>
-            <h3 style={{ margin: '0 0 6px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              #{index + 1} - {order.orderNumber}
-              {newOrders.some(newOrder => newOrder.id === order.id) && (
-                <span style={{ 
-                  background: '#ff5722',
-                  color: 'white',
-                  fontSize: '12px',
-                  padding: '2px 8px',
-                  borderRadius: '12px'
-                }}>
-                  NEW
-                </span>
-              )}
-              {allItemsHandedOver && (
-                <span style={{ 
-                  background: '#4caf50',
-                  color: 'white',
-                  fontSize: '12px',
-                  padding: '2px 8px',
-                  borderRadius: '12px'
-                }}>
-                  COMPLETED
-                </span>
-              )}
-              {allItemsRejected && (
-                <span style={{ 
-                  background: '#f44336',
-                  color: 'white',
-                  fontSize: '12px',
-                  padding: '2px 8px',
-                  borderRadius: '12px'
-                }}>
-                  REJECTED
-                </span>
-              )}
-              {hasHandedOverItems && hasRejectedItems && (
-                <span style={{ 
-                  background: '#ff9800',
-                  color: 'white',
-                  fontSize: '12px',
-                  padding: '2px 8px',
-                  borderRadius: '12px'
-                }}>
-                  PARTIALLY COMPLETED
-                </span>
-              )}
-            </h3>
-            <p style={{ color: '#666', fontSize: '14px' }}>{order.customerName}</p>
-            <p style={{ marginTop: '2px', fontSize: '14px', color: '#888' }}>
-  <strong>Placed On:</strong> {new Date(order.createdAt).toLocaleString()}
-</p>
+        {isNewOrder && (
+          <div 
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'linear-gradient(45deg, rgba(255, 87, 34, 0.05) 0%, rgba(255, 87, 34, 0.1) 50%, rgba(255, 87, 34, 0.05) 100%)',
+              animation: 'shimmer 2s infinite',
+              pointerEvents: 'none'
+            }}
+          />
+        )}
 
-            <p style={{ marginTop: '4px', fontSize: '14px' }}>
-              <strong>Final Total:</strong> ₹{order.totalAmount.toFixed(2)}
-            </p>
+        <div className="flex justify-between items-start mb-6">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center gap-2">
+                <Hash className="w-5 h-5 text-blue-600" />
+                <h3 className="text-xl font-bold text-gray-800">
+                  {order.orderNumber}
+                </h3>
+              </div>
+              
+              <div className="flex gap-2">
+                {isNewOrder && (
+                  <span className="px-3 py-1 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-bold rounded-full animate-pulse">
+                    NEW ORDER
+                  </span>
+                )}
+                {allItemsHandedOver && (
+                  <span className="px-3 py-1 bg-gradient-to-r from-green-500 to-green-600 text-white text-xs font-bold rounded-full">
+                    COMPLETED
+                  </span>
+                )}
+                {allItemsRejected && (
+                  <span className="px-3 py-1 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold rounded-full">
+                    REJECTED
+                  </span>
+                )}
+                {hasHandedOverItems && hasRejectedItems && (
+                  <span className="px-3 py-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-xs font-bold rounded-full">
+                    PARTIALLY COMPLETED
+                  </span>
+                )}
+              </div>
+            </div>
 
-            {/* Display Transaction ID */}
-            {order.transactionId && (
-              <p style={{ marginTop: '4px', fontSize: '14px' }}>
-                <strong>Transaction ID:</strong> {order.transactionId}
-              </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="flex items-center gap-3">
+                <User className="w-5 h-5 text-blue-600" />
+                <div>
+                  <p className="text-sm text-gray-500">Customer</p>
+                  <p className="font-semibold text-gray-800">{order.customerName}</p>
+                </div>
+              </div>
+              
+              {order.customerPhone && (
+                <div className="flex items-center gap-3">
+                  <Phone className="w-5 h-5 text-green-600" />
+                  <div>
+                    <p className="text-sm text-gray-500">Phone</p>
+                    <p className="font-semibold text-gray-800">{order.customerPhone}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {order.customerAddress && (
+              <div className="flex items-start gap-3 mb-4">
+                <MapPin className="w-5 h-5 text-red-600 mt-1" />
+                <div>
+                  <p className="text-sm text-gray-500">Delivery Address</p>
+                  <p className="text-gray-800">{order.customerAddress}</p>
+                </div>
+              </div>
             )}
 
-            {/* Display Payment Status */}
-            <p style={{ marginTop: '4px', fontSize: '14px' }}>
-              <strong>Payment Status:</strong> {order.paymentStatus}
-            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="flex items-center gap-3">
+                <Calendar className="w-5 h-5 text-purple-600" />
+                <div>
+                  <p className="text-sm text-gray-500">Order Time</p>
+                  <p className="font-semibold text-gray-800">
+                    {new Date(order.createdAt).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Package className="w-5 h-5 text-indigo-600" />
+                <div>
+                  <p className="text-sm text-gray-500">Total Amount</p>
+                  <p className="font-bold text-lg text-green-600">₹{order.totalAmount.toFixed(2)}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <CreditCard className="w-5 h-5 text-yellow-600" />
+                <div>
+                  <p className="text-sm text-gray-500">Payment Status</p>
+                  <p className={`font-semibold ${order.paymentStatus === 'paid' ? 'text-green-600' : 'text-orange-600'}`}>
+                    {order.paymentStatus.toUpperCase()}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {order.transactionId && (
+              <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                <p className="text-sm text-gray-500">Transaction ID</p>
+                <p className="font-mono text-gray-800">{order.transactionId}</p>
+              </div>
+            )}
           </div>
         </div>
 
         {expandedOrderId === order.id && (
-          <div style={{ marginTop: '16px', borderTop: '1px solid #eee', paddingTop: '12px' }}>
-            {order.items.map((item, index) => (
-              <div
-                key={index}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  fontSize: '14px',
-                  marginBottom: '10px',
-                  padding: '8px',
-                  background: item.status === 'handedOver' ? '#e8f5e9' : 
-                             item.status === 'rejected' ? '#ffebee' : '#f5f5f5',
-                  borderRadius: '4px',
-                  opacity: isPastOrder ? 0.9 : 1
-                }}
-              >
-                <span>
-                  {item.quantity}x {item.name}
-                  <span style={{
-                    marginLeft: '12px',
-                    fontStyle: 'italic',
-                    color: item.status === 'handedOver' ? '#4caf50' :
-                           item.status === 'rejected' ? '#f44336' : '#666'
-                  }}>
-                    ({item.status})
-                  </span>
-                </span>
-                <span>₹{item.price}</span>
-                {!isPastOrder && item.status === 'pending' && (
-                  <div style={{ display: 'flex', gap: '6px' }}>
+          <div className="border-t border-gray-200 pt-6 mt-6">
+            <h4 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <Package className="w-5 h-5" />
+              Order Items
+            </h4>
+            <div className="space-y-3">
+              {order.items.map((item, index) => (
+                <div
+                  key={index}
+                  className="flex justify-between items-center p-4 rounded-lg transition-all duration-200"
+                  style={{
+                    background: item.status === 'handedOver' ? 'linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)' : 
+                               item.status === 'accepted' ? 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)' :
+                               item.status === 'pending' ? 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)' : 
+                               'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)',
+                    border: `1px solid ${
+                      item.status === 'handedOver' ? '#4caf50' :
+                      item.status === 'accepted' ? '#2196f3' :
+                      item.status === 'pending' ? '#ff9800' : '#f44336'
+                    }`
+                  }}
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      <span className="font-semibold text-gray-800">
+                        {item.quantity}x {item.name}
+                      </span>
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                        item.status === 'handedOver' ? 'bg-green-100 text-green-800' :
+                        item.status === 'accepted' ? 'bg-blue-100 text-blue-800' :
+                        item.status === 'pending' ? 'bg-orange-100 text-orange-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {item.status.toUpperCase()}
+                      </span>
+                    </div>
+                    <p className="text-lg font-bold text-gray-800 mt-1">₹{item.price}</p>
+                  </div>
+                  
+                  {!isPastOrder && item.status === 'pending' && (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="success"
+                        icon={<Check className="w-4 h-4" />}
+                        onClick={() => updateOrderStatus(order.id, item.productId, 'accepted')}
+                      >
+                        Accept
+                      </Button>
+                      <Button
+                        variant="danger"
+                        icon={<X className="w-4 h-4" />}
+                        onClick={() => updateOrderStatus(order.id, item.productId, 'rejected')}
+                      >
+                        Reject
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {!isPastOrder && item.status === 'accepted' && (
                     <Button
                       variant="primary"
-                      icon={<Check className="w-4 h-4" />}
-                      onClick={() => updateOrderStatus(order.id, item.productId, 'accepted')}
+                      icon={<Truck className="w-4 h-4" />}
+                      onClick={() => updateOrderStatus(order.id, item.productId, 'handedOver')}
                     >
-                      Accept
+                      Hand Over
                     </Button>
-                    <Button
-                      variant="danger"
-                      icon={<X className="w-4 h-4" />}
-                      onClick={() => updateOrderStatus(order.id, item.productId, 'rejected')}
-                    >
-                      Reject
-                    </Button>
-                  </div>
-                )}
-                {!isPastOrder && item.status === 'accepted' && (
-                  <Button
-                    variant="primary"
-                    icon={<Truck className="w-4 h-4" />}
-                    onClick={() => updateOrderStatus(order.id, item.productId, 'handedOver')}
-                  >
-                    Hand Over
-                  </Button>
-                )}
-              </div>
-            ))}
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: '10px', marginTop: '16px', flexWrap: 'wrap' }}>
+        <div className="flex flex-wrap gap-3 mt-6 pt-6 border-t border-gray-200">
           <Button
             variant="secondary"
             icon={<Eye className="w-4 h-4" />}
             onClick={() => toggleView(order.id)}
           >
-            {expandedOrderId === order.id ? 'Hide' : 'View Details'}
+            {expandedOrderId === order.id ? 'Hide Details' : 'View Details'}
           </Button>
 
           {!isPastOrder && hasPendingItems && (
             <>
               <Button
-                variant="primary"
+                variant="success"
                 icon={<Check className="w-4 h-4" />}
                 onClick={() => handleOrderAccept(order)}
               >
-                Accept All
+                Accept All Items
               </Button>
               <Button
                 variant="danger"
                 icon={<X className="w-4 h-4" />}
                 onClick={() => handleOrderReject(order)}
               >
-                Reject All
+                Reject All Items
               </Button>
             </>
           )}
 
-          {!isPastOrder && hasAcceptedItems && !hasHandedOverItems && (
+          {!isPastOrder && hasAcceptedItems && !hasAnyHandedOverItem(order) && (
             <Button
               variant="primary"
               icon={<Truck className="w-4 h-4" />}
               onClick={() => handleOrderHandover(order)}
             >
-              Hand Over All
+              Hand Over All Items
             </Button>
           )}
         </div>
@@ -893,264 +958,196 @@ const Orders: React.FC = () => {
     );
   };
 
-  if (error) return <p style={{ textAlign: 'center', color: 'red' }}>{error}</p>;
-
-  // Add styles for past orders
-  const styles = `
-    .past-order {
-      transition: all 0.3s ease;
-    }
-    
-    .past-order:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .past-order {
-      animation: fadeIn 0.5s ease-out;
-    }
-  `;
+  if (error) return <p className="text-center text-red-600 text-lg">{error}</p>;
 
   return (
-    <div style={{ padding: '24px', fontFamily: 'sans-serif' }}>
-      <style>{styles}</style>
-      {/* Add notification sound */}
-      <audio ref={audioRef} src="/notification-sound.mp3" preload="auto" />
-      
-      {/* Notification popup with longer display time */}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100" onClick={enableAudio}>
       {showNotification && (
         <div 
           onClick={handleNotificationClick}
-            style={{
-            position: 'fixed',
-            top: '20px',
-            right: '20px',
-            background: '#ff5722',
+          className="fixed top-6 right-6 z-50 cursor-pointer transform transition-all duration-300 hover:scale-105"
+          style={{
+            background: 'linear-gradient(135deg, #ff5722 0%, #ff7043 100%)',
             color: 'white',
-            padding: '16px 24px',
-            borderRadius: '8px',
-            boxShadow: '0 4px 15px rgba(255,87,34,0.4)',
-            zIndex: 1000,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            cursor: 'pointer',
-            animation: 'slideIn 0.3s ease-out, blinking 4s infinite', // Slower blinking
-            fontSize: '16px',
-            fontWeight: 'bold',
-            border: '2px solid #fff',
-            minWidth: '300px' // Ensure notification has minimum width
+            padding: '20px 24px',
+            borderRadius: '16px',
+            boxShadow: '0 8px 32px rgba(255, 87, 34, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+            animation: 'slideInRight 0.5s ease-out, pulse 2s infinite',
+            minWidth: '320px',
+            maxWidth: '400px'
           }}
         >
-          <Bell size={24} className="notification-bell" />
-              <div>
-            <p style={{ margin: 0, fontWeight: 'bold' }}>{notificationMessage}</p>
-            <p style={{ margin: '6px 0 0 0', fontSize: '13px' }}>क्लिक करा आणि पहा</p>
-              </div>
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0">
+              <Bell size={28} className="animate-bounce" />
             </div>
+            <div className="flex-1">
+              <h4 className="font-bold text-lg mb-2">🔔 नवीन ऑर्डर!</h4>
+              <p className="text-sm opacity-90 mb-3">{notificationMessage}</p>
+              <p className="text-xs opacity-75">👆 क्लिक करा आणि ऑर्डर पहा</p>
+            </div>
+          </div>
+        </div>
       )}
 
-      {/* CSS for animations */}
-      <style>
-        {`
-          @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-          }
-          
-          @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-          }
-          
-          @keyframes highlight {
-            0%, 100% { background-color: #fff; }
-            50% { background-color: #ffecb3; }
-          }
-          
-          @keyframes blinking {
-            0%, 100% { box-shadow: 0 4px 15px rgba(255,87,34,0.4); }
-            50% { box-shadow: 0 4px 25px rgba(255,87,34,0.8); }
-          }
-          
-          @keyframes swing {
-            0%, 100% { transform: rotate(0deg); }
-            30% { transform: rotate(15deg); }
-            60% { transform: rotate(-15deg); }
-          }
-          
-          .notification-bell {
-            animation: swing 2s infinite ease-in-out; // Slower bell swing
-          }
-          
-          .new-order {
-            animation: fadeIn 0.5s ease-out;
-          }
-          
-          .highlight-order {
-            animation: highlight 3s ease-in-out; // Longer highlight duration
-          }
-          
-          @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-          }
-        `}
-      </style>
+      <div className="bg-white shadow-lg border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">Order Management</h1>
+              <p className="text-gray-600">Manage your incoming and completed orders</p>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <Input
+                placeholder="Search orders, customers, or items..."
+                icon={<Search className="w-5 h-5 text-gray-400" />}
+                style={{ minWidth: '300px' }}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              
+              <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-lg">
+                <Clock className="w-5 h-5 text-blue-600" />
+                <span className="text-sm font-medium text-blue-800">Auto-refresh: ON</span>
+              </div>
 
-      {/* Header with search */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 600 }}>Orders</h1>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <Input
-            placeholder="Search by Order ID, Customer or Item..."
-            icon={<Search className="w-5 h-5 text-gray-400" />}
-            style={{ minWidth: '250px' }}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {/* Live Orders Section */}
-      <div style={{ 
-        background: '#fff',
-        borderRadius: '12px',
-        padding: '24px',
-        marginBottom: '32px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
-      }}>
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '12px', 
-          marginBottom: '20px',
-          paddingBottom: '12px',
-          borderBottom: '2px solid #e3f2fd'
-        }}>
-          <div style={{ 
-            width: '12px', 
-            height: '12px', 
-            borderRadius: '50%', 
-            background: '#4caf50',
-            animation: 'pulse 2s infinite'
-          }} />
-          <h2 style={{ 
-            fontSize: '20px', 
-            fontWeight: 600,
-            color: '#1976d2',
-            margin: 0
-          }}>
-            Live Orders
-          </h2>
-        </div>
-
-        {liveOrders.length === 0 ? (
-          <p style={{ 
-            textAlign: 'center', 
-            color: '#666', 
-            padding: '32px',
-            background: '#f8f9fa',
-            borderRadius: '8px',
-            fontSize: '15px'
-          }}>
-            No live orders at the moment
-          </p>
-        ) : (
-          <div style={{ display: 'grid', gap: '20px' }}>
-            {liveOrders.map((order, index) => renderOrderCard(order, index))}
+              <button
+                onClick={enableAudio}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                  audioEnabled 
+                    ? 'bg-green-100 text-green-800 border-2 border-green-300' 
+                    : 'bg-red-100 text-red-800 border-2 border-red-300 animate-pulse'
+                }`}
+              >
+                🔊 {audioEnabled ? 'Sound ON' : 'Click to Enable Sound'}
+              </button>
+            </div>
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Past Orders Section */}
-      <div 
-        ref={pastOrdersRef}
-        style={{ 
-          background: '#fff',
-          borderRadius: '12px',
-          padding: '24px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
-        }}
-      >
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '12px', 
-          marginBottom: '20px',
-          paddingBottom: '12px',
-          borderBottom: '2px solid #f5f5f5'
-        }}>
-          <div style={{ 
-            width: '12px', 
-            height: '12px', 
-            borderRadius: '50%', 
-            background: '#9e9e9e'
-          }} />
-          <h2 style={{ 
-            fontSize: '20px', 
-            fontWeight: 600,
-            color: '#666',
-            margin: 0
-          }}>
-            Past Orders
-          </h2>
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 mb-8 overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6">
+            <div className="flex items-center gap-4">
+              <div className="w-4 h-4 bg-green-400 rounded-full animate-pulse"></div>
+              <h2 className="text-2xl font-bold text-white">Live Orders</h2>
+              <span className="bg-white bg-opacity-20 text-white px-3 py-1 rounded-full text-sm font-medium">
+                {liveOrders.length} Active
+              </span>
+            </div>
+          </div>
+
+          <div className="p-8">
+            {liveOrders.length === 0 ? (
+              <div className="text-center py-16">
+                <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-600 mb-2">No Live Orders</h3>
+                <p className="text-gray-500">New orders will appear here automatically</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {liveOrders.map((order, index) => renderOrderCard(order, index))}
+              </div>
+            )}
+          </div>
         </div>
 
-        {pastOrders.length === 0 ? (
-          <p style={{ 
-            textAlign: 'center', 
-            color: '#666', 
-            padding: '32px',
-            background: '#f8f9fa',
-            borderRadius: '8px',
-            fontSize: '15px'
-          }}>
-            No past orders available
-          </p>
-        ) : (
-          <div style={{ display: 'grid', gap: '20px' }}>
-            {pastOrders.map((order, index) => renderOrderCard(order, index, true))}
+        <div 
+          ref={pastOrdersRef}
+          className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden"
+        >
+          <div className="bg-gradient-to-r from-gray-600 to-gray-700 px-8 py-6">
+            <div className="flex items-center gap-4">
+              <div className="w-4 h-4 bg-gray-400 rounded-full"></div>
+              <h2 className="text-2xl font-bold text-white">Past Orders</h2>
+              <span className="bg-white bg-opacity-20 text-white px-3 py-1 rounded-full text-sm font-medium">
+                {pastOrders.length} Completed
+              </span>
+            </div>
           </div>
-        )}
+
+          <div className="p-8">
+            {pastOrders.length === 0 ? (
+              <div className="text-center py-16">
+                <Clock className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-600 mb-2">No Past Orders</h3>
+                <p className="text-gray-500">Completed orders will appear here</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {pastOrders.map((order, index) => renderOrderCard(order, index, true))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* Add new styles */}
-      <style>
-        {`
-          @keyframes pulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.2); opacity: 0.7; }
-            100% { transform: scale(1); opacity: 1; }
+      <style jsx>{`
+        @keyframes slideInRight {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
           }
-          
-          .live-order {
-            transition: all 0.3s ease;
-          }
-          
-          .live-order:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-          }
-          
-          .past-order {
-            transition: all 0.3s ease;
-            opacity: 0.9;
-          }
-          
-          .past-order:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+          to {
+            transform: translateX(0);
             opacity: 1;
           }
-        `}
-      </style>
+        }
+        
+        @keyframes pulse {
+          0%, 100% {
+            box-shadow: 0 8px 32px rgba(255, 87, 34, 0.4);
+          }
+          50% {
+            box-shadow: 0 8px 32px rgba(255, 87, 34, 0.6);
+          }
+        }
+        
+        @keyframes shimmer {
+          0% {
+            background-position: -200% 0;
+          }
+          100% {
+            background-position: 200% 0;
+          }
+        }
+        
+        @keyframes highlight {
+          0%, 100% {
+            background-color: rgba(255, 235, 59, 0.1);
+          }
+          50% {
+            background-color: rgba(255, 235, 59, 0.3);
+          }
+        }
+        
+        .order-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .new-order {
+          animation: slideInRight 0.5s ease-out;
+        }
+        
+        .highlight-order {
+          animation: highlight 2s ease-in-out 3;
+        }
+        
+        .live-order {
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .past-order {
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .past-order:hover {
+          opacity: 1;
+        }
+      `}</style>
     </div>
   );
 };
