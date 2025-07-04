@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Wine, ArrowRight, AlertCircle, Eye, EyeOff, Check, X, Mail, MapPin, Calendar, Shield, User, Phone, Lock, ChevronRight, CheckCircle } from 'lucide-react';
 import axios from 'axios';
+import { sessionManager } from '../utils/sessionManager';
 
 function SignUp() {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ function SignUp() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -102,6 +104,47 @@ function SignUp() {
     return Object.values(passwordRequirements).every(req => req === true);
   };
 
+  // Get current user from session (if any)
+  let currentUser: any = null;
+  try {
+    currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+  } catch {}
+
+  // Helper to handle logout and redirect
+  const logoutAndRedirect = () => {
+    sessionManager.clearSession();
+    navigate('/login');
+  };
+
+  // Email input handler with logout logic
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEmail = e.target.value;
+    // If logged in and email changes, logout
+    if (currentUser && currentUser.email && newEmail !== currentUser.email) {
+      logoutAndRedirect();
+      return;
+    }
+    setFormData({ ...formData, email: newEmail });
+    setIsOtpSent(false);
+    setIsOtpVerified(false);
+    setOtpSent(false);
+    setOtpVerified(false);
+    setOtp('');
+    setOtpSuccess('');
+  };
+
+  // Mobile input handler with logout logic
+  const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (currentUser && currentUser.mobile && value !== currentUser.mobile) {
+      logoutAndRedirect();
+      return;
+    }
+    if (/^\d{0,10}$/.test(value)) {
+      setFormData({ ...formData, mobile: value });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!agreed) {
@@ -148,11 +191,36 @@ function SignUp() {
       console.log(res.data);
 
       // After successful submission
+      // Automatically log the user in
+      try {
+        const loginRes = await axios.post('https://peghouse.in/api/auth/login', {
+          identifier: formData.email, // or mobile if you want to support mobile login
+          password: formData.password,
+        });
+        if (loginRes.data.message === 'Login successful') {
+          sessionManager.setSession(loginRes.data.token, loginRes.data.user);
+          localStorage.removeItem('isSkippedLogin');
+          localStorage.removeItem('oldMonkOfferShown');
+          window.dispatchEvent(new Event('storage'));
+          navigate('/dashboard');
+          return;
+        } else {
+          setError('Sign-up succeeded but auto-login failed. Please login manually.');
+        }
+      } catch (loginErr: any) {
+        setError('Sign-up succeeded but auto-login failed. Please login manually.');
+      }
       setIsSubmitted(true);
       setShowInfo(true);
       setTimeout(() => navigate('/login'), 4000);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Something went wrong!');
+      // Check for duplicate email/mobile error
+      const msg = err.response?.data?.message || '';
+      if (msg.toLowerCase().includes('already exists') || msg.toLowerCase().includes('duplicate')) {
+        setShowDuplicateModal(true);
+        return;
+      }
+      setError(msg || 'Something went wrong!');
     }
   };
 
@@ -307,15 +375,7 @@ function SignUp() {
                         className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-orange-400 focus:outline-none transition-all duration-300 hover:border-gray-300"
                         placeholder="Enter your email"
                         value={formData.email}
-                        onChange={(e) => {
-                          setFormData({ ...formData, email: e.target.value });
-                          setIsOtpSent(false);
-                          setIsOtpVerified(false);
-                          setOtpSent(false);
-                          setOtpVerified(false);
-                          setOtp('');
-                          setOtpSuccess('');
-                        }}
+                        onChange={handleEmailChange}
                       />
                     </div>
                     <button
@@ -573,12 +633,7 @@ function SignUp() {
                     className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-orange-400 focus:outline-none transition-all duration-300 hover:border-gray-300"
                     placeholder="10-digit mobile number"
                     value={formData.mobile}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (/^\d{0,10}$/.test(value)) {
-                        setFormData({ ...formData, mobile: value });
-                      }
-                    }}
+                    onChange={handleMobileChange}
                   />
                   {formData.mobile && formData.mobile.length !== 10 && (
                     <p className="text-red-500 text-xs mt-2 flex items-center">
@@ -854,6 +909,30 @@ function SignUp() {
                   Cancel
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Duplicate Account Modal */}
+        {showDuplicateModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl p-8 w-full max-w-md text-center shadow-2xl animate-scaleIn">
+              <div className="w-16 h-16 mx-auto bg-red-100 rounded-full flex items-center justify-center mb-4">
+                <AlertCircle size={32} className="text-red-500" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">Account Already Exists</h3>
+              <p className="text-gray-600 mb-6">
+                An account already exists with this email or mobile number. Please log in directly.
+              </p>
+              <button
+                onClick={() => {
+                  setShowDuplicateModal(false);
+                  navigate('/login');
+                }}
+                className="w-full px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:from-orange-600 hover:to-amber-600 hover:shadow-lg transition-all duration-300 hover:scale-105 active:scale-95"
+              >
+                Go to Login
+              </button>
             </div>
           </div>
         )}
