@@ -45,78 +45,90 @@ function App() {
     }
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
+const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setError('');
 
-    if (!agreedToTerms) {
-      setError('Please agree to the Terms & Govt. Regulations.');
-      setIsLoading(false);
-      return;
-    }
-
-    const identifier = loginMethod === 'mobile' ? mobile : email;
-
-    if (!identifier || (loginMethod === 'mobile' && identifier.length !== 10)) {
-      setError('Please enter a valid mobile number or email.');
-      setIsLoading(false);
-      return;
-    }
-
-    if (!password.trim()) {
-      setError('Please enter your password.');
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const response = await axios.post('https://peghouse.in/api/auth/login', {
-        identifier,
-        password,
-      });
- 
-      if (response.data.message === 'Login successful') {
-        sessionManager.setSession(response.data.token, response.data.user);
-        localStorage.removeItem('isSkippedLogin');
-        localStorage.removeItem('oldMonkOfferShown');
-        window.dispatchEvent(new Event('storage'));
-
-        if (localStorage.getItem('locationGranted') === 'true') {
-          navigate('/dashboard');
-        } else {
-          setShowLocationPopup(true);
-        }
-      }
-    } catch (error: any) {
-      const msg = error?.response?.data?.message;
-
-    if (msg === 'User not found') {
-      setError('No account found with this email or mobile number.');
-    } else if (msg === 'Invalid credentials') {
-      setError('Incorrect email or mobile number, or password.');
-    } else if (msg === 'Your account has been rejected. Please contact support.') {
-      setError('Your account is rejected. Please contact support.');
-    } else if (msg === 'Your account is not verified yet.') {
-      setError('Your account is not yet verified. Please wait for approval.');
-    } else {
-      setError('Something went wrong. Please try again.');
-    }
-    } finally {
-      setIsLoading(false);
+  if (!agreedToTerms) {
+    setError('Please agree to the Terms & Govt. Regulations.');
+    setIsLoading(false);
+    return;
   }
-  };
 
-  const handleLogout = () => {
-    sessionManager.clearSession();
-    navigate('/login');
-  };
+  const identifier = loginMethod === 'mobile' ? mobile : email;
 
-  const handleGoogleLogin = () => {
-    window.location.href = 'https://peghouse.in/api/auth/google';
-  };
+  if (!identifier || (loginMethod === 'mobile' && identifier.length !== 10)) {
+    setError('Please enter a valid mobile number or email.');
+    setIsLoading(false);
+    return;
+  }
 
-  const handleSkipLogin = () => {
+  if (!password.trim()) {
+    setError('Please enter your password.');
+    setIsLoading(false);
+    return;
+  }
+
+  const getLocationData = (): Promise<any> =>
+    new Promise((resolve) => {
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const coords = {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              timestamp: new Date().toISOString()
+            };
+            console.log('📍 Location fetched:', coords); // ✅ Log live location
+            resolve(coords);
+          },
+          (error) => {
+            console.warn('⚠️ Location access denied:', error.message);
+            resolve(null);
+          },
+          { enableHighAccuracy: true }
+        );
+      } else {
+        console.warn('⚠️ Geolocation not supported');
+        resolve(null);
+      }
+    });
+
+  try {
+    const location = await getLocationData();
+
+    if (location) {
+      console.log('📦 Sending login with location:', location); // ✅ Confirm sending
+    } else {
+      console.log('🚫 No location provided, proceeding without coordinates');
+    }
+
+    const response = await axios.post('https://peghouse.in/api/auth/login', {
+      identifier,
+      password,
+      location
+    });
+
+    if (response.data.message === 'Login successful') {
+      console.log('✅ Login Success:', response.data.user);
+      sessionManager.setSession(response.data.token, response.data.user);
+      localStorage.removeItem('isSkippedLogin');
+      localStorage.removeItem('oldMonkOfferShown');
+      window.dispatchEvent(new Event('storage'));
+      navigate('/dashboard');
+    }
+  } catch (error: any) {
+    const msg = error?.response?.data?.message;
+    console.error('❌ Login failed:', msg || error.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
+
+    const handleSkipLogin = () => {
     localStorage.setItem('isSkippedLogin', 'true');
     setIsSkipped(true);
     window.dispatchEvent(new Event('storage'));
@@ -159,6 +171,17 @@ function App() {
     setShowLocationPopup(false);
     navigate('/dashboard');
   };
+
+  const handleLogout = () => {
+    sessionManager.clearSession();
+    navigate('/login');
+  };
+
+  const handleGoogleLogin = () => {
+    window.location.href = 'https://peghouse.in/api/auth/google';
+  };
+
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 flex flex-col relative overflow-hidden">
       {/* Background Pattern */}

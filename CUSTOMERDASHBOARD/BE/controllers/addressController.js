@@ -2,6 +2,7 @@ const Address = require('../models/Address');
 const axios = require('axios');
 
 // 🔄 Reverse Geocoding & Save
+// 🔄 Reverse Geocoding & Save
 exports.getAddressFromCoordinates = async (req, res) => {
   const { latitude, longitude, userId } = req.query;
 
@@ -10,6 +11,24 @@ exports.getAddressFromCoordinates = async (req, res) => {
   }
 
   try {
+    // ✅ Check for existing address with same coordinates
+    const existing = await Address.findOne({
+      userId,
+      latitude: Number(latitude),
+      longitude: Number(longitude),
+    });
+
+    if (existing) {
+      console.log('📍 Address already exists, skipping save.');
+      return res.status(200).json({
+        address: existing.address,
+        city: existing.city,
+        pincode: existing.pincode,
+        message: 'Address already exists'
+      });
+    }
+
+    // ✅ Otherwise, reverse geocode and save
     const response = await axios.get('https://nominatim.openstreetmap.org/reverse', {
       params: {
         format: 'json',
@@ -50,6 +69,7 @@ exports.getAddressFromCoordinates = async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch address from coordinates' });
   }
 };
+
 
 // 📄 Get all addresses for a user
 exports.getUserAddresses = async (req, res) => {

@@ -109,46 +109,55 @@ const Profile = () => {
 
   // Fetch user profile data using useEffect
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const userId = localStorage.getItem('userId');
-        const response = await axios.get(`https://peghouse.in/api/users/${userId}`);
-        const user = response.data;
 
-        // If you have latitude and longitude from DB:
-        const latitude = user.latitude;
-        const longitude = user.longitude;
+  const fetchUserProfile = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) return;
 
-        let address = '';
-        if (latitude && longitude) {
-          const geoRes = await axios.get('http://localhost:5000/api/addresses/reverse-geocode/location', {
-            params: { latitude, longitude, userId },
-          });
-          address = geoRes.data.address || '';
-        }
+      const response = await axios.get(`https://peghouse.in/api/users/${userId}`);
+      const user = response.data;
 
-        setUserInfo({
-          name: user.name,
-          phone: user.mobile,
-          address: address || user.address || '',
-          location: {
-            latitude,
-            longitude,
-          },
+      // ✅ Extract location from user
+      const latitude = user?.location?.latitude;
+      const longitude = user?.location?.longitude;
+
+      console.log("🌍 User coordinates from DB:", { latitude, longitude });
+
+      let resolvedAddress = user.address || '';
+
+      // ✅ If coordinates are available, get address
+      if (latitude && longitude) {
+        const geoRes = await axios.get(`https://peghouse.in/api/addresses/reverse-geocode/location`, {
+          params: { latitude, longitude, userId }
         });
-      } catch (error) {
-        console.error('❌ Failed to fetch profile:', error);
+        resolvedAddress = geoRes.data.address || resolvedAddress;
+        console.log("📍 Resolved address from coordinates:", resolvedAddress);
       }
-    };
 
-    fetchUserProfile();
-  }, []);
+      setUserInfo({
+        name: user.name,
+        phone: user.mobile,
+        address: resolvedAddress,
+        location: {
+          latitude,
+          longitude
+        }
+      });
+    } catch (error) {
+      console.error('❌ Failed to fetch profile:', error);
+    }
+  };
+
+  fetchUserProfile();
+}, []);
+
 
   // Add this just below userInfo fetch in useEffect
   const fetchSavedAddresses = async () => {
     try {
       const userId = localStorage.getItem('userId');
-      const response = await axios.get(`http://localhost:5000/api/addresses/${userId}`);
+      const response = await axios.get(`https://peghouse.in/api/addresses/${userId}`);
       const saved = response.data;
 
       // Format into same shape you're using
@@ -444,20 +453,21 @@ const Profile = () => {
     if (newAddress.address && newAddress.city && newAddress.pincode) {
       try {
         const userId = localStorage.getItem('userId');
-        const res = await axios.post('http://localhost:5000/api/addresses', {
+        const res = await axios.post('https://peghouse.in/api/addresses', {
           userId,
           ...newAddress
         });
 
-        const saved = res.data;
+        const saved = res.data.address;
 
-        setAddresses(prev => [...prev, {
-          id: saved._id,
-          address: saved.address,
-          city: saved.city,
-          pincode: saved.pincode,
-          type: saved.type
-        }]);
+setAddresses(prev => [...prev, {
+  id: saved._id,
+  address: saved.address,
+  city: saved.city,
+  pincode: saved.pincode,
+  type: saved.type
+}]);
+
 
         // Reset form
         setNewAddress({
@@ -483,7 +493,7 @@ const Profile = () => {
     if (!confirmDelete) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/addresses/${id}`);
+      await axios.delete(`https://peghouse.in/api/addresses/${id}`);
       setAddresses(prev => prev.filter(addr => addr.id !== id));
       alert("Address deleted successfully.");
     } catch (err) {
@@ -506,7 +516,7 @@ const Profile = () => {
 const updateAddress = async () => {
   if (editingAddress && editAddressData.address && editAddressData.city && editAddressData.pincode) {
     try {
-      const res = await axios.put(`http://localhost:5000/api/addresses/${editingAddress}`, editAddressData);
+      const res = await axios.put(`https://peghouse.in/api/addresses/${editingAddress}`, editAddressData);
 
       // Update local state with returned address
       setAddresses(prev => prev.map(addr =>

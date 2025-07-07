@@ -260,7 +260,6 @@ exports.login = async (req, res) => {
   }
 
   try {
-    // ✅ Find user by mobile or email
     const user = await User.findOne({
       $or: [
         { mobile: identifier },
@@ -268,39 +267,35 @@ exports.login = async (req, res) => {
       ]
     });
 
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // ✅ Check user status
-    if (user.status === 'Rejected') {
-      return res.status(403).json({ message: 'Your account has been rejected. Please contact support.' });
-    }
+    if (user.status === 'Rejected') return res.status(403).json({ message: 'Your account has been rejected. Please contact support.' });
 
-    if (user.status !== 'Verified') {
-      return res.status(403).json({ message: 'Your account is not verified yet.' });
-    }
+    if (user.status !== 'Verified') return res.status(403).json({ message: 'Your account is not verified yet.' });
 
-    // ✅ Check password
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
-    }
+    if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
-    // ✅ Store location if provided
+    // ✅ Call internal address API if location exists
     if (location?.latitude && location?.longitude) {
-      user.location = {
-        latitude: location.latitude,
-        longitude: location.longitude,
-        timestamp: location.timestamp || new Date()
-      };
-      await user.save();
+      try {
+        await axios.get(`http://localhost:5000/api/addresses/from-coordinates`, {
+          params: {
+            latitude: location.latitude,
+            longitude: location.longitude,
+            userId: user._id.toString()
+          },
+          headers: {
+            'User-Agent': 'PegHouse/1.0'
+          }
+        });
+      } catch (geoErr) {
+        console.error('⚠️ Failed to save location address:', geoErr.message);
+      }
     }
 
-    // ✅ Generate JWT
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-    // ✅ Respond with token & user
     return res.status(200).json({
       message: 'Login successful',
       token,
