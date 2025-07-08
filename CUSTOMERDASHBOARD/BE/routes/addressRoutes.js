@@ -9,7 +9,7 @@ const {
 } = require('../controllers/addressController');
 
 // GET: Reverse geocode from lat/lng and save
-router.get('/reverse-geocode/location', getAddressFromCoordinates);
+router.get('/from-coordinates', getAddressFromCoordinates); // ✅ safe and clean
 
 // GET: Get all addresses of a user
 router.get('/:userId', getUserAddresses);

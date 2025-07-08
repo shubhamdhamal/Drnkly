@@ -6,6 +6,8 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const otpStore = new Map();
+const axios = require('axios');
+
 
 // 📤 Send OTP for registration
 exports.handleSendOtp = async (req, res) => {
@@ -252,6 +254,7 @@ exports.signup = async (req, res) => {
 
 
 // ✅ User Login with status check
+// ✅ User Login with status check
 exports.login = async (req, res) => {
   const { identifier, password, location } = req.body;
 
@@ -269,9 +272,13 @@ exports.login = async (req, res) => {
 
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    if (user.status === 'Rejected') return res.status(403).json({ message: 'Your account has been rejected. Please contact support.' });
+    if (user.status === 'Rejected') {
+      return res.status(403).json({ message: 'Your account has been rejected. Please contact support.' });
+    }
 
-    if (user.status !== 'Verified') return res.status(403).json({ message: 'Your account is not verified yet.' });
+    if (user.status !== 'Verified') {
+      return res.status(403).json({ message: 'Your account is not verified yet.' });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
@@ -289,8 +296,26 @@ exports.login = async (req, res) => {
             'User-Agent': 'PegHouse/1.0'
           }
         });
+
+        // ✅ Save live coordinates to User model
+        await User.findByIdAndUpdate(
+          user._id,
+          {
+            $set: {
+              location: {
+                latitude: location.latitude,
+                longitude: location.longitude,
+                timestamp: new Date()
+              }
+            }
+          },
+          { new: true }
+        );
+
+        console.log('✅ Location saved in User DB');
+
       } catch (geoErr) {
-        console.error('⚠️ Failed to save location address:', geoErr.message);
+        console.error('⚠️ Failed to save location address or update user:', geoErr.message);
       }
     }
 
@@ -307,3 +332,4 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: 'Server error.', error: error.message });
   }
 };
+

@@ -17,7 +17,8 @@ import {
   ShoppingBag,
   User,
   Wine,
-  X
+  X,
+  Navigation
 } from 'lucide-react';
 
 // Define Message interface to fix the error
@@ -487,6 +488,85 @@ setAddresses(prev => [...prev, {
     }
   };
 
+  // Get live location function
+  const getLiveLocation = () => {
+    if ('geolocation' in navigator) {
+      // Show loading state
+      const locationButton = document.getElementById('locationButton') as HTMLButtonElement;
+      if (locationButton) {
+        locationButton.innerHTML = '<div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>';
+        locationButton.disabled = true;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+
+          try {
+            // Get address from coordinates using reverse geocoding
+            const response = await axios.get(`https://peghouse.in/api/addresses/reverse-geocode/location`, {
+              params: { latitude, longitude }
+            });
+
+            const addressData = response.data;
+            
+            // Update the form with the resolved address
+            setNewAddress(prev => ({
+              ...prev,
+              address: addressData.address || '',
+              city: addressData.city || '',
+              pincode: addressData.pincode || ''
+            }));
+
+            alert('Location detected successfully! Please review and save.');
+          } catch (error) {
+            console.error('Failed to get address from coordinates:', error);
+            alert('Location detected but could not get address details. Please fill manually.');
+          } finally {
+            // Reset button state
+            if (locationButton) {
+              locationButton.innerHTML = '<MapPin className="w-4 h-4" />';
+              locationButton.disabled = false;
+            }
+          }
+        },
+        (error) => {
+          console.error('Location error:', error);
+          let errorMessage = 'Unable to get your location.';
+          
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage = 'Location access denied. Please enable location in your browser settings.';
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage = 'Location information unavailable.';
+              break;
+            case error.TIMEOUT:
+              errorMessage = 'Location request timed out.';
+              break;
+          }
+          
+          alert(errorMessage);
+          
+          // Reset button state
+          const locationButton = document.getElementById('locationButton') as HTMLButtonElement;
+          if (locationButton) {
+            locationButton.innerHTML = '<MapPin className="w-4 h-4" />';
+            locationButton.disabled = false;
+          }
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000
+        }
+      );
+    } else {
+      alert('Location is not supported by your browser.');
+    }
+  };
+
   // Delete address
   const deleteAddress = async (id: string) => {
     const confirmDelete = window.confirm("Are you sure you want to delete this address?");
@@ -904,14 +984,25 @@ const updateAddress = async () => {
                       </div>
                       <div>
                         <label className="block text-gray-700 text-sm font-medium mb-1">Full Address</label>
-                        <input
-                          type="text"
-                          name="address"
-                          value={newAddress.address}
-                          onChange={handleAddressChange}
-                          placeholder="Flat/House No., Building, Street"
-                          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
+                        <div className="flex space-x-2">
+                          <input
+                            type="text"
+                            name="address"
+                            value={newAddress.address}
+                            onChange={handleAddressChange}
+                            placeholder="Flat/House No., Building, Street"
+                            className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          />
+                          <button
+                            id="locationButton"
+                            type="button"
+                            onClick={getLiveLocation}
+                            className="bg-indigo-600 text-white px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors flex items-center justify-center"
+                            title="Get current location"
+                          >
+                            <MapPin className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                       <div>
                         <label className="block text-gray-700 text-sm font-medium mb-1">City</label>
@@ -952,12 +1043,23 @@ const updateAddress = async () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="mt-4">
+                  <div className="mt-4 flex gap-2">
                     <button
                       onClick={() => setShowAddAddress(true)}
                       className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center"
                     >
                       <span className="mr-2">+</span> Add New Address
+                    </button>
+                    <button
+                      type="button"
+                      className="bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center"
+                      title="Add address using current location"
+                      onClick={() => {
+                        setShowAddAddress(true);
+                        setTimeout(() => { getLiveLocation(); }, 100); // Wait for form to open
+                      }}
+                    >
+                      <MapPin className="w-5 h-5" />
                     </button>
                   </div>
                 )}
@@ -991,13 +1093,59 @@ const updateAddress = async () => {
                         </div>
                         <div>
                           <label className="block text-gray-700 text-sm font-medium mb-1">Full Address</label>
-                          <input
-                            type="text"
-                            value={editAddressData.address}
-                            onChange={(e) => setEditAddressData(prev => ({ ...prev, address: e.target.value }))}
-                            placeholder="Flat/House No., Building, Street"
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                          />
+                          <div className="flex space-x-2">
+                            <input
+                              type="text"
+                              value={editAddressData.address}
+                              onChange={(e) => setEditAddressData(prev => ({ ...prev, address: e.target.value }))}
+                              placeholder="Flat/House No., Building, Street"
+                              className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                // For edit mode, we'll update the editAddressData
+                                if ('geolocation' in navigator) {
+                                  navigator.geolocation.getCurrentPosition(
+                                    async (position) => {
+                                      const latitude = position.coords.latitude;
+                                      const longitude = position.coords.longitude;
+
+                                      try {
+                                        const response = await axios.get(`https://peghouse.in/api/addresses/reverse-geocode/location`, {
+                                          params: { latitude, longitude }
+                                        });
+
+                                        const addressData = response.data;
+                                        
+                                        setEditAddressData(prev => ({
+                                          ...prev,
+                                          address: addressData.address || '',
+                                          city: addressData.city || '',
+                                          pincode: addressData.pincode || ''
+                                        }));
+
+                                        alert('Location detected successfully! Please review and update.');
+                                      } catch (error) {
+                                        console.error('Failed to get address from coordinates:', error);
+                                        alert('Location detected but could not get address details. Please fill manually.');
+                                      }
+                                    },
+                                    (error) => {
+                                      console.error('Location error:', error);
+                                      alert('Unable to get your location. Please enable location access.');
+                                    }
+                                  );
+                                } else {
+                                  alert('Location is not supported by your browser.');
+                                }
+                              }}
+                              className="bg-indigo-600 text-white px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors flex items-center justify-center"
+                              title="Get current location"
+                            >
+                              <Navigation className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                         <div>
                           <label className="block text-gray-700 text-sm font-medium mb-1">City</label>
