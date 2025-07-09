@@ -2,7 +2,7 @@ const Address = require('../models/Address');
 const axios = require('axios');
 
 // 🔄 Reverse Geocoding & Save
-// 🔄 Reverse Geocoding & Save
+
 exports.getAddressFromCoordinates = async (req, res) => {
   const { latitude, longitude, userId } = req.query;
 
@@ -11,25 +11,7 @@ exports.getAddressFromCoordinates = async (req, res) => {
   }
 
   try {
-    // ✅ Check for existing address with same coordinates
-    const existing = await Address.findOne({
-      userId,
-      latitude: Number(latitude),
-      longitude: Number(longitude),
-    });
-
-    if (existing) {
-      console.log('📍 Address already exists, skipping save.');
-      return res.status(200).json({
-        address: existing.address,
-        city: existing.city,
-        pincode: existing.pincode,
-        message: 'Address already exists'
-      });
-    }
-
-    // ✅ Otherwise, reverse geocode and save
-    const response = await axios.get('https://nominatim.openstreetmap.org/reverse', {
+    const geoRes = await axios.get('https://nominatim.openstreetmap.org/reverse', {
       params: {
         format: 'json',
         lat: latitude,
@@ -37,15 +19,14 @@ exports.getAddressFromCoordinates = async (req, res) => {
         zoom: 18,
         addressdetails: 1,
       },
-      headers: {
-        'User-Agent': 'Drnkly/1.0',
-      },
+      headers: { 'User-Agent': 'PegHouse/1.0' }
     });
 
-    const { display_name, address } = response.data;
+    const { display_name, address } = geoRes.data;
     const city = address.city || address.town || address.village || '';
     const pincode = address.postcode || '';
 
+    // ✅ Save this as an address
     const newAddress = new Address({
       userId,
       address: display_name,
@@ -58,17 +39,18 @@ exports.getAddressFromCoordinates = async (req, res) => {
 
     await newAddress.save();
 
-    res.status(201).json({
+    // ✅ Send response to frontend
+    res.status(200).json({
       address: display_name,
       city,
-      pincode,
-      message: 'Address saved successfully'
+      pincode
     });
   } catch (err) {
-    console.error('❌ Reverse geocoding failed:', err.message);
-    res.status(500).json({ message: 'Failed to fetch address from coordinates' });
+    console.error('🔻 Geocoding error:', err.message);
+    res.status(500).json({ message: 'Failed to get address from coordinates.' });
   }
 };
+
 
 
 // 📄 Get all addresses for a user
