@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, Search, ShoppingCart, X, User, Settings, LogOut, BookOpen, Clock, AlertTriangle, Sparkles, ChevronLeft, ChevronRight, Gift } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import oldMonkImage from './pop.jpeg';
 import CartCounter from '../components/CartCounter';
 import { sessionManager } from '../utils/sessionManager';
+import { useNavigateWithScroll } from '../utils/scrollToTop';
 const mobileBannerImage = "/mobile.jpeg";
 
 
@@ -186,7 +187,7 @@ const OldMonkPromotion = ({ isOpen, onClose, onGetOffer }: { isOpen: boolean, on
 };
 
 function Dashboard() {
-  const navigate = useNavigate();
+  const navigate = useNavigateWithScroll();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [sparklePosition, setSparklePosition] = useState({ x: 0, y: 0 });
@@ -472,75 +473,77 @@ function Dashboard() {
       />
 
       {/* Header */}
-      <div 
-        className={`sticky top-0 z-50 bg-white shadow-md transition-transform duration-300 ${isHeaderVisible ? 'translate-y-0' : '-translate-y-full'}`}
-      >
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 py-2">
-          <div className="flex items-center justify-between h-14 sm:h-16">
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={toggleMenu}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                aria-label="Open menu"
+      {!showOldMonkPromo && (
+        <div 
+          className={`sticky top-0 z-50 bg-white shadow-md transition-transform duration-300 ${isHeaderVisible ? 'translate-y-0' : '-translate-y-full'}`}
+        >
+          <div className="max-w-7xl mx-auto px-2 sm:px-4 py-2">
+            <div className="flex items-center justify-between h-14 sm:h-16">
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={toggleMenu}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  aria-label="Open menu"
+                >
+                  <Menu size={20} className="text-gray-700" />
+                </button>
+              </div>
+
+              <div
+                className="cursor-pointer inline-block"
+                onClick={() => navigate('/dashboard')}
               >
-                <Menu size={20} className="text-gray-700" />
-              </button>
+                <img
+                  src="/finallogo.png"
+                  alt="Drnkly Logo"
+                  className="mx-auto object-contain w-28 sm:w-32 md:w-40 lg:w-48 transition-all duration-300"
+                />
+              </div>
+
+              <div className="flex items-center space-x-2 sm:space-x-4">
+                {isLoggedIn ? (
+                  <button
+                    onClick={handleLogout}
+                    className="bg-red-500 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-full hover:bg-red-600 transition-colors text-xs sm:text-sm font-medium shadow-sm"
+                  >
+                    Logout
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="bg-[#cd6839] text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-full hover:bg-[#b55a31] transition-colors text-xs sm:text-sm font-medium shadow-sm"
+                  >
+                    Login
+                  </button>
+                )}
+                <button
+                  onClick={() => navigate('/cart')}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors relative"
+                  aria-label="View cart"
+                >
+                  <ShoppingCart size={20} className="text-gray-700" />
+                  <CartCounter size="medium" />
+                </button>
+              </div>
             </div>
 
-            <div
-              className="cursor-pointer inline-block"
-              onClick={() => navigate('/dashboard')}
-            >
-              <img
-                src="/finallogo.png"
-                alt="Drnkly Logo"
-                className="mx-auto object-contain w-28 sm:w-32 md:w-40 lg:w-48 transition-all duration-300"
-              />
-            </div>
-
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              {isLoggedIn ? (
-                <button
-                  onClick={handleLogout}
-                  className="bg-red-500 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-full hover:bg-red-600 transition-colors text-xs sm:text-sm font-medium shadow-sm"
-                >
-                  Logout
-                </button>
-              ) : (
-                <button
-                  onClick={() => navigate('/login')}
-                  className="bg-[#cd6839] text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-full hover:bg-[#b55a31] transition-colors text-xs sm:text-sm font-medium shadow-sm"
-                >
-                  Login
-                </button>
-              )}
-              <button
-                onClick={() => navigate('/cart')}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors relative"
-                aria-label="View cart"
-              >
-                <ShoppingCart size={20} className="text-gray-700" />
-                <CartCounter size="medium" />
-              </button>
-            </div>
+            {/* Search Bar */}
+            <form onSubmit={handleSearchSubmit} className="mb-3 sm:mb-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  placeholder="Search for drinks, snacks, and more..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  className="w-full pl-10 pr-4 py-2 sm:py-3 bg-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cd6839] transition-all duration-200"
+                  autoComplete="off"
+                />
+              </div>
+            </form>
           </div>
-
-          {/* Search Bar */}
-          <form onSubmit={handleSearchSubmit} className="mb-3 sm:mb-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-              <input
-                type="text"
-                placeholder="Search for drinks, snacks, and more..."
-                value={searchQuery}
-                onChange={handleSearchChange}
-                className="w-full pl-10 pr-4 py-2 sm:py-3 bg-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cd6839] transition-all duration-200"
-                autoComplete="off"
-              />
-            </div>
-          </form>
         </div>
-      </div>
+      )}
 
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
         {/* Mobile Banner Carousel */}
