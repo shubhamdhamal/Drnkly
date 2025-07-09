@@ -22,6 +22,7 @@ import SessionExpiryPopup from './components/SessionExpiryPopup';
 import { CartProvider } from './context/CartContext';
 // import ChatBox from './pages/Chatbox'; // Add the ChatBox import
 import { sessionManager } from './utils/sessionManager';
+import { useScrollToTop } from './utils/scrollToTop';
 import './styles/global.css';
 
 // Protected Route component
@@ -53,12 +54,19 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Component to handle scroll restoration
+const ScrollToTop = () => {
+  useScrollToTop();
+  return null;
+};
+
 function App() {
   const [isChatOpen, setIsChatOpen] = useState(false); // State to control chat visibility
 
   return (
     <CartProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <div className="flex flex-col min-h-screen bg-gray-50">
           <SessionExpiryPopup />
           <main className="flex-1 pb-20"> {/* Space for bottom nav */}
