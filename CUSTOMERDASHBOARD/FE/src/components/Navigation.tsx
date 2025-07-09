@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import {
   Home,
   ShoppingBag,
@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import CartCounter from './CartCounter';
 import { sessionManager } from '../utils/sessionManager';
+import { useNavigateWithScroll } from '../utils/scrollToTop';
 
 interface NavigationProps {
   isChatOpen: boolean;
@@ -18,7 +19,7 @@ interface NavigationProps {
 }
 
 const Navigation: React.FC<NavigationProps> = ({ isChatOpen, setIsChatOpen }) => {
-  const navigate = useNavigate();
+  const navigate = useNavigateWithScroll();
   const location = useLocation();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
