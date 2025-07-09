@@ -1,27 +1,15 @@
-import {
-  AlertCircle,
-  CheckCircle,
-  Eye,
-  EyeOff,
-  Globe,
-  Lock,
-  Mail,
-  MapPin,
-  Phone,
-  Shield,
-  Wine,
-  X,
-  Zap,
-} from 'lucide-react';
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Eye, EyeOff, Mail, Lock, AlertCircle, CheckCircle, ArrowRight, ShoppingCart, User, Clock, BookOpen } from 'lucide-react';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
 import { sessionManager } from '../utils/sessionManager';
+import { useNavigateWithScroll } from '../utils/scrollToTop';
 
 const SESSION_TIMEOUT = 60 * 60 * 1000;
 
 function App() {
-  const navigate = useNavigate();
+  const navigate = useNavigateWithScroll();
 
   const [showLocationPopup, setShowLocationPopup] = useState(false);
   const [locationError, setLocationError] = useState('');
@@ -45,90 +33,78 @@ function App() {
     }
   };
 
-const handleLogin = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setIsLoading(true);
-  setError('');
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
 
-  if (!agreedToTerms) {
-    setError('Please agree to the Terms & Govt. Regulations.');
-    setIsLoading(false);
-    return;
-  }
+    if (!agreedToTerms) {
+      setError('Please agree to the Terms & Govt. Regulations.');
+      setIsLoading(false);
+      return;
+    }
 
-  const identifier = loginMethod === 'mobile' ? mobile : email;
+    const identifier = loginMethod === 'mobile' ? mobile : email;
 
-  if (!identifier || (loginMethod === 'mobile' && identifier.length !== 10)) {
-    setError('Please enter a valid mobile number or email.');
-    setIsLoading(false);
-    return;
-  }
+    if (!identifier || (loginMethod === 'mobile' && identifier.length !== 10)) {
+      setError('Please enter a valid mobile number or email.');
+      setIsLoading(false);
+      return;
+    }
 
-  if (!password.trim()) {
-    setError('Please enter your password.');
-    setIsLoading(false);
-    return;
-  }
+    if (!password.trim()) {
+      setError('Please enter your password.');
+      setIsLoading(false);
+      return;
+    }
 
-  const getLocationData = (): Promise<any> =>
-    new Promise((resolve) => {
-      if ('geolocation' in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const coords = {
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-              timestamp: new Date().toISOString()
-            };
-            console.log('📍 Location fetched:', coords); // ✅ Log live location
-            resolve(coords);
-          },
-          (error) => {
-            console.warn('⚠️ Location access denied:', error.message);
-            resolve(null);
-          },
-          { enableHighAccuracy: true }
-        );
-      } else {
-        console.warn('⚠️ Geolocation not supported');
-        resolve(null);
+    try {
+      const response = await axios.post('https://peghouse.in/api/auth/login', {
+        identifier,
+        password,
+      });
+ 
+      if (response.data.message === 'Login successful') {
+        sessionManager.setSession(response.data.token, response.data.user);
+        localStorage.removeItem('isSkippedLogin');
+        localStorage.removeItem('oldMonkOfferShown');
+        window.dispatchEvent(new Event('storage'));
+
+        if (localStorage.getItem('locationGranted') === 'true') {
+          navigate('/dashboard');
+        } else {
+          setShowLocationPopup(true);
+        }
       }
-    });
+    } catch (error: any) {
+      const msg = error?.response?.data?.message;
 
-  try {
-    const location = await getLocationData();
-
-    if (location) {
-      console.log('📦 Sending login with location:', location); // ✅ Confirm sending
+    if (msg === 'User not found') {
+      setError('No account found with this email or mobile number.');
+    } else if (msg === 'Invalid credentials') {
+      setError('Incorrect email or mobile number, or password.');
+    } else if (msg === 'Your account has been rejected. Please contact support.') {
+      setError('Your account is rejected. Please contact support.');
+    } else if (msg === 'Your account is not verified yet.') {
+      setError('Your account is not yet verified. Please wait for approval.');
     } else {
-      console.log('🚫 No location provided, proceeding without coordinates');
+      setError('Something went wrong. Please try again.');
     }
-
-    const response = await axios.post('https://peghouse.in/api/auth/login', {
-      identifier,
-      password,
-      location
-    });
-
-    if (response.data.message === 'Login successful') {
-      console.log('✅ Login Success:', response.data.user);
-      sessionManager.setSession(response.data.token, response.data.user);
-      localStorage.removeItem('isSkippedLogin');
-      localStorage.removeItem('oldMonkOfferShown');
-      window.dispatchEvent(new Event('storage'));
-      navigate('/dashboard');
-    }
-  } catch (error: any) {
-    const msg = error?.response?.data?.message;
-    console.error('❌ Login failed:', msg || error.message);
-  } finally {
-    setIsLoading(false);
+    } finally {
+      setIsLoading(false);
   }
-};
+  };
 
+  const handleLogout = () => {
+    sessionManager.clearSession();
+    navigate('/login');
+  };
 
+  const handleGoogleLogin = () => {
+    window.location.href = 'https://peghouse.in/api/auth/google';
+  };
 
-    const handleSkipLogin = () => {
+  const handleSkipLogin = () => {
     localStorage.setItem('isSkippedLogin', 'true');
     setIsSkipped(true);
     window.dispatchEvent(new Event('storage'));
@@ -171,17 +147,6 @@ const handleLogin = async (e: React.FormEvent) => {
     setShowLocationPopup(false);
     navigate('/dashboard');
   };
-
-  const handleLogout = () => {
-    sessionManager.clearSession();
-    navigate('/login');
-  };
-
-  const handleGoogleLogin = () => {
-    window.location.href = 'https://peghouse.in/api/auth/google';
-  };
-
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 flex flex-col relative overflow-hidden">
       {/* Background Pattern */}
@@ -197,7 +162,7 @@ const handleLogin = async (e: React.FormEvent) => {
           <div className="text-center mb-4 animate-fade-in-up">
             <div className="relative mb-3">
               <div className="w-16 h-16 mx-auto bg-gradient-to-br from-orange-400 to-red-500 rounded-xl flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-6 transition-transform duration-300">
-                <Wine className="w-8 h-8 text-white" />
+                <ShoppingCart className="w-8 h-8 text-white" />
               </div>
            
             </div>
@@ -229,7 +194,7 @@ const handleLogin = async (e: React.FormEvent) => {
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
-                  <Phone className="w-4 h-4 inline-block mr-2" />
+                  <User className="w-4 h-4 inline-block mr-2" />
                   Mobile
                 </button>
                 <button
@@ -253,7 +218,7 @@ const handleLogin = async (e: React.FormEvent) => {
                     Mobile Number
                   </label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-orange-500 transition-colors w-4 h-4" />
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-orange-500 transition-colors w-4 h-4" />
                     <input
                       type="text"
                       className="w-full pl-10 pr-3 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all duration-300 bg-white/50 backdrop-blur-sm hover:bg-white/70 placeholder-gray-400"
@@ -326,7 +291,7 @@ const handleLogin = async (e: React.FormEvent) => {
                     </div>
                   </div>
                   <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors flex items-center">
-                    <Shield className="w-3 h-3 mr-1 text-blue-500" />
+                    <BookOpen className="w-3 h-3 mr-1 text-blue-500" />
                     I have a valid License of Drinking
                   </span>
                 </label>
@@ -347,7 +312,7 @@ const handleLogin = async (e: React.FormEvent) => {
                     </div>
                   </div>
                   <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors flex items-center">
-                    <Globe className="w-3 h-3 mr-1 text-orange-500" />
+                    <Clock className="w-3 h-3 mr-1 text-orange-500" />
                     I agree to Terms & Govt. Regulations *
                   </span>
                 </label>
@@ -367,7 +332,7 @@ const handleLogin = async (e: React.FormEvent) => {
                   </div>
                 ) : (
                   <span className="flex items-center justify-center space-x-2">
-                    <Zap className="w-4 h-4" />
+                    <ArrowRight className="w-4 h-4" />
                     <span>Sign In</span>
                   </span>
                 )}
@@ -429,7 +394,7 @@ const handleLogin = async (e: React.FormEvent) => {
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl border border-white/20 animate-scale-in">
             <div className="text-center mb-4">
               <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center mx-auto mb-3 transform rotate-3">
-                <MapPin className="w-6 h-6 text-white" />
+                <User className="w-6 h-6 text-white" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">Enable Location</h3>
               <p className="text-gray-600 text-sm">
@@ -468,14 +433,14 @@ const handleLogin = async (e: React.FormEvent) => {
           <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-2xl w-full text-left overflow-y-auto max-h-[90vh] border border-white/20 animate-scale-in">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-gray-900 flex items-center">
-                <Shield className="w-5 h-5 mr-2 text-orange-500" />
+                <BookOpen className="w-5 h-5 mr-2 text-orange-500" />
                 Terms & Regulations
               </h2>
               <button
                 onClick={() => setShowTermsPopup(false)}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <ArrowRight className="w-5 h-5 text-gray-500" />
               </button>
             </div>
 
