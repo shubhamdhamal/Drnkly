@@ -108,8 +108,15 @@ const Profile = () => {
     type: 'Home'
   });
 
+  useEffect(() => {
+  if (showAddAddress) {
+    getLiveLocation();
+  }
+}, [showAddAddress]);
+
   // Fetch user profile data using useEffect
   useEffect(() => {
+    
 
   const fetchUserProfile = async () => {
     try {
@@ -186,6 +193,8 @@ const Profile = () => {
   useEffect(() => {
     fetchSavedAddresses();
   }, [userInfo.address]);
+
+
 
   // Empty dependency array ensures this effect runs only once
   const [chatMessages, setChatMessages] = useState<Message[]>([
@@ -488,6 +497,8 @@ setAddresses(prev => [...prev, {
     }
   };
 
+
+
   // Get live location function
   const getLiveLocation = () => {
     if ('geolocation' in navigator) {
@@ -505,9 +516,12 @@ setAddresses(prev => [...prev, {
 
           try {
             // Get address from coordinates using reverse geocoding
-            const response = await axios.get(`https://peghouse.in/api/addresses/reverse-geocode/location`, {
-              params: { latitude, longitude }
-            });
+            const userId = localStorage.getItem('userId');
+
+const response = await axios.get(`https://peghouse.in/api/addresses/from-coordinates`, {
+  params: { latitude, longitude, userId } // ✅ Include userId
+});
+
 
             const addressData = response.data;
             
@@ -581,6 +595,8 @@ setAddresses(prev => [...prev, {
       alert("Failed to delete address. Please try again.");
     }
   };
+
+
 
   // Edit address functionality
   const handleEditAddress = (address: any) => {
@@ -1460,3 +1476,11 @@ const updateAddress = async () => {
 };
 
 export default Profile;
+
+function setFullAddress(arg0: any) {
+  throw new Error('Function not implemented.');
+}
+function setCity(arg0: any) {
+  throw new Error('Function not implemented.');
+}
+
