@@ -88,6 +88,12 @@ const CartPopup: React.FC<CartPopupProps> = ({ isOpen, onClose, onViewCart }) =>
   const deliveryCharge = 40; // Fixed delivery charge
   const total = subtotal + deliveryCharge;
 
+  // Calculate progress toward free service fee
+  const FREE_SERVICE_THRESHOLD = 500;
+  const progress = Math.min((subtotal / FREE_SERVICE_THRESHOLD) * 100, 100);
+  const amountLeft = Math.max(FREE_SERVICE_THRESHOLD - subtotal, 0);
+  const isFree = subtotal >= FREE_SERVICE_THRESHOLD;
+
   // Get the 3 most recently added items
   const recentItems = [...items].slice(-3).reverse();
   const remainingCount = items.length - recentItems.length;
@@ -152,6 +158,29 @@ const CartPopup: React.FC<CartPopupProps> = ({ isOpen, onClose, onViewCart }) =>
                 <span>Subtotal:</span>
                 <span>₹{subtotal}</span>
               </div>
+              {/* Service Fee Progress Bar */}
+              <div className="mt-4">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-sm font-medium text-gray-700">Shiping Fee</span>
+                  {isFree ? (
+                    <span className="text-green-600 font-semibold">FREE!</span>
+                  ) : (
+                    <span className="text-gray-600 text-xs">Add ₹{amountLeft} more</span>
+                  )}
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-3 relative overflow-hidden">
+                  <div
+                    className={`h-3 rounded-full transition-all duration-300 ${isFree ? 'bg-green-500' : 'bg-orange-400'}`}
+                    style={{ width: `${progress}%` }}
+                  ></div>
+                  <span className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-semibold text-white">
+                    {Math.round(progress)}%
+                  </span>
+                </div>
+                {!isFree && (
+                  <div className="text-xs text-gray-500 mt-1">Add products worth ₹{amountLeft} more to get <span className="text-green-600 font-semibold">FREE shiping Fee</span>!</div>
+                )}
+              </div>
             </div>
           </>
         )}
@@ -214,6 +243,7 @@ function Products() {
   const searchResultsRef = useRef<HTMLDivElement>(null);
   const [canGoBack, setCanGoBack] = useState(false);
   const [canGoForward, setCanGoForward] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Enhanced search function with debouncing
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
@@ -306,7 +336,7 @@ function Products() {
       
       // Special handling for Old Monk promotion
       if (searchParam.toLowerCase().includes('old monk')) {
-        setSelectedCategory('drinks');
+        setSelectedCategory('all');
         if (products.length > 0) {
           const oldMonkProducts = products.filter(p => 
             p.name.toLowerCase().includes('old monk') || 
@@ -339,6 +369,7 @@ function Products() {
   // Fetch products and categories on component mount
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
       try {
         const [productRes, categoryRes] = await Promise.all([
           axios.get('https://peghouse.in/api/products'),
@@ -385,6 +416,8 @@ function Products() {
         } else {
           console.error('An unknown error occurred');
         }
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -506,25 +539,46 @@ function Products() {
     };
   }, []);
 
-  // Get sub-brands for a specific category
+  // Update getSubBrandsForCategory to handle Food with no brands
   const getSubBrandsForCategory = (category: string) => {
     // Create a map of brands and their images for the selected category
     const brandMap = new Map<string, string>();
-    
+    const foodProducts: Product[] = [];
+
     products.forEach(product => {
-      if (product.category.toLowerCase() === category.toLowerCase() && product.brand) {
-        if (!brandMap.has(product.brand)) {
-          brandMap.set(product.brand, product.image);
+      if (product.category.toLowerCase() === category.toLowerCase()) {
+        if (product.brand) {
+          if (!brandMap.has(product.brand)) {
+            brandMap.set(product.brand, product.image);
+          }
+        } else if (category.toLowerCase() === 'food') {
+          // If no brand, use product name as sub-brand for Food
+          foodProducts.push(product);
         }
       }
     });
-    
-    // Convert to SubBrand array
-    return Array.from(brandMap).map(([name, image]) => ({
-      name,
-      image,
-      category
-    }));
+
+    // If there are brands, show brands as sub-brands
+    if (brandMap.size > 0) {
+      return Array.from(brandMap).map(([name, image]) => ({
+        name,
+        image,
+        category
+      }));
+    }
+
+    // If no brands for Food, show each unique product as a sub-brand
+    if (category.toLowerCase() === 'food' && foodProducts.length > 0) {
+      // Use product name and image as sub-brand
+      const uniqueProducts = Array.from(new Map(foodProducts.map(p => [p.name, p])).values());
+      return uniqueProducts.map(product => ({
+        name: product.name,
+        image: product.image,
+        category: 'food'
+      }));
+    }
+
+    return [];
   };
 
   // Separate function to show sub-brands that can be called from useEffect and click handler
@@ -546,7 +600,7 @@ function Products() {
     setSelectedCategory(category);
     setSearchQuery(''); // Clear search bar
     setShowSearchResults(false); // Hide search results
-    showSubBrandsForCategory(category);
+    showSubBrandsForCategory(category); // This will work for Food too
   };
 
   // Handle back from sub-brands
@@ -640,13 +694,26 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
     navigate('/cart');
   };
 
-  const getPriceRanges = () => [
-    { label: 'All Prices', value: 'all' },
-    { label: 'Under ₹30', value: '0-30' },
-    { label: '₹30 - ₹50', value: '30-50' },
-    { label: '₹50 - ₹80', value: '50-80' },
-    { label: 'Over ₹80', value: '80+' }
-  ];
+  // Dynamic filter options based on sortBy
+  const getFilterOptions = () => {
+    if (sortBy === 'volume') {
+      return [
+        { label: 'All Volumes', value: 'all' },
+        { label: '180 ml', value: 'vol-180' },
+        { label: '375 ml', value: 'vol-375' },
+        { label: '750 ml', value: 'vol-750' },
+        { label: '1000 ml', value: 'vol-1000' },
+      ];
+    } else {
+      return [
+        { label: 'All Prices', value: 'all' },
+        { label: 'Under ₹30', value: '0-30' },
+        { label: '₹30 - ₹50', value: '30-50' },
+        { label: '₹50 - ₹80', value: '50-80' },
+        { label: 'Over ₹80', value: '80+' },
+      ];
+    }
+  };
 
   // Filter by volume for drinks
   const filterByVolume = (products: Product[]) => {
@@ -670,15 +737,19 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
     }
   };
 
-  // The modified filter products function with sorting by category type
+  // Add to state:
+  const [sortBy, setSortBy] = useState<'price' | 'volume'>('price');
+
+  // Update filterProducts to handle volume filter
   const filterProducts = () => {
     let filtered = [...products];
 
-    // Remove Food unless sunrise+Food
+    // Remove Food unless sunrise+Food or Food category is selected
     const params = new URLSearchParams(location.search);
     const storeParam = params.get('store');
     const categoryParam = params.get('category');
-    const isSunriseFood = storeParam === 'sunrise' && (categoryParam?.toLowerCase() === 'food');
+    const isFoodCategory = selectedCategory.toLowerCase() === 'food';
+    const isSunriseFood = (storeParam === 'sunrise' && categoryParam?.toLowerCase() === 'food') || isFoodCategory;
 
     if (!isSunriseFood) {
       filtered = filtered.filter(product => product.category.toLowerCase() !== 'food');
@@ -695,11 +766,18 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
     }
 
     if (priceRange !== 'all') {
-      const [min, max] = priceRange.split('-').map(Number);
-      filtered = filtered.filter(product => {
-        if (max) return product.price >= min && product.price <= max;
-        return product.price >= min;
-      });
+      if (priceRange.startsWith('vol-')) {
+        // Volume filter
+        const vol = parseInt(priceRange.replace('vol-', ''));
+        filtered = filtered.filter(product => product.volume === vol);
+      } else {
+        // Price filter
+        const [min, max] = priceRange.split('-').map(Number);
+        filtered = filtered.filter(product => {
+          if (max) return product.price >= min && product.price <= max;
+          return product.price >= min;
+        });
+      }
     }
 
     if (searchQuery.trim()) {
@@ -710,8 +788,12 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
       );
     }
 
-    // Custom sort for 'All Products' (selectedCategory === 'all')
-    if (selectedCategory === 'all') {
+    // Sort by selected method
+    if (sortBy === 'volume') {
+      filtered = filtered.filter(p => typeof p.volume === 'number');
+      filtered.sort((a, b) => (a.volume || 0) - (b.volume || 0));
+    } else if (sortBy === 'price' && selectedCategory === 'all') {
+      // Group by category order, then by price
       filtered.sort((a, b) => {
         const aCat = a.category.toLowerCase();
         const bCat = b.category.toLowerCase();
@@ -721,13 +803,8 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
         // If same category, sort by price low to high
         return a.price - b.price;
       });
-    } else if ([
-      'drinks', 'cigarette', 'soft drinks', 'snacks', 'glass/plates'
-    ].includes(selectedCategory.toLowerCase()) || sortMethod === 'volume') {
-      // For these categories, sort by price low to high
-      return filterByVolume(filtered);
     } else {
-      return filterByPrice(filtered);
+      filtered.sort((a, b) => a.price - b.price);
     }
 
     return filtered;
@@ -811,6 +888,116 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
 
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
+
+  // Loading Skeleton Component
+  const LoadingSkeleton = () => (
+    <div 
+      className="product-grid"
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+        gap: '12px',
+        padding: '0 8px 120px 8px',
+        maxWidth: '1920px',
+        margin: '0 auto',
+        alignItems: 'stretch',
+        minHeight: 'calc(100vh - 400px)'
+      }}
+    >
+      {Array.from({ length: 12 }).map((_, index) => (
+        <div
+          key={index}
+          className="product-card animate-pulse"
+          style={{
+            background: 'white',
+            borderRadius: '8px',
+            padding: '8px',
+            textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
+            justifyContent: 'space-between',
+            position: 'relative',
+            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+            border: '1px solid rgba(229, 231, 235, 0.5)',
+            minHeight: '200px'
+          }}
+        >
+          <div>
+            {/* Image skeleton */}
+            <div 
+              style={{
+                width: '100%',
+                height: '130px',
+                position: 'relative',
+                borderRadius: '6px',
+                overflow: 'hidden',
+                marginBottom: '6px',
+                background: '#f3f4f6'
+              }}
+            >
+              <div 
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  background: 'linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%)',
+                  backgroundSize: '200% 100%',
+                  animation: 'shimmer 1.5s infinite'
+                }}
+              />
+            </div>
+            
+            <div className="px-1">
+              {/* Title skeleton */}
+              <div 
+                style={{
+                  height: '16px',
+                  background: '#f3f4f6',
+                  borderRadius: '4px',
+                  marginBottom: '8px',
+                  animation: 'shimmer 1.5s infinite'
+                }}
+              />
+              
+              <div className="flex justify-between items-center mt-1">
+                {/* Volume/Price skeleton */}
+                <div 
+                  style={{
+                    width: '40px',
+                    height: '12px',
+                    background: '#f3f4f6',
+                    borderRadius: '4px',
+                    animation: 'shimmer 1.5s infinite'
+                  }}
+                />
+                <div 
+                  style={{
+                    width: '50px',
+                    height: '16px',
+                    background: '#f3f4f6',
+                    borderRadius: '4px',
+                    animation: 'shimmer 1.5s infinite'
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+          
+          {/* Button skeleton */}
+          <div 
+            style={{
+              width: '100%',
+              height: '28px',
+              background: '#f3f4f6',
+              borderRadius: '4px',
+              marginTop: '8px',
+              animation: 'shimmer 1.5s infinite'
+            }}
+          />
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <div className="container mx-auto bg-white min-h-screen pb-20">
@@ -1102,11 +1289,11 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
                 zIndex: 10,
                 marginTop: '4px'
               }}>
-                {getPriceRanges().map(range => (
+                {getFilterOptions().map(option => (
                   <button
-                    key={range.value}
+                    key={option.value}
                     onClick={() => {
-                      setPriceRange(range.value);
+                      setPriceRange(option.value);
                       setShowPriceFilter(false);
                     }}
                     style={{
@@ -1116,87 +1303,34 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
                       background: 'none',
                       textAlign: 'left',
                       cursor: 'pointer',
-                      color: priceRange === range.value ? '#cd6839' : 'black'
+                      color: priceRange === option.value ? '#cd6839' : 'black'
                     }}
                   >
-                    {range.label}
+                    {option.label}
                   </button>
                 ))}
               </div>
             )}
           </div>
-
-          {/* Sort By Filter */}
+          {/* Sort By Filter (NEW) */}
           <div style={{ width: '30%', position: 'relative' }}>
-            <button
-              onClick={() => {
-                setShowBrandFilter(!showBrandFilter);
-                setShowPriceFilter(false);
-              }}
+            <select
+              value={sortBy}
+              onChange={e => setSortBy(e.target.value as 'price' | 'volume')}
               style={{
                 padding: '8px 16px',
                 background: '#f5f5f5',
                 border: 'none',
                 borderRadius: '8px',
                 width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between'
+                fontWeight: 500
               }}
             >
-              Sort By {sortMethod === 'volume' ? 'Volume' : 'Price'} <ChevronDown size={16} />
-            </button>
-            {showBrandFilter && (
-              <div style={{
-                position: 'absolute',
-                top: '100%',
-                left: 0,
-                width: '100%',
-                background: 'white',
-                borderRadius: '8px',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-                zIndex: 10,
-                marginTop: '4px'
-              }}>
-                <button
-                  onClick={() => {
-                    setSortOrder('asc');
-                    setShowBrandFilter(false);
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '8px 16px',
-                    border: 'none',
-                    background: 'none',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    color: sortOrder === 'asc' ? '#cd6839' : 'black'
-                  }}
-                >
-                  {sortMethod === 'volume' ? 'Volume: Low to High' : 'Price: Low to High'}
-                </button>
-                <button
-                  onClick={() => {
-                    setSortOrder('desc');
-                    setShowBrandFilter(false);
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '8px 16px',
-                    border: 'none',
-                    background: 'none',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    color: sortOrder === 'desc' ? '#cd6839' : 'black'
-                  }}
-                >
-                  {sortMethod === 'volume' ? 'Volume: High to Low' : 'Price: High to Low'}
-                </button>
-              </div>
-            )}
+              <option value="price">Sort by Price</option>
+              <option value="volume">Sort by Volume (ml)</option>
+            </select>
           </div>
-
-          {/* Relevance Button */}
+          {/* Relevance Button (unchanged) */}
           <button
             style={{
               padding: '8px 16px',
@@ -1215,119 +1349,123 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
         </div>
 
         {/* Product Grid */}
-        <div 
-          className="product-grid"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
-            gap: '12px',
-            padding: '0 8px 120px 8px', // Added 120px bottom padding
-            maxWidth: '1920px',
-            margin: '0 auto',
-            alignItems: 'stretch',
-            minHeight: 'calc(100vh - 400px)'
-          }}
-        >
-          {selectedCategory === 'Food' ? (
-            <div style={{
-              width: '100%',
-              padding: '40px 20px',
-              textAlign: 'center',
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-              gridColumn: '1 / -1'
-            }}>
-              <h3 style={{ 
-                fontSize: '20px', 
-                color: '#4B5563',
-                marginBottom: '10px'
+        {isLoading ? (
+          <LoadingSkeleton />
+        ) : (
+          <div 
+            className="product-grid"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+              gap: '12px',
+              padding: '0 8px 120px 8px', // Added 120px bottom padding
+              maxWidth: '1920px',
+              margin: '0 auto',
+              alignItems: 'stretch',
+              minHeight: 'calc(100vh - 400px)'
+            }}
+          >
+            {selectedCategory === 'Food' ? (
+              <div style={{
+                width: '100%',
+                padding: '40px 20px',
+                textAlign: 'center',
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+                gridColumn: '1 / -1'
               }}>
-                Food Menu Coming Soon
-              </h3>
-              <p style={{ 
-                color: '#6B7280',
-                fontSize: '16px'
-              }}>
-                We are currently preparing our Food menu. Please check back later.
-              </p>
-            </div>
-          ) : (
-            filterProducts().map((product) => (
-            <div
-              key={product._id}
-              id={`product-${product._id}`}
-              className="product-card"
-              style={productCardStyle}
-            >
-              <div>
-                <div style={productImageContainerStyle}>
-                  {product.category.toLowerCase() === 'Food' ? (
-                    <div 
-                      style={{
-                        ...productImageStyle,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: '#f3f4f6',
-                        color: '#6b7280',
-                        fontSize: '10px',
-                        textAlign: 'center',
-                        padding: '4px'
-                      }}
-                    >
-                      {product.name}
-                    </div>
-                  ) : (
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="product-image"
-                      style={productImageStyle}
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = 'https://via.placeholder.com/150?text=' + product.name;
-                      }}
-                    />
-                  )}
-                </div>
-                
-                <div className="px-1">
-                  <div className="text-[13px] font-medium truncate" title={product.name}>
-                    {product.name}
-                  </div>
-                  
-                  <div className="flex justify-between items-center mt-1">
-                    {['drinks', 'soft drinks'].includes(product.category.toLowerCase()) ? (
-                      <>
-                        <span className="text-[10px] font-medium bg-blue-50 text-blue-600 py-0.5 px-1 rounded">
-                          {product.volume} ml
-                        </span>
-                        <span className="text-[13px] font-bold text-[#cd6839]">
-                          ₹{product.price}
-                        </span>
-                      </>
+                <h3 style={{ 
+                  fontSize: '20px', 
+                  color: '#4B5563',
+                  marginBottom: '10px'
+                }}>
+                  Food Menu Coming Soon
+                </h3>
+                <p style={{ 
+                  color: '#6B7280',
+                  fontSize: '16px'
+                }}>
+                  We are currently preparing our Food menu. Please check back later.
+                </p>
+              </div>
+            ) : (
+              filterProducts().map((product) => (
+              <div
+                key={product._id}
+                id={`product-${product._id}`}
+                className="product-card"
+                style={productCardStyle}
+              >
+                <div>
+                  <div style={productImageContainerStyle}>
+                    {product.category.toLowerCase() === 'Food' ? (
+                      <div 
+                        style={{
+                          ...productImageStyle,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: '#f3f4f6',
+                          color: '#6b7280',
+                          fontSize: '10px',
+                          textAlign: 'center',
+                          padding: '4px'
+                        }}
+                      >
+                        {product.name}
+                      </div>
                     ) : (
-                      <span className="text-[13px] font-bold text-[#cd6839] w-full text-center">
-                        ₹{product.price}
-                      </span>
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="product-image"
+                        style={productImageStyle}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = 'https://via.placeholder.com/150?text=' + product.name;
+                        }}
+                      />
                     )}
                   </div>
+                  
+                  <div className="px-1">
+                    <div className="text-[13px] font-medium truncate" title={product.name}>
+                      {product.name}
+                    </div>
+                    
+                    <div className="flex justify-between items-center mt-1">
+                      {['drinks', 'soft drinks'].includes(product.category.toLowerCase()) ? (
+                        <>
+                          <span className="text-[10px] font-medium bg-blue-50 text-blue-600 py-0.5 px-1 rounded">
+                            {product.volume} ml
+                          </span>
+                          <span className="text-[13px] font-bold text-[#cd6839]">
+                            ₹{product.price}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-[13px] font-bold text-[#cd6839] w-full text-center">
+                          ₹{product.price}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
+                
+                <button
+                  onClick={(e) => handleAddToCart(e, product)}
+                  className="w-full py-1 px-2 bg-[#cd6839] text-white text-[10px] rounded font-medium mt-2
+                            hover:bg-[#b55a31] transition-colors duration-200
+                            focus:outline-none focus:ring-1 focus:ring-[#cd6839] focus:ring-opacity-50"
+                >
+                  Add to Cart
+                </button>
               </div>
-              
-              <button
-                onClick={(e) => handleAddToCart(e, product)}
-                className="w-full py-1 px-2 bg-[#cd6839] text-white text-[10px] rounded font-medium mt-2
-                          hover:bg-[#b55a31] transition-colors duration-200
-                          focus:outline-none focus:ring-1 focus:ring-[#cd6839] focus:ring-opacity-50"
-              >
-                Add to Cart
-              </button>
-            </div>
-            ))
-          )}
-        </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
 
       {/* Add Cart Popup */}
@@ -1343,6 +1481,11 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
       {/* Add highlight animation styles */}
       <style>
         {`
+          @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+          }
+          
           @keyframes highlightProduct {
             0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(205, 104, 57, 0); }
             50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(205, 104, 57, 0.2); }
