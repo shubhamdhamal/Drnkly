@@ -119,43 +119,52 @@ const Profile = () => {
     
 
   const fetchUserProfile = async () => {
-    try {
-      const userId = localStorage.getItem('userId');
-      if (!userId) return;
+  try {
+    const userId = localStorage.getItem('userId');
+    if (!userId) return;
 
-      const response = await axios.get(`https://peghouse.in/api/users/${userId}`);
-      const user = response.data;
+    const response = await axios.get(`https://peghouse.in/api/users/${userId}`);
+    const user = response.data;
 
-      // ✅ Extract location from user
-      const latitude = user?.location?.latitude;
-      const longitude = user?.location?.longitude;
+    // ✅ Extract location from user
+    const latitude = user?.location?.latitude;
+    const longitude = user?.location?.longitude;
 
-      console.log("🌍 User coordinates from DB:", { latitude, longitude });
+    console.log("🌍 User coordinates from DB:", { latitude, longitude });
 
-      let resolvedAddress = user.address || '';
+    let resolvedAddress = user.address || '';
 
-      // ✅ If coordinates are available, get address
-      if (latitude && longitude) {
-        const geoRes = await axios.get(`https://peghouse.in/api/addresses/reverse-geocode/location`, {
-          params: { latitude, longitude, userId }
-        });
-        resolvedAddress = geoRes.data.address || resolvedAddress;
-        console.log("📍 Resolved address from coordinates:", resolvedAddress);
-      }
-
-      setUserInfo({
-        name: user.name,
-        phone: user.mobile,
-        address: resolvedAddress,
-        location: {
-          latitude,
-          longitude
-        }
+    // ✅ If coordinates are available, get address
+    if (latitude && longitude) {
+      const geoRes = await axios.get(`https://peghouse.in/api/addresses/from-coordinates`, {
+        params: { latitude, longitude, userId }
       });
-    } catch (error) {
-      console.error('❌ Failed to fetch profile:', error);
+      resolvedAddress = geoRes.data.address || resolvedAddress;
+      console.log("📍 Resolved address from coordinates:", resolvedAddress);
     }
-  };
+
+    setUserInfo({
+      name: user.name,
+      phone: user.mobile,
+      address: resolvedAddress,
+      location: {
+        latitude,
+        longitude
+      },
+      city: user.city,        // Fetch the city
+      state: user.state,      // Fetch the state
+      dob: user.dob,          // Fetch the date of birth
+      idProof: user.idProof,  // Fetch the ID proof
+      selfDeclaration: user.selfDeclaration, // Fetch self-declaration status
+      status: user.status     // Fetch the user’s status
+    });
+  } catch (error) {
+    console.error('❌ Failed to fetch profile:', error);
+  }
+};
+
+fetchUserProfile();
+
 
   fetchUserProfile();
 }, []);
@@ -724,115 +733,117 @@ const updateAddress = async () => {
   };
 
   const ProfileHeader = () => {
-    return (
-      <div className="bg-white text-gray-800 p-6 border-b border-gray-100 rounded-t-xl">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center shadow-sm border border-gray-100">
-              <span className="text-gray-700 text-3xl font-semibold">
-                {userInfo.name ? userInfo.name.charAt(0).toUpperCase() : ''}
-              </span>
-            </div>
-            {isEditing ? (
-              <form 
-                className="bg-white p-4 rounded-lg shadow-sm border border-gray-100"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (userInfo.phone.length === 10) {
-                    handleSaveChanges();
-                  }
-                }}
-              >
-                <div className="mb-3">
-                  <label className="block text-gray-700 text-sm font-medium mb-1" htmlFor="name">Full Name</label>
-                  <input
-                    id="name"
-                    type="text"
-                    name="name"
-                    value={userInfo.name}
-                    onChange={handleUserInfoChange}
-                    className="block w-full rounded border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    placeholder="Name"
-                    autoComplete="name"
-                    autoFocus
-                  />
-                </div>
-                <div className="mb-3">
-                  <label className="block text-gray-700 text-sm font-medium mb-1" htmlFor="phone">Phone Number</label>
-                  <input
-                    id="phone"
-                    type="tel"
-                    name="phone"
-                    value={userInfo.phone}
-                    onChange={handleUserInfoChange}
-                    className="block w-full rounded border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    placeholder="Phone"
-                    autoComplete="tel"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    maxLength={10}
-                    ref={phoneInputRef}
-                  />
-                  {userInfo.phone && userInfo.phone.length !== 10 && (
-                    <p className="text-red-500 text-sm mt-1">
-                      Mobile number must be exactly 10 digits.
-                    </p>
-                  )}
-                </div>
+  return (
+    <div className="bg-white text-gray-800 p-6 border-b border-gray-100 rounded-t-xl">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center shadow-sm border border-gray-100">
+            <span className="text-gray-700 text-3xl font-semibold">
+              {userInfo.name ? userInfo.name.charAt(0).toUpperCase() : ''}
+            </span>
+          </div>
+          {isEditing ? (
+            <form 
+              className="bg-white p-4 rounded-lg shadow-sm border border-gray-100"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (userInfo.phone.length === 10) {
+                  handleSaveChanges();
+                }
+              }}
+            >
+              <div className="mb-3">
+                <label className="block text-gray-700 text-sm font-medium mb-1" htmlFor="name">Full Name</label>
                 <input
-                  id="address"
+                  id="name"
                   type="text"
-                  name="address"
-                  value={userInfo.address}
+                  name="name"
+                  value={userInfo.name}
                   onChange={handleUserInfoChange}
                   className="block w-full rounded border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  placeholder="Address"
-                  autoComplete="street-address"
+                  placeholder="Name"
+                  autoComplete="name"
+                  autoFocus
                 />
-
-                <div className="mt-4">
-                  <button
-                    id="saveProfileButton"
-                    type="submit"
-                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors w-full"
-                    disabled={userInfo.phone.length !== 10}
-                  >
-                    Save Profile
-                  </button>
-                  <button
-                    type="button"
-                    className="mt-2 text-gray-700 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors w-full"
-                    onClick={() => setIsEditing(false)}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <div>
-                <h2 className="text-2xl font-bold text-gray-800">{userInfo.name}</h2>
-                <p className="text-gray-600 text-lg">{userInfo.phone}</p>
-                <p className="text-gray-600 text-base mt-1">{userInfo.address}</p>
-                <div className="mt-2 flex items-center">
-                  <span className="bg-green-500 w-2 h-2 rounded-full mr-2"></span>
-                  <span className="text-xs text-gray-500">Verified User</span>
-                </div>
               </div>
-            )}
-          </div>
-          {!isEditing && (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="text-gray-700 hover:text-indigo-600 transition-colors flex items-center"
-            >
-              <Edit2 className="w-5 h-5 mr-2" />
-              <span className="font-medium">Edit Profile</span>
-            </button>
+              <div className="mb-3">
+                <label className="block text-gray-700 text-sm font-medium mb-1" htmlFor="phone">Phone Number</label>
+                <input
+                  id="phone"
+                  type="tel"
+                  name="phone"
+                  value={userInfo.phone}
+                  onChange={handleUserInfoChange}
+                  className="block w-full rounded border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Phone"
+                  autoComplete="tel"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={10}
+                  ref={phoneInputRef}
+                />
+                {userInfo.phone && userInfo.phone.length !== 10 && (
+                  <p className="text-red-500 text-sm mt-1">
+                    Mobile number must be exactly 10 digits.
+                  </p>
+                )}
+              </div>
+              <input
+                id="address"
+                type="text"
+                name="address"
+                value={userInfo.address}
+                onChange={handleUserInfoChange}
+                className="block w-full rounded border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Address"
+                autoComplete="street-address"
+              />
+              <div className="mt-4">
+                <button
+                  id="saveProfileButton"
+                  type="submit"
+                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors w-full"
+                  disabled={userInfo.phone.length !== 10}
+                >
+                  Save Profile
+                </button>
+                <button
+                  type="button"
+                  className="mt-2 text-gray-700 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors w-full"
+                  onClick={() => setIsEditing(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800">{userInfo.name}</h2>
+              <p className="text-gray-600 text-lg">{userInfo.phone}</p>
+              <p className="text-gray-600 text-base mt-1">{userInfo.address}</p>
+              <p className="text-gray-600 text-base mt-1">{userInfo.city}, {userInfo.state}</p>
+              <p className="text-gray-600 text-base mt-1">Date of Birth: {new Date(userInfo.dob).toLocaleDateString()}</p>
+              <div className="mt-2 flex items-center">
+                <span className="bg-green-500 w-2 h-2 rounded-full mr-2"></span>
+                <span className="text-xs text-gray-500">Verified User</span>
+              </div>
+            </div>
           )}
         </div>
+        {!isEditing && (
+          <button
+            onClick={() => setIsEditing(true)}
+            className="text-gray-700 hover:text-indigo-600 transition-colors flex items-center"
+          >
+            <Edit2 className="w-5 h-5 mr-2" />
+            <span className="font-medium">Edit Profile</span>
+          </button>
+        )}
       </div>
-    );
-  };
+    </div>
+  );
+};
+
 
   // Card component for the main menu options
   type FeatureCardProps = {

@@ -26,7 +26,24 @@ exports.getAddressFromCoordinates = async (req, res) => {
     const city = address.city || address.town || address.village || '';
     const pincode = address.postcode || '';
 
-    // ✅ Save this as an address
+    // ✅ Check if this address already exists for the user
+    const existingAddress = await Address.findOne({
+      userId,
+      address: display_name,
+      city,
+      pincode
+    });
+
+    if (existingAddress) {
+      return res.status(200).json({
+        message: 'Address already exists',
+        address: display_name,
+        city,
+        pincode
+      });
+    }
+
+    // ✅ Save as new address
     const newAddress = new Address({
       userId,
       address: display_name,
@@ -50,6 +67,7 @@ exports.getAddressFromCoordinates = async (req, res) => {
     res.status(500).json({ message: 'Failed to get address from coordinates.' });
   }
 };
+
 
 
 
