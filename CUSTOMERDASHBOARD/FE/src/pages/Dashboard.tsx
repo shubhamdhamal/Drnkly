@@ -1,729 +1,1001 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Package, ShoppingBag, TrendingUp, IndianRupeeIcon, CheckCircle, Tag, Plus, X, CheckSquare, Square, AlertTriangle, Percent } from 'lucide-react';
+import { Menu, Search, ShoppingCart, X, User, Settings, LogOut, BookOpen, Clock, AlertTriangle, Sparkles, ChevronLeft, ChevronRight, Gift } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { toast } from 'react-toastify';
+import oldMonkImage from './pop.jpeg';
+import CartCounter from '../components/CartCounter';
+import { sessionManager } from '../utils/sessionManager';
+import { useNavigateWithScroll } from '../utils/scrollToTop';
+const mobileBannerImage = "/mobile.jpeg";
 
-interface Product {
-  _id: string;
-  name: string;
-  brand: string;
-  price: number;
-  category: string;
-  alcoholContent?: number;
-  stock: number;
-  image: string;
-}
 
-interface Offer {
-  id: string;
-  title: string;
-  description: string;
-  discountPercentage: number;
-  isActive: boolean;
-  appliedToProducts: string[];
-  couponCode?: string;
-}
-
-const Dashboard: React.FC = () => {
-  const navigate = useNavigate();
-
-  // States for products and offers
-  const [products, setProducts] = useState<Product[]>([]);
-  const [alcoholProducts, setAlcoholProducts] = useState<Product[]>([]);
-  const [offers, setOffers] = useState<Offer[]>([
-    { 
-      id: '1', 
-      title: 'Weekend Special', 
-      description: '10% off on all premium whiskeys',
-      discountPercentage: 10,
-      isActive: true,
-      appliedToProducts: [],
-      couponCode: 'WEEKEND10'
-    },
-    { 
-      id: '2', 
-      title: 'Happy Hour', 
-      description: '15% off on beer between 5-7 PM',
-      discountPercentage: 15,
-      isActive: false,
-      appliedToProducts: [],
-      couponCode: 'HAPPY15'
-    },
-    { 
-      id: '3', 
-      title: 'Buy 2 Get 1', 
-      description: 'Special deal on wine purchases',
-      discountPercentage: 33,
-      isActive: false,
-      appliedToProducts: [],
-      couponCode: 'WINE2GET1'
-    },
-    { 
-      id: '4', 
-      title: 'First-Time Discount', 
-      description: '5% off on first order',
-      discountPercentage: 5,
-      isActive: true,
-      appliedToProducts: [],
-      couponCode: 'FIRST5'
-    },
-    { 
-      id: '5', 
-      title: 'Bulk Purchase', 
-      description: '20% off on orders above ₹2000',
-      discountPercentage: 20,
-      isActive: false,
-      appliedToProducts: [],
-      couponCode: 'BULK20'
-    },
-    { 
-      id: '6', 
-      title: 'Festive Offer', 
-      description: 'Special discounts for the holiday season',
-      discountPercentage: 12,
-      isActive: true,
-      appliedToProducts: [],
-      couponCode: 'FESTIVAL12'
-    },
-    { 
-      id: '7', 
-      title: 'Clearance Sale', 
-      description: 'Discounts on selected items to clear inventory',
-      discountPercentage: 25,
-      isActive: false,
-      appliedToProducts: [],
-      couponCode: 'CLEAR25'
-    },
-    { 
-      id: '8', 
-      title: 'Member Discount', 
-      description: 'Special pricing for loyalty members',
-      discountPercentage: 8,
-      isActive: true,
-      appliedToProducts: [],
-      couponCode: 'MEMBER8'
-    },
-    { 
-      id: '9', 
-      title: 'New Year Offer', 
-      description: '15% off to celebrate the new year',
-      discountPercentage: 15,
-      isActive: false,
-      appliedToProducts: [],
-      couponCode: 'NEWYEAR15'
-    },
-    { 
-      id: '10', 
-      title: 'Premium Selection', 
-      description: '10% off on premium spirits',
-      discountPercentage: 10,
-      isActive: true,
-      appliedToProducts: [],
-      couponCode: 'PREMIUM10'
+// Simplified banner animations CSS with media queries
+const bannerAnimations = `
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  .banner-fade {
+    animation: fadeIn 0.5s ease-out;
+  }
+  
+  .banner-content {
+    transition: transform 0.3s ease;
+  }
+  
+  .banner-content:hover {
+    transform: translateY(-5px);
+  }
+  
+  /* Mobile banners - hidden on desktop */
+  .mobile-banner {
+    display: block;
+  }
+  
+  .desktop-banner {
+    display: none;
+  }
+  
+  /* Desktop banners - hidden on mobile */
+  @media (min-width: 768px) {
+    .mobile-banner {
+      display: none;
     }
-  ]);
-  const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
-  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
-  const [showOfferModal, setShowOfferModal] = useState(false);
+    
+    .desktop-banner {
+      display: block;
+    }
+  }
+`;
 
-  // Fetch the products for the logged-in vendor
+const categories = [
+  {
+    name: 'Drinks',
+    image: 'https://plus.unsplash.com/premium_photo-1671244417901-6d0f50085167?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    icon: '🍸'
+  },
+  {
+    name: 'Snacks',
+    image: 'https://plus.unsplash.com/premium_photo-1695558759748-5cad76d7d48e?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    icon: '🍿'
+  },
+  {
+    name: 'Soft Drinks',
+    image: 'https://images.unsplash.com/photo-1452725210141-07dda20225ec?q=80&w=2152&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    icon: '🥤'
+  },
+  {
+    name: 'Cigarette',
+    image: 'https://images.unsplash.com/photo-1702306455611-e3360e6ffeee?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    icon: '🚬'
+  },
+  {
+    name: 'Glasses & Plates',
+    image: 'https://images.unsplash.com/photo-1516600164266-f3b8166ae679?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    icon: '🥃'
+  }
+];
+
+const stores = [
+  { id: 1, name: "PK Wines", rating: 4.8, image: "https://images.unsplash.com/photo-1597290282695-edc43d0e7129?w=600&h=400&fit=crop", address: "123 Main St", distance: "0.8 miles", openTime: "10:00 AM - 10:00 PM", deliveryTime: "25-30 min" },
+  { id: 2, name: "Sunrise Family Garden Restaurant", rating: 4.5, image: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=600&h=400&fit=crop", address: "456 Oak Ave", distance: "1.2 miles", openTime: "11:00 AM - 9:00 PM", deliveryTime: "30-35 min" }
+];
+
+// Banner data - Separate arrays for mobile and desktop
+const mobileBanners = [
+  {
+    id: "mobile-1",
+    image: mobileBannerImage,
+  
+    mobileOptimized: true
+  },
+  {
+    id: "mobile-2", 
+    image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=600&auto=format&fit=crop",
+    title: "Quick Delivery",
+    description: "Fast delivery in 30 minutes or less",
+    type: "featured",
+    theme: "whiskey",
+    mobileOptimized: true
+  },
+  {
+    id: "mobile-3",
+    image: "https://images.unsplash.com/photo-1528823872057-9c018a7a7553?q=80&w=600&auto=format&fit=crop", 
+    title: "Party Packages",
+    description: "Everything for your weekend gathering",
+    type: "regular",
+    theme: "wine",
+    mobileOptimized: true
+  },
+  {
+    id: "mobile-4",
+    image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=600&auto=format&fit=crop",
+    title: "Happy Hours",
+    description: "50% off on selected drinks from 4-7 PM",
+    type: "special",
+    theme: "beer",
+    mobileOptimized: true
+  }
+];
+
+const desktopBanners = [
+  {
+    id: "desktop-1",
+    image: "https://images.unsplash.com/photo-1616527546362-77e70524262d?q=80&w=2070&auto=format&fit=crop",
+    
+    mobileOptimized: false
+  },
+  {
+    id: "desktop-2",
+    image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=2070&auto=format&fit=crop",
+    title: "Premium Drinks Delivered",
+    description: "Fast delivery in 45 minutes or less. Order now and enjoy premium quality!",
+    type: "featured", 
+    theme: "whiskey",
+    mobileOptimized: false
+  },
+  {
+    id: "desktop-3",
+    image: "https://images.unsplash.com/photo-1528823872057-9c018a7a7553?q=80&w=2070&auto=format&fit=crop",
+    title: "Premium Party Packages",
+    description: "Everything you need for your weekend gathering in one comprehensive order",
+    type: "regular",
+    theme: "wine", 
+    mobileOptimized: false
+  },
+  {
+    id: "desktop-4",
+    image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=2070&auto=format&fit=crop",
+    title: "Craft Beer Selection",
+    description: "Explore our curated collection of local and international craft beers",
+    type: "featured",
+    theme: "beer",
+    mobileOptimized: false
+  }
+];
+
+// Legacy banners array for backward compatibility
+const banners = [...mobileBanners, ...desktopBanners];
+
+// Old Monk Promotional Popup Component
+const OldMonkPromotion = ({ isOpen, onClose, onGetOffer }: { isOpen: boolean, onClose: () => void, onGetOffer: () => void }) => {
+  if (!isOpen) return null;
+  
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center p-4">
+      <div className="relative max-w-3xl w-full overflow-hidden shadow-2xl">
+        {/* Close button */}
+        <button 
+          onClick={onClose}
+          className="absolute top-3 right-3 text-white hover:text-gray-300 z-10"
+        >
+          <X size={24} />
+        </button>
+        
+        {/* Main content - clickable image with built-in FREE button */}
+        <div className="relative cursor-pointer" onClick={onGetOffer}>
+          <img 
+            src={oldMonkImage} 
+            alt="Promotion Background" 
+            className="w-full h-auto"
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+function Dashboard() {
+  const navigate = useNavigateWithScroll();
+  const location = useLocation();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [sparklePosition, setSparklePosition] = useState({ x: 0, y: 0 });
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userName, setUserName] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const [currentBanner, setCurrentBanner] = useState(0);
+  const [currentMobileBanner, setCurrentMobileBanner] = useState(0);
+  const [currentDesktopBanner, setCurrentDesktopBanner] = useState(0);
+  const [sparkles, setSparkles] = useState<{ x: number, y: number, size: number, delay: number }[]>([]);
+  const [bubbles, setBubbles] = useState<{left: string, size: number, delay: number, duration: number}[]>([]);
+  
+  // Old Monk promotion state
+  const [showOldMonkPromo, setShowOldMonkPromo] = useState(false);
+
+  // Initialize Facebook Pixel
   useEffect(() => {
-    const fetchProducts = async () => {
+    // Add Facebook Pixel base code
+    const script = document.createElement('script');
+    script.innerHTML = `
+      !function(f,b,e,v,n,t,s)
+      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', '1232437498289481');
+      fbq('track', 'PageView');
+    `;
+    document.head.appendChild(script);
+    
+    // Add noscript pixel
+    const noscript = document.createElement('noscript');
+    const img = document.createElement('img');
+    img.height = 1;
+    img.width = 1;
+    img.style.display = 'none';
+    img.src = 'https://www.facebook.com/tr?id=1232437498289481&ev=PageView&noscript=1';
+    noscript.appendChild(img);
+    document.body.appendChild(noscript);
+    
+    // Clean up on unmount
+    return () => {
+      if (script.parentNode) {
+        document.head.removeChild(script);
+      }
+      if (noscript.parentNode) {
+        document.body.removeChild(noscript);
+      }
+    };
+  }, []);
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+
+  const handleLogout = () => {
+    sessionManager.clearSession();
+    localStorage.removeItem("locationGranted");
+    setIsLoggedIn(false);
+    navigate('/login');
+  };
+  
+  // Function to handle the Old Monk offer
+  const handleGetOldMonkOffer = () => {
+    // Close the popup
+    setShowOldMonkPromo(false);
+    
+    // Add debug log
+    console.log('Navigating to Old Monk products page...');
+    
+    // Navigate to Old Monk product in Products page - search ONLY for "Old Monk" (without 180ml)
+    navigate('/products?search=Old%20Monk%20Rum%20Free');
+    
+    // Set a flag to mark the offer as shown to this user
+    localStorage.setItem('oldMonkOfferShown', 'true');
+  };
+
+  useEffect(() => {
+    const fetchUserName = async () => {
       try {
         const token = localStorage.getItem('authToken');
-        if (token) {
-          const response = await axios.get('https://vendor.peghouse.in/api/vendor/products', {
+        const userId = localStorage.getItem('userId');
+        const isSkipped = localStorage.getItem('isSkippedLogin'); 
+        const oldMonkOfferShown = localStorage.getItem('oldMonkOfferShown');
+        
+        // Set login status
+        const loginStatus = !!token && !isSkipped;
+        console.log('Dashboard login check:', { token: !!token, userId: !!userId, isSkipped: !!isSkipped, loginStatus });
+        setIsLoggedIn(loginStatus);
+  
+        // Show the Old Monk promotion for all users
+          setShowOldMonkPromo(true);
+  
+        if (token && userId && loginStatus) {
+          const response = await axios.get(`https://peghouse.in/api/users/${userId}`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           });
-          
-          const allProducts = response.data.products || [];
-          setProducts(allProducts);
-          
-          // Filter only alcohol products
-          const alcoholOnly = allProducts.filter((product: Product) => 
-            product.category.toLowerCase() === 'drinks' || 
-            product.alcoholContent > 0
-          );
-          setAlcoholProducts(alcoholOnly);
-        } else {
-          console.error('No token found');
+  
+          const user = response.data;
+          setUserName(user.name);
         }
       } catch (error) {
-        console.error('Error fetching products:', error);
+        console.error('Failed to fetch user info for sidebar', error);
       }
     };
-
-    fetchProducts();
-  }, []);
-
-  // Function to toggle product selection
-  const toggleProductSelection = (productId: string) => {
-    setSelectedProducts(prev => 
-      prev.includes(productId) 
-        ? prev.filter(id => id !== productId) 
-        : [...prev, productId]
-    );
-  };
-
-  // Function to apply selected offer to products
-  const applyOfferToProducts = () => {
-    if (!selectedOffer) return;
-
-    // If no products are selected, select all alcohol products
-    const productsToApply = selectedProducts.length > 0 
-      ? selectedProducts 
-      : alcoholProducts.map(p => p._id);
-
-    // Update the offer with selected products and set isActive to true
-    const updatedOffers = offers.map(offer => 
-      offer.id === selectedOffer.id 
-        ? { ...offer, appliedToProducts: productsToApply, isActive: true } 
-        : offer
-    );
+  
+    fetchUserName();
     
-    setOffers(updatedOffers);
-    toast.success(`${selectedOffer.title} activated and applied to ${productsToApply.length} products`);
-    setShowOfferModal(false);
-    setSelectedOffer(null);
-    setSelectedProducts([]);
-  };
-
-  // Function to open offer modal with pre-selected offer
-  const openOfferModal = (offer: Offer) => {
-    setSelectedOffer(offer);
-    setSelectedProducts(offer.appliedToProducts || []);
-    setShowOfferModal(true);
-  };
-
-  // Function to create a new offer (this would usually involve an API call)
-  const createNewOffer = () => {
-    const randomCode = 'OFFER' + Math.floor(Math.random() * 10000);
-    const newOffer: Offer = {
-      id: Date.now().toString(),
-      title: "New Offer",
-      description: "Description for new offer",
-      discountPercentage: 10,
-      isActive: false,
-      appliedToProducts: [],
-      couponCode: randomCode
+    const handleStorageChange = () => {
+      fetchUserName();
     };
     
-    setOffers(prev => [...prev, newOffer]);
-    openOfferModal(newOffer);
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSparklePosition({
+        x: Math.random() * 100,
+        y: Math.random() * 100
+      });
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Handle header hide/show on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        setIsHeaderVisible(false);
+      } else {
+        setIsHeaderVisible(true);
+      }
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
+
+  // Banner carousel logic - Separate for mobile and desktop
+  useEffect(() => {
+    const mobileInterval = setInterval(() => {
+      setCurrentMobileBanner((prev) => (prev + 1) % mobileBanners.length);
+    }, 7000);
+    
+    const desktopInterval = setInterval(() => {
+      setCurrentDesktopBanner((prev) => (prev + 1) % desktopBanners.length);
+    }, 7000);
+    
+    return () => {
+      clearInterval(mobileInterval);
+      clearInterval(desktopInterval);
+    };
+  }, []);
+
+  const nextBanner = () => {
+    setCurrentBanner((prev) => (prev + 1) % banners.length);
   };
 
-  // Filter top alcohol products by price
-  const topAlcoholProducts = [...alcoholProducts]
-    .sort((a, b) => b.price - a.price)
-    .slice(0, 5);
+  const prevBanner = () => {
+    setCurrentBanner((prev) => (prev === 0 ? banners.length - 1 : prev - 1));
+  };
 
-  const stats = [
-    { 
-      title: 'Active Orders', 
-      value: '25', 
-      icon: ShoppingBag, 
-      changeType: 'positive',
-      description: 'Need your attention',
-      path: '/orders',
-      bgGradient: 'from-blue-50 to-blue-100',
-      iconColor: 'text-blue-600',
-      badgeColor: 'bg-blue-100 text-blue-700'
-    },
-    { 
-      title: 'Products', 
-      value: `${products.length}`, 
-      icon: Package,
-      changeType: 'neutral',
-      description: 'total in inventory',
-      path: '/products',
-      searchQuery: 'Old Monk Rum Free',
-      bgGradient: 'from-green-50 to-green-100',
-      iconColor: 'text-green-600',
-      badgeColor: 'bg-green-100 text-green-700'
-    },
-    { 
-      title: 'Completed Orders', 
-      value: '125', 
-      icon: CheckCircle,
-      changeType: 'positive',
-      description: 'this month',
-      path: '/orders',
-      bgGradient: 'from-purple-50 to-purple-100',
-      iconColor: 'text-purple-600',
-      badgeColor: 'bg-purple-100 text-purple-700'
-    },
-    { 
-      title: 'Total Sales', 
-      value: '₹45,231', 
-      icon: IndianRupeeIcon, 
-      changeType: 'positive',
-      description: 'vs. last month',
-      path: '/payouts',
-      bgGradient: 'from-amber-50 to-amber-100',
-      iconColor: 'text-amber-600',
-      badgeColor: 'bg-amber-100 text-amber-700'
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    // Restore immediate navigation to Products page as user types
+    if (value.trim()) {
+      navigate(`/products?search=${encodeURIComponent(value)}`);
     }
-  ];
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    // Navigate when form is submitted (Enter key)
+    if (searchQuery.trim()) {
+      navigate(`/products?search=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
+  // Generate random sparkles for banners
+  useEffect(() => {
+    const generateSparkles = () => {
+      const newSparkles = [];
+      for (let i = 0; i < 20; i++) {
+        newSparkles.push({
+          x: Math.random() * 100,
+          y: Math.random() * 100,
+          size: Math.random() * 5 + 2,
+          delay: Math.random() * 5
+        });
+      }
+      setSparkles(newSparkles);
+    };
+    
+    generateSparkles();
+    const interval = setInterval(generateSparkles, 10000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  // Generate bubbles for beer-themed banner
+  useEffect(() => {
+    const currentMobileBannerData = mobileBanners[currentMobileBanner];
+    const currentDesktopBannerData = desktopBanners[currentDesktopBanner];
+    
+    if (currentMobileBannerData?.theme === 'beer' || currentDesktopBannerData?.theme === 'beer') {
+      const newBubbles = [];
+      for (let i = 0; i < 20; i++) {
+        newBubbles.push({
+          left: `${Math.random() * 100}%`,
+          size: Math.random() * 15 + 5,
+          delay: Math.random() * 5,
+          duration: Math.random() * 5 + 3
+        });
+      }
+      setBubbles(newBubbles);
+    }
+  }, [currentMobileBanner, currentDesktopBanner]);
+
+  // Function to trigger Facebook Pixel event
+  const triggerFacebookPixelEvent = () => {
+    try {
+      // Create and inject Meta Pixel script directly
+      const pixelScript = document.createElement('script');
+      pixelScript.innerHTML = `
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window, document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '1232437498289481');
+        fbq('track', 'PageView');
+      `;
+      document.head.appendChild(pixelScript);
+      
+      // Create and inject noscript pixel
+      const noscriptElement = document.createElement('noscript');
+      const imgElement = document.createElement('img');
+      imgElement.height = 1;
+      imgElement.width = 1;
+      imgElement.style.display = 'none';
+      imgElement.src = 'https://www.facebook.com/tr?id=1232437498289481&ev=PageView&noscript=1';
+      noscriptElement.appendChild(imgElement);
+      document.body.appendChild(noscriptElement);
+      
+      alert('Facebook Pixel loaded and PageView event tracked!');
+      
+      // If fbq is already defined, track an additional custom event
+      if ((window as any).fbq) {
+        (window as any).fbq('track', 'ButtonClick');
+        console.log('Additional ButtonClick event tracked');
+      }
+    } catch (error) {
+      console.error('Error loading Facebook Pixel:', error);
+      alert('Error loading Facebook Pixel. See console for details.');
+    }
+  };
 
   return (
-    <div className="space-y-6 md:space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
-          <p className="text-gray-600 mt-1">Welcome back! Here's what's happening with your store.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <select className="w-full sm:w-auto px-4 py-2 bg-white border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option>Last 7 days</option>
-            <option>Last 30 days</option>
-            <option>Last 3 months</option>
-          </select>
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <div 
-              key={index} 
-              className={`bg-white rounded-xl p-5 md:p-6 shadow-lg border border-gray-100 
-                hover:shadow-xl transition-all duration-300 transform hover:translate-y-[-5px] 
-                overflow-hidden relative ${stat.path ? 'cursor-pointer' : ''}`}
-              onClick={() => {
-                if (stat.title === 'Completed Orders') {
-                  localStorage.setItem('showPastOrders', 'true');
-                  navigate('/orders');
-                } else if (stat.title === 'Total Sales') {
-                  navigate('/payouts');
-                } else if (stat.path) {
-                  if (stat.searchQuery) {
-                    localStorage.setItem('productSearchQuery', stat.searchQuery);
-                  }
-                  navigate(stat.path);
-                }
-              }}
-            >
-              {/* Background gradient */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${stat.bgGradient} opacity-40`}></div>
-              
-              <div className="relative z-10">
-              <div className="flex items-center justify-between">
-                  <div className={`bg-white p-3 rounded-lg shadow-sm border border-gray-100`}>
-                    <Icon className={`w-7 h-7 ${stat.iconColor}`} />
-                </div>
-                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs md:text-sm font-medium ${stat.badgeColor}`}>
-                  {stat.changeType === 'positive' && '+3.2%'}
-                  {stat.changeType === 'negative' && '-1.4%'}
-                    {stat.changeType === 'neutral' && 'Current'}
-                </span>
-              </div>
-              <div className="mt-4">
-                <h3 className="text-sm font-medium text-gray-600">{stat.title}</h3>
-                  <p className="text-2xl md:text-3xl font-bold text-gray-900 mt-1">{stat.value}</p>
-                  <p className="text-xs md:text-sm text-gray-500 mt-2">{stat.description}</p>
-                </div>
-                
-                {/* Action indicator */}
-                <div className="mt-4 flex items-center text-sm font-medium text-blue-600">
-                  <span>View Details</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </div>
-              
-              {/* Decorative elements */}
-              <div className="absolute top-0 right-0 h-20 w-20 bg-gradient-to-bl from-white to-transparent opacity-60 transform rotate-45"></div>
-              <div className="absolute bottom-0 left-0 h-16 w-16 bg-gradient-to-tr from-white to-transparent opacity-60 transform -rotate-45"></div>
-            </div>
-          );
-        })}
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Add simplified animation styles */}
+      <style>{bannerAnimations}</style>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-        {/* Active Offers */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden transform transition-all duration-300 hover:translate-y-[-5px] hover:shadow-xl">
-          <div className="p-5 md:p-6 border-b border-gray-100 bg-gradient-to-r from-white to-blue-50 flex justify-between items-center">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-800">Active Offers</h2>
-              <p className="text-sm text-gray-600 mt-1">Current available offers</p>
-            </div>
-            <button 
-              onClick={createNewOffer}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-1 hover:bg-blue-700 transition-colors shadow-sm"
-            >
-              <Plus className="w-4 h-4" /> New
-            </button>
-          </div>
-          <div className="divide-y divide-gray-100 max-h-[400px] overflow-y-auto">
-            {offers
-              .filter(offer => offer.isActive)
-              .map((offer) => (
-                <div key={offer.id} className="p-5 md:p-6 hover:bg-gray-50 transition-colors">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div>
-                      <div className="flex items-center gap-3">
-                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-700 shadow-sm">
-                          <CheckCircle className="w-5 h-5" />
-                        </span>
-                        <p className="font-medium text-gray-800">{offer.title}</p>
-                      </div>
-                      <p className="text-sm text-gray-600 mt-2 ml-11">{offer.description}</p>
-                      {offer.appliedToProducts.length > 0 && (
-                        <p className="text-xs text-blue-600 mt-1 ml-11">Applied to {offer.appliedToProducts.length} products</p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="font-semibold text-green-700 bg-green-50 px-3 py-1 rounded-full text-sm">{offer.discountPercentage}% off</span>
-                      <button 
-                        onClick={() => openOfferModal(offer)}
-                        className="bg-white hover:bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm transition-colors border border-gray-200 shadow-sm hover:shadow"
-                      >
-                        Edit
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            
-            {offers.filter(offer => offer.isActive).length === 0 && (
-              <div className="p-8 text-center text-gray-500">
-                <AlertTriangle className="w-8 h-8 mx-auto mb-3 text-gray-400" />
-                <p className="font-medium">No active offers configured yet</p>
-                <p className="text-sm mt-1">Create new offers to attract more customers</p>
-              </div>
-            )}
-          </div>
-        </div>
+      {/* Old Monk Promotional Popup */}
+      <OldMonkPromotion 
+        isOpen={showOldMonkPromo} 
+        onClose={() => setShowOldMonkPromo(false)} 
+        onGetOffer={handleGetOldMonkOffer}
+      />
 
-        {/* Applied Offers */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden transform transition-all duration-300 hover:translate-y-[-5px] hover:shadow-xl">
-          <div className="p-5 md:p-6 border-b border-gray-100 bg-gradient-to-r from-white to-green-50">
-            <h2 className="text-lg font-semibold text-gray-800">Applied Offers</h2>
-            <p className="text-sm text-gray-600 mt-1">Offers you have applied to your products</p>
-          </div>
-          <div className="divide-y divide-gray-100 max-h-[400px] overflow-y-auto">
-            {offers
-              .filter(offer => offer.isActive && offer.appliedToProducts.length > 0)
-              .map((offer) => (
-                <div key={offer.id} className="p-5 md:p-6 hover:bg-gray-50 transition-colors">
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-700 shadow-sm">
-                          <Percent className="w-5 h-5" />
-                        </span>
-                        <p className="font-medium text-gray-800">{offer.title}</p>
-                      </div>
-                      <span className="font-semibold text-blue-700 bg-blue-50 px-3 py-1 rounded-full text-sm">{offer.discountPercentage}% off</span>
-                    </div>
-                    <p className="text-sm text-gray-600 ml-11">{offer.description}</p>
-                    
-                    <div className="mt-3 ml-11 pt-3 border-t border-gray-100">
-                      <p className="text-sm font-medium mb-3">Applied to {offer.appliedToProducts.length} products:</p>
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {alcoholProducts
-                          .filter(product => offer.appliedToProducts.includes(product._id))
-                          .slice(0, 3) // Show only first 3 products
-                          .map(product => (
-                            <div key={product._id} className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-100">
-                              <div className="w-8 h-8 bg-white rounded-md overflow-hidden shadow-sm">
-                                <img 
-                                  src={product.image || `https://via.placeholder.com/50?text=${product.name}`}
-                                  alt={product.name}
-                                  className="w-full h-full object-contain"
-                                />
-                              </div>
-                              <span className="text-sm font-medium text-gray-700">{product.name}</span>
-                            </div>
-                          ))
-                        }
-                        {offer.appliedToProducts.length > 3 && (
-                          <span className="text-sm bg-gray-100 px-3 py-2 rounded-lg border border-gray-200">
-                            +{offer.appliedToProducts.length - 3} more
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex gap-3">
-                        <button 
-                          onClick={() => openOfferModal(offer)}
-                          className="bg-blue-50 text-blue-700 hover:bg-blue-100 px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 border border-blue-200 shadow-sm hover:shadow"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                          </svg>
-                          Edit
-                        </button>
-                        <button 
-                          onClick={() => {
-                            const updatedOffers = offers.map(o => 
-                              o.id === offer.id ? {...o, appliedToProducts: []} : o
-                            );
-                            setOffers(updatedOffers);
-                            toast.success(`${offer.title} removed from all products`);
-                          }}
-                          className="bg-red-50 text-red-700 hover:bg-red-100 px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 border border-red-200 shadow-sm hover:shadow"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M3 6h18"></path>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
-                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                          </svg>
-                          Remove
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              
-            {!offers.some(offer => offer.isActive && offer.appliedToProducts.length > 0) && (
-              <div className="p-8 text-center text-gray-500">
-                <AlertTriangle className="w-8 h-8 mx-auto mb-3 text-gray-400" />
-                <p className="font-medium">You haven't applied any offers to your products yet</p>
-                <button 
-                  onClick={createNewOffer}
-                  className="mt-3 text-blue-600 hover:text-blue-800 text-sm font-medium bg-blue-50 px-4 py-2 rounded-lg border border-blue-100 hover:bg-blue-100 transition-colors"
+      {/* Header */}
+      {!showOldMonkPromo && (
+        <div 
+          className={`sticky top-0 z-50 bg-white shadow-md transition-transform duration-300 ${isHeaderVisible ? 'translate-y-0' : '-translate-y-full'}`}
+        >
+          <div className="max-w-7xl mx-auto px-2 sm:px-4 py-2">
+            <div className="flex items-center justify-between h-14 sm:h-16">
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={toggleMenu}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  aria-label="Open menu"
                 >
-                  Create an offer
+                  <Menu size={20} className="text-gray-700" />
                 </button>
               </div>
-            )}
+
+              <div
+                className="cursor-pointer inline-block"
+                onClick={() => navigate('/dashboard')}
+              >
+                <img
+                  src="/finallogo.png"
+                  alt="Drnkly Logo"
+                  className="mx-auto object-contain w-28 sm:w-32 md:w-40 lg:w-48 transition-all duration-300"
+                />
+              </div>
+
+              <div className="flex items-center space-x-2 sm:space-x-4">
+                {isLoggedIn ? (
+                  <button
+                    onClick={handleLogout}
+                    className="bg-red-500 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-full hover:bg-red-600 transition-colors text-xs sm:text-sm font-medium shadow-sm"
+                  >
+                    Logout
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="bg-[#cd6839] text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-full hover:bg-[#b55a31] transition-colors text-xs sm:text-sm font-medium shadow-sm"
+                  >
+                    Login
+                  </button>
+                )}
+                <button
+                  onClick={() => navigate('/cart')}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors relative"
+                  aria-label="View cart"
+                >
+                  <ShoppingCart size={20} className="text-gray-700" />
+                  <CartCounter size="medium" />
+                </button>
+              </div>
+            </div>
+
+            {/* Search Bar */}
+            <form onSubmit={handleSearchSubmit} className="mb-3 sm:mb-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  placeholder="Search for drinks, snacks, and more..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  className="w-full pl-10 pr-4 py-2 sm:py-3 bg-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cd6839] transition-all duration-200"
+                  autoComplete="off"
+                />
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        {/* Mobile Banner Carousel */}
+        <div className="mobile-banner relative mb-6 sm:mb-8 rounded-2xl overflow-hidden shadow-lg h-48 sm:h-64 md:h-72 -mx-3 sm:mx-0">
+          {/* Mobile Carousel indicators */}
+          <div className="absolute bottom-3 left-0 right-0 z-20 flex justify-center space-x-2">
+            {mobileBanners.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentMobileBanner(index)}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  currentMobileBanner === index 
+                    ? "bg-white w-6" 
+                    : "bg-white/50 hover:bg-white/80"
+                }`}
+                aria-label={`Go to mobile slide ${index + 1}`}
+              />
+            ))}
+          </div>
+
+          {/* Mobile Carousel navigation buttons */}
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              setCurrentMobileBanner((prev) => (prev === 0 ? mobileBanners.length - 1 : prev - 1));
+            }}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-black/30 hover:bg-black/50 text-white rounded-full p-2 backdrop-blur-sm transition-colors"
+            aria-label="Previous mobile banner"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              setCurrentMobileBanner((prev) => (prev + 1) % mobileBanners.length);
+            }}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-black/30 hover:bg-black/50 text-white rounded-full p-2 backdrop-blur-sm transition-colors"
+            aria-label="Next mobile banner"
+          >
+            <ChevronRight size={20} />
+          </button>
+
+          {/* Mobile Banner slides */}
+          <div className="relative w-full h-full">
+            {mobileBanners.map((banner, index) => (
+              <div 
+                key={banner.id}
+                className={`absolute inset-0 transition-opacity duration-500 ${
+                  currentMobileBanner === index ? "opacity-100 z-10" : "opacity-0 z-0"
+                }`}
+                onClick={() => {
+                  navigate('/products?search=Old%20Monk%20Rum%20Free');
+                }}
+              >
+                {/* For first mobile banner, show only image and below it the text */}
+                {banner.id === "mobile-1" ? (
+                  <>
+                    <img
+                      src={banner.image}
+                      alt="Old Monk Offer"
+                      className="w-full h-full object-cover scale-90"
+                      style={{ objectPosition: 'center' }}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.onerror = null;
+                        target.src = "website1.png";
+                      }}
+                    />
+                    {/* Small Order Now button for first mobile banner */}
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate('/products?search=Old%20Monk%20Rum%20Free');
+                      }}
+                      className="absolute bottom-16 left-1/2 transform -translate-x-1/2 bg-[#cd6839] hover:bg-[#b55a31] text-white px-3 py-1.5 rounded-lg transition-colors shadow-lg hover:shadow-xl text-xs font-medium z-20"
+                    >
+                      Order Now →
+                    </button>
+                    <div className="bg-white text-center py-2 px-2 text-sm font-semibold text-[#cd6839]">
+                      GET OLD MONK QUARTER FREE!<br />
+                      On Your First Order<br />
+                      180 ml | Delivered in 45 Min
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Mobile Banner content for other banners (if any) */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/20 z-10 flex flex-col justify-center p-4 sm:p-6">
+                      <div className="max-w-lg">
+                        {banner.type === "special" && (
+                          <div className="inline-block bg-yellow-400 text-blue-900 font-bold px-2 py-1 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm mb-2 sm:mb-3">
+                            Weekend Special!
+                          </div>
+                        )}
+                        {banner.type === "featured" && (
+                          <div className="inline-block bg-[#cd6839]/20 text-white font-bold px-2 py-1 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm mb-2 sm:mb-3">
+                            Most Popular
+                          </div>
+                        )}
+                        <h1 className="text-white text-xl sm:text-2xl font-bold mb-2 md:mb-3 banner-fade leading-tight">
+                          {banner.title}
+                        </h1>
+                        <p className="text-white/90 text-xs sm:text-sm mb-3 sm:mb-4 banner-fade leading-relaxed">
+                          {banner.description}
+                        </p>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate('/products?search=Old%20Monk%20Rum%20Free');
+                          }}
+                          className="bg-[#cd6839] hover:bg-[#b55a31] text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg transition-colors shadow-lg hover:shadow-xl text-xs sm:text-sm font-medium banner-content"
+                        >
+                          Order Now →
+                        </button>
+                      </div>
+                    </div>
+                    <img
+                      src={banner.image}
+                      alt={banner.title}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.onerror = null;
+                        target.src = "website1.png";
+                      }}
+                    />
+                  </>
+                )}
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Inactive Offers */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden transform transition-all duration-300 hover:translate-y-[-5px] hover:shadow-xl">
-          <div className="p-5 md:p-6 border-b border-gray-100 bg-gradient-to-r from-white to-purple-50">
-            <h2 className="text-lg font-semibold text-gray-800">Inactive Offers</h2>
-            <p className="text-sm text-gray-600 mt-1">Offers with coupon codes ready to be activated</p>
+        {/* Desktop Banner Carousel */}
+        <div className="desktop-banner relative mb-6 sm:mb-8 rounded-2xl overflow-hidden shadow-lg h-48 sm:h-64 md:h-72 -mx-3 sm:mx-0">
+          {/* Desktop Carousel indicators */}
+          <div className="absolute bottom-3 left-0 right-0 z-20 flex justify-center space-x-2">
+            {desktopBanners.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentDesktopBanner(index)}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  currentDesktopBanner === index 
+                    ? "bg-white w-6" 
+                    : "bg-white/50 hover:bg-white/80"
+                }`}
+                aria-label={`Go to desktop slide ${index + 1}`}
+              />
+            ))}
           </div>
-          <div className="divide-y divide-gray-100 max-h-[400px] overflow-y-auto">
-            {offers
-              .filter(offer => !offer.isActive)
-              .map((offer) => (
-                <div key={offer.id} className="p-5 md:p-6 hover:bg-gray-50 transition-colors">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div>
-                      <div className="flex items-center gap-3">
-                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-600 shadow-sm">
-                          <Tag className="w-5 h-5" />
-                        </span>
-                        <p className="font-medium text-gray-800">{offer.title}</p>
+
+          {/* Desktop Carousel navigation buttons */}
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              setCurrentDesktopBanner((prev) => (prev === 0 ? desktopBanners.length - 1 : prev - 1));
+            }}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-black/30 hover:bg-black/50 text-white rounded-full p-2 backdrop-blur-sm transition-colors"
+            aria-label="Previous desktop banner"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              setCurrentDesktopBanner((prev) => (prev + 1) % desktopBanners.length);
+            }}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-black/30 hover:bg-black/50 text-white rounded-full p-2 backdrop-blur-sm transition-colors"
+            aria-label="Next desktop banner"
+          >
+            <ChevronRight size={20} />
+          </button>
+
+          {/* Desktop Banner slides */}
+          <div className="relative w-full h-full">
+            {desktopBanners.map((banner, index) => (
+              <div 
+                key={banner.id}
+                className={`absolute inset-0 transition-opacity duration-500 ${
+                  currentDesktopBanner === index ? "opacity-100 z-10" : "opacity-0 z-0"
+                }`}
+                onClick={() => {
+                  navigate('/products?search=Old%20Monk%20Rum%20Free');
+                }}
+              >
+                {/* Desktop Banner content */}
+                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/20 z-10 flex flex-col justify-center p-4 sm:p-6 md:p-10">
+                  <div className="max-w-lg">
+                    {/* Special banner badge */}
+                    {banner.type === "special" && (
+                      <div className="inline-block bg-yellow-400 text-blue-900 font-bold px-2 py-1 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm mb-2 sm:mb-3">
+                        Weekend Special!
                       </div>
-                      <p className="text-sm text-gray-600 mt-2 ml-11">{offer.description}</p>
-                      
-                      {/* Display coupon code */}
-                      {offer.couponCode && (
-                        <div className="mt-2 ml-11">
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
-                            Coupon: <span className="font-bold ml-1">{offer.couponCode}</span>
-                          </span>
-                        </div>
-                      )}
+                    )}
+                    
+                    {/* Featured banner badge */}
+                    {banner.type === "featured" && (
+                      <div className="inline-block bg-[#cd6839]/20 text-white font-bold px-2 py-1 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm mb-2 sm:mb-3">
+                        Most Popular
+                      </div>
+                    )}
+                    
+                    <h1 className="text-white text-xl sm:text-2xl md:text-4xl font-bold mb-2 md:mb-3 banner-fade leading-tight">
+                      {banner.title}
+                    </h1>
+                    
+                    <p className="text-white/90 text-xs sm:text-sm md:text-lg mb-3 sm:mb-4 md:mb-6 banner-fade leading-relaxed">
+                      {banner.description}
+                    </p>
+                    
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate('/products?search=Old%20Monk%20Rum%20Free');
+                      }}
+                      className="bg-[#cd6839] hover:bg-[#b55a31] text-white px-3 py-2 sm:px-4 sm:py-2 md:px-6 md:py-3 rounded-lg transition-colors shadow-lg hover:shadow-xl text-xs sm:text-sm md:text-base font-medium banner-content"
+                    >
+                      Order Now →
+                    </button>
+                  </div>
+                </div>
+                
+                <img
+                  src={banner.image}
+                  alt={banner.title}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.onerror = null;
+                    target.src = "website1.png";
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Mobile warning - Now visible on mobile too */}
+        <div className="drink-warning text-center text-[#cd6839] font-bold text-xs sm:text-sm md:text-xl mb-4 sm:mb-6 md:mb-8 p-2 md:p-3 border border-[#cd6839]/20 rounded-xl bg-[#cd6839]/5">
+          Drink Responsibly – Alcohol consumption is injurious to health 🍷
+        </div>
+
+        {/* Categories */}
+        <div className="mb-6 sm:mb-10">
+          <div className="flex items-center justify-between mb-3 sm:mb-5">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-800">Categories</h2>
+            <button 
+              onClick={() => navigate('/products')}
+              className="text-xs sm:text-sm text-[#cd6839] hover:text-[#b55a31] font-medium"
+            >
+              View All
+            </button>
+          </div>
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-4">
+            {categories.map((category) => (
+              <div 
+                key={category.name} 
+                onClick={() => {
+                  navigate(`/products?category=${encodeURIComponent(category.name)}`);
+                }}
+                className="relative bg-white overflow-hidden rounded-lg sm:rounded-xl cursor-pointer transform hover:scale-105 transition-all duration-300 hover:shadow-lg group border border-gray-100"
+              >
+                <div className="aspect-square relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-2 sm:p-3 z-10">
+                    <span className="text-lg sm:text-2xl mb-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      {category.icon}
+                    </span>
+                    <h3 className="text-white font-semibold text-xs sm:text-sm leading-tight">{category.name}</h3>
+                  </div>
+                  <img 
+                    src={category.image} 
+                    alt={category.name} 
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Stores */}
+        <div className="mb-6 sm:mb-8">
+          <div className="flex items-center justify-between mb-3 sm:mb-5">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-800">Nearby Stores</h2>
+            <div className="text-xs sm:text-sm text-gray-500 flex items-center">
+              <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-1 sm:mr-2"></span>
+              Open Now
+            </div>
+          </div>
+          <div className="grid gap-4 sm:gap-6">
+            {stores.map((store) => (
+              <div 
+                key={store.id} 
+                className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100" 
+                onClick={() => {
+                  if (store.name === "PK Wines") {
+                    navigate('/products?store=pkwines&exclude=food');
+                  } else if (store.name === "Sunrise Family Garden Restaurant") {
+                    navigate('/products?store=sunrise&category=food');
+                  }
+                }}
+              >
+                <div className="flex flex-col sm:flex-row">
+                  <div className="w-full sm:w-48 h-36 sm:h-auto relative overflow-hidden">
+                    <img 
+                      src={store.image} 
+                      alt={store.name} 
+                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-110" 
+                    />
+                    <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-xs sm:text-sm font-medium px-2 py-1 rounded-full shadow-sm">
+                      <div className="flex items-center">
+                        <span className="text-yellow-400 mr-1">★</span>
+                        <span>{store.rating}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="font-medium text-gray-600 bg-gray-100 px-3 py-1 rounded-full text-sm">{offer.discountPercentage}% off</span>
-                      <button 
-                        onClick={() => {
-                          // Pre-select all alcohol products for this offer and directly apply it
-                          setSelectedOffer(offer);
-                          const allProductIds = alcoholProducts.map(p => p._id);
-                          setSelectedProducts(allProductIds);
-                          
-                          // Create updated offer with these products and active status
-                          const updatedOffers = offers.map(o => 
-                            o.id === offer.id 
-                              ? { ...o, appliedToProducts: allProductIds, isActive: true } 
-                              : o
-                          );
-                          
-                          setOffers(updatedOffers);
-                          toast.success(`${offer.title} activated and applied to all ${allProductIds.length} products`);
-                        }}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors shadow-sm"
-                      >
-                        Activate
+                  </div>
+                  <div className="p-3 sm:p-5 flex flex-col justify-between flex-grow">
+                    <div>
+                      <div className="flex items-center justify-between mb-1 sm:mb-2">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-800">{store.name}</h3>
+                        <div className="text-xs font-medium bg-green-100 text-green-800 px-2 py-0.5 sm:py-1 rounded-full">
+                          Open
+                        </div>
+                      </div>
+                      <p className="text-gray-600 text-xs sm:text-sm mb-1">{store.address}</p>
+                      <p className="text-gray-500 text-xs sm:text-sm mb-2 sm:mb-3">{store.openTime}</p>
+                      
+                      <div className="flex items-center space-x-3 sm:space-x-4 text-xs sm:text-sm text-gray-500">
+                        <div className="flex items-center">
+                          <Clock size={12} className="mr-1" />
+                          <span>{store.deliveryTime}</span>
+                        </div>
+                        <div>
+                          <span>{store.distance}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-3 sm:mt-4 flex items-center justify-between">
+                      <span className="text-xs sm:text-sm text-blue-600 font-medium hover:underline">View Menu</span>
+                      <button className="bg-[#cd6839] text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg hover:bg-[#b55a31] transition-colors shadow-sm font-medium text-xs sm:text-sm">
+                        Order Now
                       </button>
                     </div>
                   </div>
                 </div>
-              ))}
-
-            {offers.filter(offer => !offer.isActive).length === 0 && (
-              <div className="p-8 text-center text-gray-500">
-                <AlertTriangle className="w-8 h-8 mx-auto mb-3 text-gray-400" />
-                <p className="font-medium">No inactive offers available</p>
-                <p className="text-sm mt-1">All your offers are currently active</p>
               </div>
-            )}
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Offer Selection Modal */}
-      {showOfferModal && selectedOffer && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="p-4 border-b flex items-center justify-between sticky top-0 bg-white z-10">
-              <h3 className="font-semibold text-lg">
-                {selectedOffer.isActive ? 'Edit Offer' : 'New Offer'}
-              </h3>
+      {/* Sidebar Menu */}
+      {isMenuOpen && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity duration-300" onClick={toggleMenu}>
+          <div 
+            className="absolute top-0 left-0 w-64 sm:w-80 h-full bg-white p-4 sm:p-6 shadow-2xl transform transition-transform duration-300 ease-out" 
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-6 sm:mb-8">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-800">Menu</h2>
               <button 
-                onClick={() => {
-                  setShowOfferModal(false);
-                  setSelectedOffer(null);
-                  setSelectedProducts([]);
-                }}
-                className="p-1 hover:bg-gray-100 rounded-full"
+                onClick={toggleMenu}
+                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                aria-label="Close menu"
               >
-                <X className="w-5 h-5" />
+                <X size={22} className="text-gray-700" />
               </button>
             </div>
-            
-            <div className="p-4 border-b">
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Offer Title</label>
-                  <input 
-                    type="text" 
-                    value={selectedOffer.title}
-                    onChange={(e) => setSelectedOffer({...selectedOffer, title: e.target.value})}
-                    className="w-full px-3 py-2 border rounded-lg"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                  <input 
-                    type="text" 
-                    value={selectedOffer.description}
-                    onChange={(e) => setSelectedOffer({...selectedOffer, description: e.target.value})}
-                    className="w-full px-3 py-2 border rounded-lg"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Discount Percentage</label>
-                  <input 
-                    type="number" 
-                    min="1"
-                    max="99"
-                    value={selectedOffer.discountPercentage}
-                    onChange={(e) => setSelectedOffer({...selectedOffer, discountPercentage: parseInt(e.target.value) || 0})}
-                    className="w-full px-3 py-2 border rounded-lg"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Coupon Code</label>
-                  <input 
-                    type="text" 
-                    value={selectedOffer.couponCode || ''}
-                    onChange={(e) => setSelectedOffer({...selectedOffer, couponCode: e.target.value})}
-                    className="w-full px-3 py-2 border rounded-lg uppercase"
-                    placeholder="e.g. SUMMER20"
-                  />
-                </div>
+
+            <div className="flex items-center p-3 sm:p-4 bg-gray-50 rounded-xl mb-6 sm:mb-8">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#cd6839]/10 rounded-full flex items-center justify-center">
+                <User size={18} className="text-[#cd6839]" />
+              </div>
+              <div className="ml-3 sm:ml-4">
+                <h3 className="font-medium text-gray-800 text-sm sm:text-base">{userName || 'Guest User'}</h3>
+                <p className="text-xs sm:text-sm text-gray-600">
+                  {isLoggedIn ? 'View Profile' : 'Please login to continue'}
+                </p>
               </div>
             </div>
-            
-            <div className="p-4 flex-1 overflow-y-auto">
-              <h4 className="font-medium mb-2">Select Products for this Offer</h4>
+
+            <div className="space-y-1 sm:space-y-2">
+              {isLoggedIn ? (
+                <button 
+                  onClick={() => navigate('/profile')} 
+                  className="flex items-center w-full p-2 sm:p-3 hover:bg-gray-50 rounded-lg transition-colors"
+                >
+                  <User size={18} className="mr-3 text-gray-600" /> 
+                  <span className="font-medium text-sm sm:text-base">My Profile</span>
+                </button>
+              ) : (
+                <button 
+                  onClick={() => navigate('/blog')} 
+                  className="flex items-center w-full p-2 sm:p-3 hover:bg-gray-50 rounded-lg transition-colors"
+                >
+                  <BookOpen size={18} className="mr-3 text-[#cd6839]" /> 
+                  <span className="font-medium text-sm sm:text-base">Blog</span>
+                </button>
+              )}
               
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-sm text-gray-600">{selectedProducts.length} of {alcoholProducts.length} products selected</p>
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={() => setSelectedProducts(alcoholProducts.map(p => p._id))}
-                    className="text-xs text-blue-600 hover:text-blue-800"
-                  >
-                    Select All
-                  </button>
-                  <button 
-                    onClick={() => setSelectedProducts([])}
-                    className="text-xs text-red-600 hover:text-red-800"
-                  >
-                    Clear
-                  </button>
-                </div>
-              </div>
+              <button 
+                onClick={() => navigate('/order-history')} 
+                className="flex items-center w-full p-2 sm:p-3 hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                <Clock size={18} className="mr-3 text-gray-600" /> 
+                <span className="font-medium text-sm sm:text-base">Order History</span>
+              </button>
               
-              <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
-                {alcoholProducts.map(product => (
-                  <div 
-                    key={product._id}
-                    onClick={() => toggleProductSelection(product._id)}
-                    className={`flex items-center p-3 rounded-lg border transition-colors cursor-pointer ${
-                      selectedProducts.includes(product._id) 
-                        ? 'bg-blue-50 border-blue-300' 
-                        : 'bg-white border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="mr-3">
-                      {selectedProducts.includes(product._id) ? (
-                        <CheckSquare className="w-5 h-5 text-blue-600" />
-                      ) : (
-                        <Square className="w-5 h-5 text-gray-400" />
-                      )}
-                    </div>
-                    <div className="flex items-center flex-1 gap-3">
-                      <div className="w-12 h-12 bg-gray-100 rounded overflow-hidden">
-                        <img 
-                          src={product.image || `https://via.placeholder.com/100?text=${product.name}`}
-                          alt={product.name}
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">{product.name}</p>
-                        <p className="text-xs text-gray-600">{product.brand}</p>
-                      </div>
-                      <div className="ml-auto">
-                        <p className="font-semibold">₹{product.price}</p>
-                        {selectedOffer.discountPercentage > 0 && (
-                          <p className="text-xs text-green-600">
-                            ₹{Math.round(product.price * (1 - selectedOffer.discountPercentage/100))} after discount
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                
-                {alcoholProducts.length === 0 && (
-                  <div className="p-4 text-center text-gray-500 border border-dashed rounded-lg">
-                    <AlertTriangle className="w-5 h-5 mx-auto mb-2" />
-                    <p>No alcohol products found to apply offers</p>
-                  </div>
-                )}
-              </div>
+              <button 
+                onClick={() => navigate('/issue-report')} 
+                className="flex items-center w-full p-2 sm:p-3 hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                <AlertTriangle size={18} className="mr-3 text-yellow-500" /> 
+                <span className="font-medium text-sm sm:text-base">Report Issue</span>
+              </button>
+              
+              <button 
+                onClick={() => navigate('/issue-tracking')} 
+                className="flex items-center w-full p-2 sm:p-3 hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                <Sparkles size={18} className="mr-3 text-blue-500" /> 
+                <span className="font-medium text-sm sm:text-base">Track Issue</span>
+              </button>
+              
+              <div className="pt-2 mt-2 border-t border-gray-100"></div>
+              
+              {isLoggedIn ? (
+                <button 
+                  onClick={handleLogout} 
+                  className="flex items-center w-full p-2 sm:p-3 text-red-500 hover:bg-red-50 rounded-lg transition-colors mt-2"
+                >
+                  <LogOut size={18} className="mr-3" /> 
+                  <span className="font-medium text-sm sm:text-base">Logout</span>
+                </button>
+              ) : (
+                <button 
+                  onClick={() => navigate('/login')} 
+                  className="flex items-center w-full p-2 sm:p-3 text-[#cd6839] hover:bg-[#cd6839]/10 rounded-lg transition-colors mt-2"
+                >
+                  <LogOut size={18} className="mr-3" /> 
+                  <span className="font-medium text-sm sm:text-base">Login</span>
+                </button>
+              )}
             </div>
             
-            <div className="p-4 border-t bg-gray-50 flex justify-end gap-3 sticky bottom-0">
-              <button 
-                onClick={() => {
-                  setShowOfferModal(false);
-                  setSelectedOffer(null);
-                  setSelectedProducts([]);
-                }}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={applyOfferToProducts}
-                disabled={selectedProducts.length === 0}
-                className={`px-4 py-2 rounded-lg text-white ${
-                  selectedProducts.length > 0 
-                    ? 'bg-blue-600 hover:bg-blue-700' 
-                    : 'bg-gray-400 cursor-not-allowed'
-                } transition-colors`}
-              >
-                Apply Offer
-              </button>
+            <div className="absolute bottom-6 sm:bottom-8 left-0 right-0 px-4 sm:px-6">
+              <div className="bg-[#cd6839]/10 rounded-xl p-3 sm:p-4 text-xs sm:text-sm text-gray-700">
+                <p className="font-medium mb-1 text-[#cd6839]">Need Help?</p>
+                <p>Contact our support team at support@drnkly.com</p>
+              </div>
             </div>
           </div>
         </div>
