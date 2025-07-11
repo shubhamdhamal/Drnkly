@@ -32,7 +32,7 @@ const Button: React.FC<ButtonProps> = ({
 
   return (
     <button
-      className={`${baseStyles} ${variantStyles[variant]} ${className}`}
+      className={${baseStyles} ${variantStyles[variant]} ${className}}
       onClick={onClick}
       disabled={disabled}
     >
@@ -153,6 +153,10 @@ const Orders: React.FC = () => {
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const pastOrdersRef = useRef<HTMLDivElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const soundEnabledRef = useRef(false);
+  const prevLiveOrderIdsRef = useRef<string[]>([]);
 
   // Initialize audio context
   const initializeAudio = async () => {
@@ -221,11 +225,54 @@ const Orders: React.FC = () => {
     }
   };
 
+  // Play notification sound (ton.mp3)
+  const playTonSound = () => {
+    if (audioRef.current && soundEnabledRef.current) {
+      console.log('🎵 Playing sound for new order');
+      try {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().then(() => {
+          console.log('✅ Sound played successfully');
+        }).catch((e) => {
+          console.warn('❌ Audio play failed:', e);
+        });
+      } catch (e) {
+        console.warn('❌ Audio play error:', e);
+      }
+    } else {
+      console.log('Sound not enabled or audioRef not ready');
+    }
+  };
+
+  // Enable sound on any user click (anywhere on page)
+  useEffect(() => {
+    if (soundEnabled) return;
+    const handleAnyClick = () => {
+      if (!soundEnabledRef.current) {
+        setSoundEnabled(true);
+        soundEnabledRef.current = true;
+        console.log('🔊 Sound enabled automatically');
+        if (audioRef.current) {
+          audioRef.current.currentTime = 0;
+          audioRef.current.play().catch(e => console.log('Initial sound test failed:', e));
+        }
+      }
+    };
+    window.addEventListener('click', handleAnyClick, { once: true });
+    return () => window.removeEventListener('click', handleAnyClick);
+  }, [soundEnabled]);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    soundEnabledRef.current = soundEnabled;
+  }, [soundEnabled]);
+
   const fetchOrders = async () => {
     try {
       const token = localStorage.getItem('authToken');
       const res = await axios.get<ApiResponse>('https://vendor.peghouse.in/api/vendor/orders', {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: Bearer ${token} },
       });
 
       const fetchedOrders: Order[] = res.data.orders.map((order) => ({
@@ -235,7 +282,7 @@ const Orders: React.FC = () => {
         customerPhone: order.customerPhone || order.deliveryAddress?.phone || '',
         customerAddress:
           order.customerAddress ||
-          `${order.deliveryAddress?.street || ''}, ${order.deliveryAddress?.city || ''}, ${order.deliveryAddress?.state || ''} - ${order.deliveryAddress?.pincode || ''}`,
+          ${order.deliveryAddress?.street || ''}, ${order.deliveryAddress?.city || ''}, ${order.deliveryAddress?.state || ''} - ${order.deliveryAddress?.pincode || ''},
         items: order.items.map((item) => ({
           productId: item.productId,
           name: item.name,
@@ -250,6 +297,51 @@ const Orders: React.FC = () => {
         createdAt: order.createdAt,
         readyForPickup: order.readyForPickup || false,
       }));
+
+      // --- Only play sound for truly new live orders ---
+      const getLiveOrderIds = (orders: Order[]) =>
+        orders
+          .filter(order => {
+            const hasPendingItems = order.items.some(item => item.status === 'pending');
+            const hasAcceptedItems = order.items.some(item => item.status === 'accepted');
+            const allItemsHandedOver = order.items.every(item => item.status === 'handedOver');
+            const allItemsRejected = order.items.every(item => item.status === 'rejected');
+            return (hasPendingItems || hasAcceptedItems) && !allItemsHandedOver && !allItemsRejected;
+          })
+          .map(order => order.id);
+
+      const newLiveOrderIds = getLiveOrderIds(fetchedOrders);
+      const prevLiveOrderIds = prevLiveOrderIdsRef.current;
+      const trulyNewLiveOrderIds = newLiveOrderIds.filter(id => !prevLiveOrderIds.includes(id));
+
+      if (trulyNewLiveOrderIds.length > 0 && prevLiveOrderIds.length > 0) {
+        playTonSound();
+      }
+
+      prevLiveOrderIdsRef.current = newLiveOrderIds;
+      // --- End new live order sound logic ---
+
+      // Check for new orders by comparing with existing orders
+      const existingOrderIds = orders.map(o => o.id);
+      const newOrdersDetected = fetchedOrders.filter(order => !existingOrderIds.includes(order.id));
+      
+      if (newOrdersDetected.length > 0 && orders.length > 0) {
+        // New order detected - play sound immediately and automatically
+        console.log('🚨 NEW ORDER DETECTED! Playing sound automatically...');
+        
+        // Auto-enable sound if not already enabled
+        if (!soundEnabledRef.current) {
+          setSoundEnabled(true);
+          soundEnabledRef.current = true;
+          console.log('🔊 Sound auto-enabled for new order');
+        }
+        
+        // Play sound
+        playTonSound();
+        
+        setNewOrders(prev => [...newOrdersDetected, ...prev]);
+        showOrderNotification(newOrdersDetected);
+      }
 
       setOrders(fetchedOrders);
     } catch (err) {
@@ -294,7 +386,7 @@ const Orders: React.FC = () => {
           pastOrdersRef.current.scrollIntoView({ behavior: 'smooth' });
           
           if (location.state.orderNumber) {
-            const orderElement = document.getElementById(`order-${location.state.orderNumber}`);
+            const orderElement = document.getElementById(order-${location.state.orderNumber});
             if (orderElement) {
               orderElement.classList.add('highlight-order');
               setTimeout(() => {
@@ -314,6 +406,14 @@ const Orders: React.FC = () => {
       
       setNewOrders(prevNew => [newOrder, ...prevNew]);
       showOrderNotification([newOrder]);
+      
+      // Auto-enable sound and play for new order
+      if (!soundEnabledRef.current) {
+        setSoundEnabled(true);
+        soundEnabledRef.current = true;
+        console.log('🔊 Sound auto-enabled for WebSocket new order');
+      }
+      playTonSound();
       
       return updatedOrders;
     });
@@ -343,11 +443,11 @@ const Orders: React.FC = () => {
       const shouldRedirectToPickup = status === 'accepted' && isLastPendingItem(currentOrder, productId);
 
       const response = await axios.put(
-        `https://vendor.peghouse.in/api/vendor/orders/${orderId}/status`,
+        https://vendor.peghouse.in/api/vendor/orders/${orderId}/status,
         { productId, status },
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: Bearer ${token},
           },
         }
       );
@@ -376,13 +476,13 @@ const Orders: React.FC = () => {
 
         if (shouldRedirectToPickup) {
           const pickupResponse = await axios.put(
-            `https://vendor.peghouse.in/api/vendor/orders/${orderId}/ready-for-pickup`,
+            https://vendor.peghouse.in/api/vendor/orders/${orderId}/ready-for-pickup,
             { 
               orderId: orderId, 
               orderNumber: currentOrder.orderNumber,
               status: 'accepted'
             },
-            { headers: { Authorization: `Bearer ${token}` } }
+            { headers: { Authorization: Bearer ${token} } }
           );
 
           if (pickupResponse.status === 200) {
@@ -473,16 +573,16 @@ const Orders: React.FC = () => {
       const firstOrder = newOrders[0];
       const itemsSummary = firstOrder.items
         .filter(item => item.status === 'pending')
-        .map(item => `${item.quantity}x ${item.name}`)
+        .map(item => ${item.quantity}x ${item.name})
         .join(', ');
       
       message = pendingCount === 1 
-        ? `${firstOrder.customerName} ने ऑर्डर केली आहे: ${itemsSummary}` 
-        : `${pendingCount} नवीन ऑर्डर्स आल्या आहेत!`;
+        ? ${firstOrder.customerName} ने ऑर्डर केली आहे: ${itemsSummary} 
+        : ${pendingCount} नवीन ऑर्डर्स आल्या आहेत!;
     } else {
       message = orderCount === 1 
-        ? `${newOrders[0].customerName} ची नवीन ऑर्डर: ${newOrders[0].orderNumber}` 
-        : `${orderCount} नवीन ऑर्डर्स आल्या आहेत!`;
+        ? ${newOrders[0].customerName} ची नवीन ऑर्डर: ${newOrders[0].orderNumber} 
+        : ${orderCount} नवीन ऑर्डर्स आल्या आहेत!;
     }
     
     setNotificationMessage(message);
@@ -519,7 +619,7 @@ const Orders: React.FC = () => {
     setShowNotification(false);
     if (newOrders.length > 0) {
       setExpandedOrderId(newOrders[0].id);
-      const orderElement = document.getElementById(`order-${newOrders[0].id}`);
+      const orderElement = document.getElementById(order-${newOrders[0].id});
       if (orderElement) {
         orderElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
         orderElement.classList.add('highlight-order');
@@ -548,13 +648,13 @@ const Orders: React.FC = () => {
       await Promise.all(updatePromises);
       
       const response = await axios.put(
-        `https://vendor.peghouse.in/api/vendor/orders/${order.id}/ready-for-pickup`,
+        https://vendor.peghouse.in/api/vendor/orders/${order.id}/ready-for-pickup,
         { 
           orderId: order.id, 
           orderNumber: order.orderNumber,
           status: 'accepted'
         },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: Bearer ${token} } }
       );
       
       if (response.status === 200) {
@@ -585,9 +685,9 @@ const Orders: React.FC = () => {
         .filter(item => item.status === 'accepted')
         .map(item => 
           axios.put(
-            `https://vendor.peghouse.in/api/vendor/orders/${order.id}/status`,
+            https://vendor.peghouse.in/api/vendor/orders/${order.id}/status,
             { productId: item.productId, status: 'handedOver' },
-            { headers: { Authorization: `Bearer ${token}` } }
+            { headers: { Authorization: Bearer ${token} } }
           )
         );
       
@@ -610,7 +710,7 @@ const Orders: React.FC = () => {
             status: 'completed',
             handedOverAt: new Date().toISOString()
           },
-          { headers: { Authorization: `Bearer ${token}` } }
+          { headers: { Authorization: Bearer ${token} } }
         );
       } catch (payoutErr) {
         console.error('Failed to track order in payouts:', payoutErr);
@@ -699,8 +799,8 @@ const Orders: React.FC = () => {
     return (
       <div
         key={order.id}
-        id={`order-${order.id}`}
-        className={`order-card ${isNewOrder ? 'new-order' : ''} ${isPastOrder ? 'past-order' : 'live-order'}`}
+        id={order-${order.id}}
+        className={order-card ${isNewOrder ? 'new-order' : ''} ${isPastOrder ? 'past-order' : 'live-order'}}
         style={{
           background: allItemsHandedOver ? 'linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)' : 
                      allItemsRejected ? 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)' :
@@ -826,7 +926,7 @@ const Orders: React.FC = () => {
                 <CreditCard className="w-5 h-5 text-yellow-600" />
                 <div>
                   <p className="text-sm text-gray-500">Payment Status</p>
-                  <p className={`font-semibold ${order.paymentStatus === 'paid' ? 'text-green-600' : 'text-orange-600'}`}>
+                  <p className={font-semibold ${order.paymentStatus === 'paid' ? 'text-green-600' : 'text-orange-600'}}>
                     {order.paymentStatus.toUpperCase()}
                   </p>
                 </div>
@@ -962,6 +1062,20 @@ const Orders: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100" onClick={enableAudio}>
+      {/* Audio element for ton */}
+      <audio ref={audioRef} src="/ton.mp3" preload="auto" />
+      
+      {/* Sound Status Indicator */}
+      <div className="fixed top-4 left-4 z-50">
+        <div className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 ${
+          soundEnabled 
+            ? 'bg-green-100 text-green-800 border-2 border-green-300' 
+            : 'bg-orange-100 text-orange-800 border-2 border-orange-300 animate-pulse'
+        }`}>
+          🔊 Sound: {soundEnabled ? 'READY' : 'Will Auto-Enable'}
+        </div>
+      </div>
+
       {showNotification && (
         <div 
           onClick={handleNotificationClick}
@@ -1084,7 +1198,7 @@ const Orders: React.FC = () => {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes slideInRight {
           from {
             transform: translateX(100%);
