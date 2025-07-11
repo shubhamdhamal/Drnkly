@@ -790,8 +790,12 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
 
     // Sort by selected method
     if (sortBy === 'volume') {
-      filtered = filtered.filter(p => typeof p.volume === 'number');
-      filtered.sort((a, b) => (a.volume || 0) - (b.volume || 0));
+      // Separate products with valid volume and those without
+      const withVolume = filtered.filter(p => typeof p.volume === 'number' && p.volume > 0);
+      const withoutVolume = filtered.filter(p => !(typeof p.volume === 'number' && p.volume > 0));
+      // Sort products with volume in ascending order (smallest first)
+      withVolume.sort((a, b) => (a.volume || 0) - (b.volume || 0));
+      filtered = [...withVolume, ...withoutVolume];
     } else if (sortBy === 'price' && selectedCategory === 'all') {
       // Group by category order, then by price
       filtered.sort((a, b) => {
