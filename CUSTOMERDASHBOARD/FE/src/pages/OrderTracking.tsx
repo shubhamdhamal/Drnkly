@@ -20,6 +20,8 @@ const OrderTracking = () => {
     ]
   });
 
+  // Check if the last status is Delivered
+  const isDelivered = orderDetails.tracking[orderDetails.tracking.length - 1].status === 'Delivered';
 
 
   return (
@@ -57,10 +59,12 @@ const OrderTracking = () => {
       </div>
 
       {/* Estimated Delivery Time */}
-      <div className="mt-6 p-4 bg-yellow-100 rounded-lg">
-        <p className="text-lg font-semibold text-gray-800">Estimated Delivery Time:</p>
-        <p className="text-gray-700">Your order is expected to be delivered within 30-40 minutes. Please check the tracking timeline for updates.</p>
-      </div>
+      {!isDelivered && (
+        <div className="mt-6 p-4 bg-yellow-100 rounded-lg">
+          <p className="text-lg font-semibold text-gray-800">Estimated Delivery Time:</p>
+          <p className="text-gray-700">Your order is expected to be delivered within 30-40 minutes. Please check the tracking timeline for updates.</p>
+        </div>
+      )}
     </div>
   );
 };
