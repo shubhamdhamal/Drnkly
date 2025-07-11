@@ -304,7 +304,7 @@ const Cart = () => {
             <img
               src="/finallogo.png"
               alt="Drnkly Logo"
-              className="h-12 sm:h-16 md:h-20 lg:h-24 mx-auto object-contain"
+              className="h-16 sm:h-24 md:h-32 lg:h-40 mx-auto object-contain"
             />
           </div>
         </div>
@@ -364,7 +364,7 @@ const Cart = () => {
                       <img
                         src={item.image}
                         alt={item.name}
-                        className="w-24 h-24 object-cover rounded-md"
+                        className="w-24 h-24 object-contain rounded-md bg-white"
                       />
                       <div>
                         <h3 className="text-lg font-medium text-gray-900">{item.name}</h3>
