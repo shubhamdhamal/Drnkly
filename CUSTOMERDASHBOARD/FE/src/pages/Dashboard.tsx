@@ -78,8 +78,8 @@ const categories = [
 ];
 
 const stores = [
-  { id: 1, name: "PK Wines", rating: 4.8, image: "https://images.unsplash.com/photo-1597290282695-edc43d0e7129?w=600&h=400&fit=crop", address: "123 Main St", distance: "0.8 miles", openTime: "10:00 AM - 10:00 PM", deliveryTime: "25-30 min" },
-  { id: 2, name: "Sunrise Family Garden Restaurant", rating: 4.5, image: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=600&h=400&fit=crop", address: "456 Oak Ave", distance: "1.2 miles", openTime: "11:00 AM - 9:00 PM", deliveryTime: "30-35 min" }
+  { id: 1, name: "PK Wines", rating: 4.8, image: "https://images.unsplash.com/photo-1597290282695-edc43d0e7129?w=600&h=400&fit=crop", address: "Hinjewadi", openTime: "10:00 AM - 2:00 AM", deliveryTime: "40-45 min" },
+  { id: 2, name: "Sunrise Family Garden Restaurant", rating: 4.5, image: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=600&h=400&fit=crop", address: "Hinjewadi", openTime: "10:00 AM - 2:00 AM", deliveryTime: "40-45 min" }
 ];
 
 // Banner data - Separate arrays for mobile and desktop
@@ -878,9 +878,6 @@ function Dashboard() {
                           <Clock size={12} className="mr-1" />
                           <span>{store.deliveryTime}</span>
                         </div>
-                        <div>
-                          <span>{store.distance}</span>
-                        </div>
                       </div>
                     </div>
                     <div className="mt-3 sm:mt-4 flex items-center justify-between">
@@ -994,7 +991,7 @@ function Dashboard() {
             <div className="absolute bottom-6 sm:bottom-8 left-0 right-0 px-4 sm:px-6">
               <div className="bg-[#cd6839]/10 rounded-xl p-3 sm:p-4 text-xs sm:text-sm text-gray-700">
                 <p className="font-medium mb-1 text-[#cd6839]">Need Help?</p>
-                <p>Contact our support team at support@drnkly.com</p>
+                <p>Contact our support team at peghouse17@gmail.com</p>
               </div>
             </div>
           </div>
