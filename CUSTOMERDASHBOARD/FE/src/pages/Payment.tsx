@@ -13,6 +13,8 @@ const Payment = () => {
   const [pendingOrder, setPendingOrder] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const paymentMethodRef = useRef<HTMLDivElement>(null);
+  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
 
   const isPaymentDetailsProvided = isScreenshotUploaded || transactionId.trim().length > 0;
 
@@ -39,6 +41,20 @@ const Payment = () => {
     setIsScreenshotUploaded(value);
     if (value) {
       setIsCashOnDelivery(false);
+    }
+  };
+
+  // Handle screenshot file upload
+  const handleScreenshotFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      setScreenshotFile(file);
+      setIsScreenshotUploaded(true);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setScreenshotPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -252,20 +268,28 @@ const getDrinksFeeRate = () => {
 
             <div className="mb-4">
               <h3 className="text-gray-700 mb-2">Payment Screenshot (OPTIONAL)</h3>
-              <a
-                href="https://drive.google.com/drive/folders/1i09WZAT0qd57MV9KMecAI6Rdvcon7TUF?usp=sharing"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 underline"
-              >
+              <label htmlFor="paymentScreenshotUpload" className="text-blue-600 underline cursor-pointer block mb-2">
                 UPLOAD PAYMENT SCREENSHOT HERE
-              </a>
+              </label>
+              <input
+                id="paymentScreenshotUpload"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleScreenshotFileChange}
+              />
+              {screenshotPreview && (
+                <div className="mt-2">
+                  <img src={screenshotPreview} alt="Screenshot Preview" className="w-32 h-32 object-contain border rounded" />
+                </div>
+              )}
               <div className="mt-4">
                 <input
                   type="checkbox"
                   id="paymentScreenshotCheckbox"
                   checked={isScreenshotUploaded}
                   onChange={() => handleScreenshotChange(!isScreenshotUploaded)}
+                  disabled={!!screenshotFile}
                 />
                 <label htmlFor="paymentScreenshotCheckbox" className="ml-2 text-gray-700">
                   I have Entered the Transaction ID or Uploaded the Payment Screenshot
