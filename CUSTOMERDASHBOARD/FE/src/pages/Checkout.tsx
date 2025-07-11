@@ -358,7 +358,7 @@ const drinksFee = items.reduce((sum, item) => {
                   <img 
                     src={item.image} 
                     alt={item.name}
-                    className="w-16 h-16 object-cover rounded-lg mr-4"
+                    className="w-16 h-16 object-contain rounded-lg bg-white mr-4"
                   />
                   <div>
                     <h3 className="font-medium">{item.name}</h3>
