@@ -84,11 +84,25 @@ exports.getUserAddresses = async (req, res) => {
 };
 
 // ➕ Manually add an address
+// POST /api/addresses
 exports.addManualAddress = async (req, res) => {
-  const { userId, address, city, pincode, type } = req.body;
+  const {
+    userId,
+    address,
+    city = '',
+    pincode = '',
+    type = 'Manual',
+    flatNo = '',
+    buildingNo = '',
+    fullAddress = '',
+    landmark = '',
+    additionalInfo = '',
+    latitude = null,
+    longitude = null
+  } = req.body;
 
-  if (!userId || !address || !city || !pincode) {
-    return res.status(400).json({ message: 'All fields are required' });
+  if (!userId || !address) {
+    return res.status(400).json({ message: 'User ID and address are required' });
   }
 
   try {
@@ -97,7 +111,14 @@ exports.addManualAddress = async (req, res) => {
       address,
       city,
       pincode,
-      type: type || 'Manual'
+      type,
+      flatNo,
+      buildingNo,
+      fullAddress,
+      landmark,
+      additionalInfo,
+      latitude,
+      longitude
     });
 
     await newAddress.save();
@@ -107,6 +128,9 @@ exports.addManualAddress = async (req, res) => {
     res.status(500).json({ message: 'Failed to add address' });
   }
 };
+
+
+
 
 // ✏️ Update address by ID
 exports.updateAddress = async (req, res) => {

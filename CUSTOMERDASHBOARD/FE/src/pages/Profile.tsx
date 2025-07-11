@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
 import axios from 'axios';
 import {
   BookOpen,
@@ -77,6 +76,8 @@ const Profile = () => {
   const [selectedLocation, setSelectedLocation] = useState('pune, Maharashtra');
   const [searchQuery, setSearchQuery] = useState('');
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+
   const [isEditing, setIsEditing] = useState(false);
   const [userInfo, setUserInfo] = useState({
     name: '',
@@ -95,17 +96,21 @@ const Profile = () => {
   const [addresses, setAddresses] = useState<{id: string, address: string, city: string, pincode: string, type: string}[]>([]);
   const [showAddAddress, setShowAddAddress] = useState(false);
   const [newAddress, setNewAddress] = useState({
-    address: '',
-    city: '',
-    pincode: '',
-    type: 'Home'
+    flatNo: '',
+    buildingNo: '',
+    fullAddress: '',
+    landmark: '',
+    type: 'Home',
+    additionalInfo: ''
   });
   const [editingAddress, setEditingAddress] = useState<string | null>(null);
   const [editAddressData, setEditAddressData] = useState({
-    address: '',
-    city: '',
-    pincode: '',
-    type: 'Home'
+    flatNo: '',
+    buildingNo: '',
+    fullAddress: '',
+    landmark: '',
+    type: 'Home',
+    additionalInfo: ''
   });
 
   useEffect(() => {
@@ -467,128 +472,141 @@ fetchUserProfile();
     }));
   };
 
-  // Add new address
-  const addNewAddress = async () => {
-    if (newAddress.address && newAddress.city && newAddress.pincode) {
-      try {
-        const userId = localStorage.getItem('userId');
-        const res = await axios.post('https://peghouse.in/api/addresses', {
-          userId,
-          ...newAddress
-        });
-
-        const saved = res.data.address;
-
-setAddresses(prev => [...prev, {
-  id: saved._id,
-  address: saved.address,
-  city: saved.city,
-  pincode: saved.pincode,
-  type: saved.type
-}]);
-
-
-        // Reset form
-        setNewAddress({
-          address: '',
-          city: '',
-          pincode: '',
-          type: 'Home'
-        });
-        setShowAddAddress(false);
-        alert('Address saved successfully!');
-      } catch (err) {
-        console.error('❌ Failed to save address:', err);
-        alert('Failed to save address. Please try again.');
-      }
-    } else {
-      alert('Please fill all required fields');
+const addNewAddress = async () => {
+  if (newAddress.flatNo && newAddress.buildingNo && newAddress.fullAddress) {
+    if (newAddress.type === 'Other' && !newAddress.additionalInfo) {
+      alert('Please fill Address Name for "Other" type address');
+      return;
     }
-  };
+
+    try {
+      const userId = localStorage.getItem('userId');
+
+      // ✅ Construct the full address string
+      const completeAddress = `${newAddress.flatNo}, ${newAddress.buildingNo}, ${newAddress.fullAddress}${newAddress.landmark ? `, ${newAddress.landmark}` : ''}${newAddress.additionalInfo ? `, ${newAddress.additionalInfo}` : ''}`;
+
+      // ✅ Prepare payload with latitude & longitude
+      const payload = {
+        userId,
+        address: completeAddress,
+        type: newAddress.type,
+        flatNo: newAddress.flatNo,
+        buildingNo: newAddress.buildingNo,
+        fullAddress: newAddress.fullAddress,
+        landmark: newAddress.landmark,
+        additionalInfo: newAddress.additionalInfo,
+        latitude: newAddress.latitude || null,
+        longitude: newAddress.longitude || null
+      };
+
+      console.log("📦 Sending Address Payload: ", payload);
+
+      // ✅ POST to backend
+      const res = await axios.post('https://peghouse.in/api/addresses', payload);
+      const saved = res.data.address;
+
+      // ✅ Update address list in UI
+      setAddresses(prev => [...prev, {
+        id: saved._id,
+        address: completeAddress,
+        city: saved.city || '',
+        pincode: saved.pincode || '',
+        type: saved.type
+      }]);
+
+      // ✅ Reset form
+      setNewAddress({
+        flatNo: '',
+        buildingNo: '',
+        fullAddress: '',
+        landmark: '',
+        type: 'Home',
+        additionalInfo: '',
+        latitude: null,
+        longitude: null
+      });
+
+      setShowAddAddress(false);
+      alert('Address saved successfully!');
+    } catch (err) {
+      console.error('❌ Failed to save address:', err);
+      alert('Failed to save address. Please try again.');
+    }
+  } else {
+    alert('Please fill all required fields (Flat No, Building No, Full Address)');
+  }
+};
+
+
+
 
 
 
   // Get live location function
-  const getLiveLocation = () => {
-    if ('geolocation' in navigator) {
-      // Show loading state
-      const locationButton = document.getElementById('locationButton') as HTMLButtonElement;
-      if (locationButton) {
-        locationButton.innerHTML = '<div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>';
-        locationButton.disabled = true;
+const getLiveLocation = () => {
+  if (!('geolocation' in navigator)) {
+    alert('Location is not supported by your browser.');
+    return;
+  }
+
+  setIsLocating(true); // Start loading
+
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+
+      try {
+        const userId = localStorage.getItem('userId');
+
+        const response = await axios.get(`https://peghouse.in/api/addresses/from-coordinates`, {
+          params: { latitude, longitude, userId }
+        });
+
+        const addressData = response.data;
+
+        setNewAddress(prev => ({
+          ...prev,
+          fullAddress: addressData.address || '',
+          latitude,
+          longitude
+        }));
+
+        alert('Location detected successfully! Please review and save.');
+      } catch (error) {
+        console.error('Failed to get address from coordinates:', error);
+        alert('Location detected but could not get address details. Please fill manually.');
+      } finally {
+        setIsLocating(false); // Stop loading
+      }
+    },
+    (error) => {
+      console.error('Location error:', error);
+      let errorMessage = 'Unable to get your location.';
+
+      switch (error.code) {
+        case error.PERMISSION_DENIED:
+          errorMessage = 'Location access denied. Please enable location in your browser settings.';
+          break;
+        case error.POSITION_UNAVAILABLE:
+          errorMessage = 'Location information unavailable.';
+          break;
+        case error.TIMEOUT:
+          errorMessage = 'Location request timed out.';
+          break;
       }
 
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const latitude = position.coords.latitude;
-          const longitude = position.coords.longitude;
-
-          try {
-            // Get address from coordinates using reverse geocoding
-            const userId = localStorage.getItem('userId');
-
-const response = await axios.get(`https://peghouse.in/api/addresses/from-coordinates`, {
-  params: { latitude, longitude, userId } // ✅ Include userId
-});
-
-
-            const addressData = response.data;
-            
-            // Update the form with the resolved address
-            setNewAddress(prev => ({
-              ...prev,
-              address: addressData.address || '',
-              city: addressData.city || '',
-              pincode: addressData.pincode || ''
-            }));
-
-            alert('Location detected successfully! Please review and save.');
-          } catch (error) {
-            console.error('Failed to get address from coordinates:', error);
-            alert('Location detected but could not get address details. Please fill manually.');
-          } finally {
-            // Reset button state
-            if (locationButton) {
-              locationButton.innerHTML = '<MapPin className="w-4 h-4" />';
-              locationButton.disabled = false;
-            }
-          }
-        },
-        (error) => {
-          console.error('Location error:', error);
-          let errorMessage = 'Unable to get your location.';
-          
-          switch (error.code) {
-            case error.PERMISSION_DENIED:
-              errorMessage = 'Location access denied. Please enable location in your browser settings.';
-              break;
-            case error.POSITION_UNAVAILABLE:
-              errorMessage = 'Location information unavailable.';
-              break;
-            case error.TIMEOUT:
-              errorMessage = 'Location request timed out.';
-              break;
-          }
-          
-          alert(errorMessage);
-          
-          // Reset button state
-          const locationButton = document.getElementById('locationButton') as HTMLButtonElement;
-          if (locationButton) {
-            locationButton.innerHTML = '<MapPin className="w-4 h-4" />';
-            locationButton.disabled = false;
-          }
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 60000
-        }
-      );
-    } else {
-      alert('Location is not supported by your browser.');
+      alert(errorMessage);
+      setIsLocating(false); // Stop loading
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 60000
     }
-  };
+  );
+};
+
 
   // Delete address
   const deleteAddress = async (id: string) => {
@@ -610,23 +628,47 @@ const response = await axios.get(`https://peghouse.in/api/addresses/from-coordin
   // Edit address functionality
   const handleEditAddress = (address: any) => {
     setEditingAddress(address.id);
+    
+    // Parse the existing address to extract individual fields
+    // Assuming address format: "Flat No, Building No, Full Address, Landmark, Additional Info"
+    const addressParts = address.address.split(', ');
+    
     setEditAddressData({
-      address: address.address,
-      city: address.city,
-      pincode: address.pincode,
-      type: address.type
+      flatNo: addressParts[0] || '',
+      buildingNo: addressParts[1] || '',
+      fullAddress: addressParts[2] || '',
+      landmark: addressParts[3] || '',
+      type: address.type,
+      additionalInfo: addressParts[4] || ''
     });
   };
 
 const updateAddress = async () => {
-  if (editingAddress && editAddressData.address && editAddressData.city && editAddressData.pincode) {
+  if (editingAddress && editAddressData.flatNo && editAddressData.buildingNo && editAddressData.fullAddress) {
+    // Check if additionalInfo is required for "Other" type
+    if (editAddressData.type === 'Other' && !editAddressData.additionalInfo) {
+      alert('Please fill Address Name for "Other" type address');
+      return;
+    }
+    
     try {
-      const res = await axios.put(`https://peghouse.in/api/addresses/${editingAddress}`, editAddressData);
+      // Create full address string from individual fields
+      const completeAddress = `${editAddressData.flatNo}, ${editAddressData.buildingNo}, ${editAddressData.fullAddress}${editAddressData.landmark ? `, ${editAddressData.landmark}` : ''}${editAddressData.additionalInfo ? `, ${editAddressData.additionalInfo}` : ''}`;
+      
+      const res = await axios.put(`https://peghouse.in/api/addresses/${editingAddress}`, {
+        address: completeAddress,
+        type: editAddressData.type,
+        flatNo: editAddressData.flatNo,
+        buildingNo: editAddressData.buildingNo,
+        fullAddress: editAddressData.fullAddress,
+        landmark: editAddressData.landmark,
+        additionalInfo: editAddressData.additionalInfo
+      });
 
       // Update local state with returned address
       setAddresses(prev => prev.map(addr =>
         addr.id === editingAddress
-          ? { ...addr, ...res.data.address }  // Make sure `res.data.address` contains updated fields
+          ? { ...addr, address: completeAddress, type: editAddressData.type }
           : addr
       ));
 
@@ -636,6 +678,8 @@ const updateAddress = async () => {
       console.error('❌ Failed to update address:', err);
       alert('Failed to update address. Please try again.');
     }
+  } else {
+    alert('Please fill all required fields (Flat No, Building No, Full Address)');
   }
 };
 
@@ -1010,46 +1054,75 @@ const updateAddress = async () => {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-gray-700 text-sm font-medium mb-1">Full Address</label>
-                        <div className="flex space-x-2">
-                          <input
-                            type="text"
-                            name="address"
-                            value={newAddress.address}
-                            onChange={handleAddressChange}
-                            placeholder="Flat/House No., Building, Street"
-                            className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                          />
-                          <button
-                            id="locationButton"
-                            type="button"
-                            onClick={getLiveLocation}
-                            className="bg-indigo-600 text-white px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors flex items-center justify-center"
-                            title="Get current location"
-                          >
-                            <MapPin className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-gray-700 text-sm font-medium mb-1">City</label>
+                        <label className="block text-gray-700 text-sm font-medium mb-1">Flat No.</label>
                         <input
                           type="text"
-                          name="city"
-                          value={newAddress.city}
+                          name="flatNo"
+                          value={newAddress.flatNo}
                           onChange={handleAddressChange}
-                          placeholder="City"
+                          placeholder="Flat No."
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                      </div>
+                      {newAddress.type === 'Other' && (
+                        <div>
+                          <label className="block text-gray-700 text-sm font-medium mb-1">Address Name (Required for Other)</label>
+                          <input
+                            type="text"
+                            name="additionalInfo"
+                            value={newAddress.additionalInfo}
+                            onChange={handleAddressChange}
+                            placeholder="Address Name"
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          />
+                        </div>
+                      )}
+                      <div>
+                        <label className="block text-gray-700 text-sm font-medium mb-1">Building No.</label>
+                        <input
+                          type="text"
+                          name="buildingNo"
+                          value={newAddress.buildingNo}
+                          onChange={handleAddressChange}
+                          placeholder="Building No."
                           className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-gray-700 text-sm font-medium mb-1">PIN Code</label>
+                        <label className="block text-gray-700 text-sm font-medium mb-1">Full Address</label>
+                        <div className="flex space-x-2">
+                          <input
+                            type="text"
+                            name="fullAddress"
+                            value={newAddress.fullAddress}
+                            onChange={handleAddressChange}
+                            placeholder="Full Address"
+                            className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          />
+                          <button
+  id="locationButton"
+  type="button"
+  onClick={getLiveLocation}
+  disabled={isLocating}
+  className={`bg-indigo-600 text-white px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors flex items-center justify-center ${isLocating ? 'opacity-60 cursor-not-allowed' : ''}`}
+>
+  {isLocating ? (
+    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+  ) : (
+    <MapPin className="w-4 h-4" />
+  )}
+</button>
+
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-gray-700 text-sm font-medium mb-1">Landmark (Optional)</label>
                         <input
                           type="text"
-                          name="pincode"
-                          value={newAddress.pincode}
+                          name="landmark"
+                          value={newAddress.landmark}
                           onChange={handleAddressChange}
-                          placeholder="PIN Code"
+                          placeholder="Landmark"
                           className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
                       </div>
@@ -1119,13 +1192,45 @@ const updateAddress = async () => {
                           </select>
                         </div>
                         <div>
+                          <label className="block text-gray-700 text-sm font-medium mb-1">Flat No.</label>
+                          <input
+                            type="text"
+                            value={editAddressData.flatNo}
+                            onChange={(e) => setEditAddressData(prev => ({ ...prev, flatNo: e.target.value }))}
+                            placeholder="Flat No."
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          />
+                        </div>
+                        {editAddressData.type === 'Other' && (
+                          <div>
+                            <label className="block text-gray-700 text-sm font-medium mb-1">Address Name (Required for Other)</label>
+                            <input
+                              type="text"
+                              value={editAddressData.additionalInfo}
+                              onChange={(e) => setEditAddressData(prev => ({ ...prev, additionalInfo: e.target.value }))}
+                              placeholder="Address Name"
+                              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                          </div>
+                        )}
+                        <div>
+                          <label className="block text-gray-700 text-sm font-medium mb-1">Building No.</label>
+                          <input
+                            type="text"
+                            value={editAddressData.buildingNo}
+                            onChange={(e) => setEditAddressData(prev => ({ ...prev, buildingNo: e.target.value }))}
+                            placeholder="Building No."
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          />
+                        </div>
+                        <div>
                           <label className="block text-gray-700 text-sm font-medium mb-1">Full Address</label>
                           <div className="flex space-x-2">
                             <input
                               type="text"
-                              value={editAddressData.address}
-                              onChange={(e) => setEditAddressData(prev => ({ ...prev, address: e.target.value }))}
-                              placeholder="Flat/House No., Building, Street"
+                              value={editAddressData.fullAddress}
+                              onChange={(e) => setEditAddressData(prev => ({ ...prev, fullAddress: e.target.value }))}
+                              placeholder="Full Address"
                               className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             />
                             <button
@@ -1147,9 +1252,11 @@ const updateAddress = async () => {
                                         
                                         setEditAddressData(prev => ({
                                           ...prev,
-                                          address: addressData.address || '',
-                                          city: addressData.city || '',
-                                          pincode: addressData.pincode || ''
+                                          flatNo: addressData.flatNo || '',
+                                          buildingNo: addressData.buildingNo || '',
+                                          fullAddress: addressData.fullAddress || '',
+                                          landmark: addressData.landmark || '',
+                                          additionalInfo: addressData.additionalInfo || ''
                                         }));
 
                                         alert('Location detected successfully! Please review and update.');
@@ -1170,30 +1277,32 @@ const updateAddress = async () => {
                               className="bg-indigo-600 text-white px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors flex items-center justify-center"
                               title="Get current location"
                             >
-                              <Navigation className="w-4 h-4" />
+                              <MapPin className="w-4 h-4" />
                             </button>
                           </div>
                         </div>
                         <div>
-                          <label className="block text-gray-700 text-sm font-medium mb-1">City</label>
+                          <label className="block text-gray-700 text-sm font-medium mb-1">Landmark (Optional)</label>
                           <input
                             type="text"
-                            value={editAddressData.city}
-                            onChange={(e) => setEditAddressData(prev => ({ ...prev, city: e.target.value }))}
-                            placeholder="City"
+                            value={editAddressData.landmark}
+                            onChange={(e) => setEditAddressData(prev => ({ ...prev, landmark: e.target.value }))}
+                            placeholder="Landmark"
                             className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                           />
                         </div>
-                        <div>
-                          <label className="block text-gray-700 text-sm font-medium mb-1">PIN Code</label>
-                          <input
-                            type="text"
-                            value={editAddressData.pincode}
-                            onChange={(e) => setEditAddressData(prev => ({ ...prev, pincode: e.target.value }))}
-                            placeholder="PIN Code"
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                          />
-                        </div>
+                        {editAddressData.type === 'Other' && (
+                          <div>
+                            <label className="block text-gray-700 text-sm font-medium mb-1">Additional Info (Required for Other)</label>
+                            <input
+                              type="text"
+                              value={editAddressData.additionalInfo}
+                              onChange={(e) => setEditAddressData(prev => ({ ...prev, additionalInfo: e.target.value }))}
+                              placeholder="Additional Info"
+                              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                          </div>
+                        )}
                         <div className="flex space-x-3 pt-2">
                           <button
                             onClick={updateAddress}
@@ -1494,4 +1603,6 @@ function setFullAddress(arg0: any) {
 function setCity(arg0: any) {
   throw new Error('Function not implemented.');
 }
+
+
 
