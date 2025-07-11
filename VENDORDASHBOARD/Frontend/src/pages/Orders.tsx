@@ -32,7 +32,7 @@ const Button: React.FC<ButtonProps> = ({
 
   return (
     <button
-      className={${baseStyles} ${variantStyles[variant]} ${className}}
+      className={`${baseStyles} ${variantStyles[variant]} ${className}`}
       onClick={onClick}
       disabled={disabled}
     >
@@ -272,7 +272,7 @@ const Orders: React.FC = () => {
     try {
       const token = localStorage.getItem('authToken');
       const res = await axios.get<ApiResponse>('https://vendor.peghouse.in/api/vendor/orders', {
-        headers: { Authorization: Bearer ${token} },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       const fetchedOrders: Order[] = res.data.orders.map((order) => ({
@@ -282,7 +282,7 @@ const Orders: React.FC = () => {
         customerPhone: order.customerPhone || order.deliveryAddress?.phone || '',
         customerAddress:
           order.customerAddress ||
-          ${order.deliveryAddress?.street || ''}, ${order.deliveryAddress?.city || ''}, ${order.deliveryAddress?.state || ''} - ${order.deliveryAddress?.pincode || ''},
+          `${order.deliveryAddress?.street || ''}, ${order.deliveryAddress?.city || ''}, ${order.deliveryAddress?.state || ''} - ${order.deliveryAddress?.pincode || ''}`,
         items: order.items.map((item) => ({
           productId: item.productId,
           name: item.name,
@@ -386,7 +386,7 @@ const Orders: React.FC = () => {
           pastOrdersRef.current.scrollIntoView({ behavior: 'smooth' });
           
           if (location.state.orderNumber) {
-            const orderElement = document.getElementById(order-${location.state.orderNumber});
+            const orderElement = document.getElementById(`order-${location.state.orderNumber}`);
             if (orderElement) {
               orderElement.classList.add('highlight-order');
               setTimeout(() => {
@@ -443,11 +443,11 @@ const Orders: React.FC = () => {
       const shouldRedirectToPickup = status === 'accepted' && isLastPendingItem(currentOrder, productId);
 
       const response = await axios.put(
-        https://vendor.peghouse.in/api/vendor/orders/${orderId}/status,
+        `https://vendor.peghouse.in/api/vendor/orders/${orderId}/status`,
         { productId, status },
         {
           headers: {
-            Authorization: Bearer ${token},
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -476,13 +476,13 @@ const Orders: React.FC = () => {
 
         if (shouldRedirectToPickup) {
           const pickupResponse = await axios.put(
-            https://vendor.peghouse.in/api/vendor/orders/${orderId}/ready-for-pickup,
+            `https://vendor.peghouse.in/api/vendor/orders/${orderId}/ready-for-pickup`,
             { 
               orderId: orderId, 
               orderNumber: currentOrder.orderNumber,
               status: 'accepted'
             },
-            { headers: { Authorization: Bearer ${token} } }
+            { headers: { Authorization: `Bearer ${token}` } }
           );
 
           if (pickupResponse.status === 200) {
@@ -573,16 +573,16 @@ const Orders: React.FC = () => {
       const firstOrder = newOrders[0];
       const itemsSummary = firstOrder.items
         .filter(item => item.status === 'pending')
-        .map(item => ${item.quantity}x ${item.name})
+        .map(item => `${item.quantity}x ${item.name}`)
         .join(', ');
       
       message = pendingCount === 1 
-        ? ${firstOrder.customerName} ने ऑर्डर केली आहे: ${itemsSummary} 
-        : ${pendingCount} नवीन ऑर्डर्स आल्या आहेत!;
+        ? `${firstOrder.customerName} ने ऑर्डर केली आहे: ${itemsSummary}` 
+        : `${pendingCount} नवीन ऑर्डर्स आल्या आहेत!`;
     } else {
       message = orderCount === 1 
-        ? ${newOrders[0].customerName} ची नवीन ऑर्डर: ${newOrders[0].orderNumber} 
-        : ${orderCount} नवीन ऑर्डर्स आल्या आहेत!;
+        ? `${newOrders[0].customerName} ची नवीन ऑर्डर: ${newOrders[0].orderNumber}` 
+        : `${orderCount} नवीन ऑर्डर्स आल्या आहेत!`;
     }
     
     setNotificationMessage(message);
@@ -619,7 +619,7 @@ const Orders: React.FC = () => {
     setShowNotification(false);
     if (newOrders.length > 0) {
       setExpandedOrderId(newOrders[0].id);
-      const orderElement = document.getElementById(order-${newOrders[0].id});
+      const orderElement = document.getElementById(`order-${newOrders[0].id}`);
       if (orderElement) {
         orderElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
         orderElement.classList.add('highlight-order');
@@ -648,13 +648,13 @@ const Orders: React.FC = () => {
       await Promise.all(updatePromises);
       
       const response = await axios.put(
-        https://vendor.peghouse.in/api/vendor/orders/${order.id}/ready-for-pickup,
+        `https://vendor.peghouse.in/api/vendor/orders/${order.id}/ready-for-pickup`,
         { 
           orderId: order.id, 
           orderNumber: order.orderNumber,
           status: 'accepted'
         },
-        { headers: { Authorization: Bearer ${token} } }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       
       if (response.status === 200) {
@@ -685,9 +685,9 @@ const Orders: React.FC = () => {
         .filter(item => item.status === 'accepted')
         .map(item => 
           axios.put(
-            https://vendor.peghouse.in/api/vendor/orders/${order.id}/status,
+            `https://vendor.peghouse.in/api/vendor/orders/${order.id}/status`,
             { productId: item.productId, status: 'handedOver' },
-            { headers: { Authorization: Bearer ${token} } }
+            { headers: { Authorization: `Bearer ${token}` } }
           )
         );
       
@@ -710,7 +710,7 @@ const Orders: React.FC = () => {
             status: 'completed',
             handedOverAt: new Date().toISOString()
           },
-          { headers: { Authorization: Bearer ${token} } }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
       } catch (payoutErr) {
         console.error('Failed to track order in payouts:', payoutErr);
@@ -799,8 +799,8 @@ const Orders: React.FC = () => {
     return (
       <div
         key={order.id}
-        id={order-${order.id}}
-        className={order-card ${isNewOrder ? 'new-order' : ''} ${isPastOrder ? 'past-order' : 'live-order'}}
+        id={`order-${order.id}`}
+        className={`order-card ${isNewOrder ? 'new-order' : ''} ${isPastOrder ? 'past-order' : 'live-order'}`}
         style={{
           background: allItemsHandedOver ? 'linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)' : 
                      allItemsRejected ? 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)' :
@@ -926,7 +926,7 @@ const Orders: React.FC = () => {
                 <CreditCard className="w-5 h-5 text-yellow-600" />
                 <div>
                   <p className="text-sm text-gray-500">Payment Status</p>
-                  <p className={font-semibold ${order.paymentStatus === 'paid' ? 'text-green-600' : 'text-orange-600'}}>
+                  <p className={`font-semibold ${order.paymentStatus === 'paid' ? 'text-green-600' : 'text-orange-600'}`}>
                     {order.paymentStatus.toUpperCase()}
                   </p>
                 </div>
