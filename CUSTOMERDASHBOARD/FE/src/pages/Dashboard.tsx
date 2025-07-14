@@ -126,13 +126,11 @@ const desktopBanners = [
     
     mobileOptimized: false
   },
+  
+
   {
     id: "desktop-2",
-    image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=2070&auto=format&fit=crop",
-    title: "Premium Drinks Delivered",
-    description: "Fast delivery in 45 minutes or less. Order now and enjoy premium quality!",
-    type: "featured", 
-    theme: "whiskey",
+    image: "/newban.png",
     mobileOptimized: false
   },
   {
