@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingCart, Trash2, Plus, Minus, AlertTriangle } from 'lucide-react';
 import axios from 'axios';
@@ -8,18 +8,11 @@ import { useCart } from '../context/CartContext';
 
 const Cart = () => {
   const navigate = useNavigate();
-  const { setItems: setContextItems, clearCart: clearContextCart } = useCart();
+  const { items, setItems: setContextItems, clearCart: clearContextCart } = useCart();
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const prevItemsRef = useRef<any[]>([]);
 
-  interface CartItem {
-    category: any;
-    productId: any; 
-    name: string;
-    price: number | string;
-    image: string;
-    quantity: number | string;
-  }
-
-  const [items, setItems] = useState<CartItem[]>([]);
+  // No local items state, use context items
   const [isLoading, setIsLoading] = useState<{[key: string]: boolean}>({});
   const userId = localStorage.getItem('userId');
   
@@ -74,13 +67,28 @@ const Cart = () => {
     };
   }, []);
 
+  // Highlight effect for newly added/updated items
+  useEffect(() => {
+    const prevItems = prevItemsRef.current;
+    // Find newly added or updated item
+    for (const item of items) {
+      const prev = prevItems.find(p => p.productId === item.productId);
+      if (!prev || prev.quantity !== item.quantity) {
+        setHighlightedId(item.productId);
+        setTimeout(() => setHighlightedId(null), 1500);
+        break;
+      }
+    }
+    prevItemsRef.current = items;
+  }, [items]);
+
   // Fetch cart items and sync with context
   useEffect(() => {
     const fetchCart = async () => {
       if (!userId) {
         toast.error('User not logged in');
         clearContextCart(); // Clear context cart if user is not logged in
-        setItems([]); // Clear local items
+        // setItems([]); // Remove local state update
         return;
       }
 
@@ -90,7 +98,7 @@ const Cart = () => {
           ...item,
           category: item.productId?.category || null
         }));
-        setItems(populatedItems);
+        // setItems(populatedItems); // Remove local state update
 
         // Update the cart context with the fetched items
         const contextItems = res.data.items.map((item: any) => ({
@@ -115,7 +123,7 @@ const Cart = () => {
         toast.error('Failed to load cart');
         console.error(error);
         // Clear both local and context cart on error
-        setItems([]);
+        // setItems([]); // Remove local state update
         clearContextCart();
       }
     };
@@ -151,7 +159,7 @@ const Cart = () => {
         quantity: item.quantity
       }));
 
-      setItems(updatedItems);
+      // setItems(updatedItems); // Remove local state update
       
       // Update the cart context with the updated items
       const contextItems = res.data.cart.items.map((item: any) => ({
@@ -209,7 +217,7 @@ const Cart = () => {
         quantity: item.quantity
       }));
       
-      setItems(updatedItems);
+      // setItems(updatedItems); // Remove local state update
       
       // Update the cart context with the updated items
       const contextItems = res.data.cart.items.map((item: any) => ({
@@ -252,25 +260,22 @@ const Cart = () => {
     setItemToDelete(null);
   };
 
+  // Fix total and drinksFee calculations to always use numbers
   // Base total
   const total = items.reduce((sum, item) => {
-    const rawPrice = typeof item.price === 'string' ? item.price.replace(/[^\d.]/g, '') : item.price;
-    const rawQuantity = typeof item.quantity === 'string' ? item.quantity.replace(/[^\d.]/g, '') : item.quantity;
-    const price = isNaN(Number(rawPrice)) ? 0 : Number(rawPrice);
-    const quantity = isNaN(Number(rawQuantity)) ? 1 : Number(rawQuantity);
+    const price = Number(item.price) || 0;
+    const quantity = Number(item.quantity) || 1;
     return sum + price * quantity;
   }, 0);
 
   // Drinks Fee (20%)
   const drinksFee = items.reduce((sum, item) => {
     const category = item?.category;
-    const price = typeof item.price === 'string' ? Number(item.price.replace(/[^\d.]/g, '')) : item.price;
-    const quantity = typeof item.quantity === 'string' ? Number(item.quantity.replace(/[^\d.]/g, '')) : item.quantity;
-
+    const price = Number(item.price) || 0;
+    const quantity = Number(item.quantity) || 1;
     if (category === 'Drinks') {
-      return sum + (Number(price) || 0) * (Number(quantity) || 1) * 0.20;
+      return sum + price * quantity * 0.20;
     }
-
     return sum;
   }, 0);
 
@@ -355,11 +360,14 @@ const Cart = () => {
               </div>
             ) : (
               items.map((item: any) => {
-                const itemId = item.productId?._id || item.productId;
+                const itemId = item.productId;
                 const itemLoading = isLoading[itemId] || false;
                 
                 return (
-                  <div key={itemId} className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-6 mb-6">
+                  <div
+                    key={itemId}
+                    className={`flex flex-col sm:flex-row sm:items-center justify-between border-b pb-6 mb-6 transition-all duration-500 ${highlightedId === item.productId ? 'ring-2 ring-[#cd6839] bg-orange-50' : ''}`}
+                  >
                     <div className="flex items-center space-x-4">
                       <img
                         src={item.image}
@@ -467,7 +475,7 @@ const Cart = () => {
                     (window as any).fbq('track', 'InitiateCheckout', {
                       content_type: 'product',
                       contents: items.map(item => ({
-                        id: item.productId?._id || item.productId,
+                        id: item.productId,
                         quantity: Number(item.quantity)
                       })),
                       num_items: items.length,

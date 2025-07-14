@@ -303,44 +303,53 @@ fetchUserProfile();
   };
   
   const handleSaveChanges = async () => {
-    if (userInfo.phone.length !== 10) {
-      alert('Mobile number must be exactly 10 digits.');
+  if (!userInfo.phone || userInfo.phone.length !== 10) {
+    alert('Mobile number must be exactly 10 digits.');
+    return;
+  }
+
+  try {
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      alert('User ID not found. Please log in again.');
       return;
     }
-  
-    try {
-      const userId = localStorage.getItem('userId');
-      
-      // Show loading indicator
-      const saveButton = document.getElementById('saveProfileButton');
-      if (saveButton) {
-        saveButton.textContent = 'Saving...';
-        saveButton.setAttribute('disabled', 'true');
-      }
-      
-      const response = await axios.put(
-        `https://peghouse.in/api/users/profile/${userId}`,
-        userInfo
-      );
-      
-      // Update the userInfo state with the response data
-      setUserInfo(response.data);
-      setIsEditing(false); // Save successful, now exit editing mode
-      
-      // Show success message
-      alert('Profile updated successfully!');
-    } catch (error) {
-      console.error('Failed to update profile', error);
-      alert('Failed to update profile. Please try again.');
-    } finally {
-      // Reset button state
-      const saveButton = document.getElementById('saveProfileButton');
-      if (saveButton) {
-        saveButton.textContent = 'Save Profile';
-        saveButton.removeAttribute('disabled');
-      }
+
+    // Disable button and show loading text
+    const saveButton = document.getElementById('saveProfileButton');
+    if (saveButton) {
+      saveButton.textContent = 'Saving...';
+      saveButton.disabled = true;
     }
-  };
+
+    const response =
+     await axios.put(
+      `https://peghouse.in/api/users/${userId}`,
+      {
+        name: userInfo.name,
+        email: userInfo.email,
+        mobile: userInfo.phone,
+        state: userInfo.state,
+        city: userInfo.city,
+        dob: userInfo.dob
+      }
+    );
+
+    setUserInfo(response.data.user); // ✅ Make sure to use `.user` from API response
+    setIsEditing(false);
+    alert('Profile updated successfully!');
+  } catch (error) {
+    console.error('❌ Failed to update profile:', error.response?.data || error.message);
+    alert(error.response?.data?.message || 'Failed to update profile. Please try again.');
+  } finally {
+    // Re-enable the button
+    const saveButton = document.getElementById('saveProfileButton');
+    if (saveButton) {
+      saveButton.textContent = 'Save Profile';
+      saveButton.disabled = false;
+    }
+  }
+};
 
   const generateAIResponse = (input: string): string => {
     const lowerInput = input.toLowerCase();
@@ -797,68 +806,118 @@ const updateAddress = async () => {
               }}
             >
               <div className="mb-3">
-                <label className="block text-gray-700 text-sm font-medium mb-1" htmlFor="name">Full Name</label>
-                <input
-                  id="name"
-                  type="text"
-                  name="name"
-                  value={userInfo.name}
-                  onChange={handleUserInfoChange}
-                  className="block w-full rounded border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  placeholder="Name"
-                  autoComplete="name"
-                  autoFocus
-                />
-              </div>
-              <div className="mb-3">
-                <label className="block text-gray-700 text-sm font-medium mb-1" htmlFor="phone">Phone Number</label>
-                <input
-                  id="phone"
-                  type="tel"
-                  name="phone"
-                  value={userInfo.phone}
-                  onChange={handleUserInfoChange}
-                  className="block w-full rounded border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  placeholder="Phone"
-                  autoComplete="tel"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  maxLength={10}
-                  ref={phoneInputRef}
-                />
-                {userInfo.phone && userInfo.phone.length !== 10 && (
-                  <p className="text-red-500 text-sm mt-1">
-                    Mobile number must be exactly 10 digits.
-                  </p>
-                )}
-              </div>
-              <input
-                id="address"
-                type="text"
-                name="address"
-                value={userInfo.address}
-                onChange={handleUserInfoChange}
-                className="block w-full rounded border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="Address"
-                autoComplete="street-address"
-              />
-              <div className="mt-4">
-                <button
-                  id="saveProfileButton"
-                  type="submit"
-                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors w-full"
-                  disabled={userInfo.phone.length !== 10}
-                >
-                  Save Profile
-                </button>
-                <button
-                  type="button"
-                  className="mt-2 text-gray-700 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors w-full"
-                  onClick={() => setIsEditing(false)}
-                >
-                  Cancel
-                </button>
-              </div>
+  <label className="block text-gray-700 text-sm font-medium mb-1" htmlFor="email">Email Address</label>
+  <input
+    id="email"
+    type="email"
+    name="email"
+    value={userInfo?.email || ''}
+    onChange={handleUserInfoChange}
+    className="block w-full rounded border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+    placeholder="Email"
+    autoComplete="email"
+    autoFocus
+  />
+</div>
+
+
+<div className="mb-3">
+  <label className="block text-gray-700 text-sm font-medium mb-1" htmlFor="state">State</label>
+  <input
+    id="state"
+    type="text"
+    name="state"
+    value={userInfo?.state || ''}
+    onChange={handleUserInfoChange}
+    className="block w-full rounded border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+    placeholder="State"
+    autoComplete="address-level1"
+  />
+</div>
+
+<div className="mb-3">
+  <label className="block text-gray-700 text-sm font-medium mb-1" htmlFor="city">City</label>
+  <input
+    id="city"
+    type="text"
+    name="city"
+    value={userInfo?.city || ''}
+    onChange={handleUserInfoChange}
+    className="block w-full rounded border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+    placeholder="City"
+    autoComplete="address-level2"
+  />
+</div>
+
+<div className="mb-3">
+  <label className="block text-gray-700 text-sm font-medium mb-1" htmlFor="dob">Date of Birth</label>
+  <input
+    id="dob"
+    type="date"
+    name="dob"
+    value={userInfo?.dob ? userInfo.dob.slice(0, 10) : ''}
+    onChange={handleUserInfoChange}
+    className="block w-full rounded border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+    placeholder="Date of Birth"
+    autoComplete="bday"
+  />
+</div>
+
+
+<div className="mb-3">
+  <label className="block text-gray-700 text-sm font-medium mb-1" htmlFor="name">Full Name</label>
+  <input
+    id="name"
+    type="text"
+    name="name"
+    value={userInfo?.name || ''}
+    onChange={handleUserInfoChange}
+    className="block w-full rounded border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+    placeholder="Full Name"
+    autoComplete="name"
+  />
+</div>
+
+<div className="mb-3">
+  <label className="block text-gray-700 text-sm font-medium mb-1" htmlFor="phone">Phone Number</label>
+  <input
+    id="phone"
+    type="tel"
+    name="phone"
+    value={userInfo?.phone || ''}
+    onChange={handleUserInfoChange}
+    className="block w-full rounded border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+    placeholder="Phone"
+    autoComplete="tel"
+    inputMode="numeric"
+    pattern="[0-9]*"
+    maxLength={10}
+    ref={phoneInputRef}
+  />
+  {userInfo?.phone && userInfo.phone.length !== 10 && (
+    <p className="text-red-500 text-sm mt-1">
+      Mobile number must be exactly 10 digits.
+    </p>
+  )}
+</div>
+
+<div className="mt-4">
+  <button
+    id="saveProfileButton"
+    type="submit"
+    className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors w-full"
+    disabled={userInfo?.phone?.length !== 10}
+  >
+    Save Profile
+  </button>
+  <button
+    type="button"
+    className="mt-2 text-gray-700 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors w-full"
+    onClick={() => setIsEditing(false)}
+  >
+    Cancel
+  </button>
+</div>
             </form>
           ) : (
             <div>

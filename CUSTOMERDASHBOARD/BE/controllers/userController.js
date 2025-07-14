@@ -12,20 +12,47 @@ exports.getProfile = async (req, res) => {
   }
 };
 
-// UPDATE profile by ID
 exports.updateProfile = async (req, res) => {
   try {
-    const { name, email, mobile, kycDocument, address } = req.body;
+    const { name, email, mobile, state, city, dob } = req.body;
+    const userId = req.params.id;
 
-    // Update the user profile
+    // 🔍 Check if mobile is already used by another user
+    const existingMobile = await User.findOne({ mobile, _id: { $ne: userId } });
+    if (existingMobile) {
+      return res.status(400).json({ message: 'Mobile number already in use by another user' });
+    }
+
+    // 🔍 Check if email is already used by another user
+    const existingEmail = await User.findOne({ email, _id: { $ne: userId } });
+    if (existingEmail) {
+      return res.status(400).json({ message: 'Email already in use by another user' });
+    }
+
+    // ✅ Update user
     const updatedUser = await User.findByIdAndUpdate(
-      req.params.id,
-      { name, email, mobile, kycDocument, address },
-      { new: true }  // This ensures that the updated user data is returned
-    ).select('-password');  // Don't return password in response
+      userId,
+      {
+        name,
+        email,
+        mobile,
+        state,
+        city,
+        dob: new Date(dob)
+      },
+      { new: true }
+    ).select('-password');
 
-    res.json(updatedUser);  // Return the updated user data
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json({
+      message: 'Profile updated successfully',
+      user: updatedUser
+    });
   } catch (err) {
-    res.status(500).json({ message: 'Update failed' });
+    console.error('❌ Update Error:', err.message);
+    res.status(500).json({ message: 'Update failed', error: err.message });
   }
 };
