@@ -92,11 +92,7 @@ const mobileBanners = [
   },
   {
     id: "mobile-2", 
-    image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=600&auto=format&fit=crop",
-    title: "Quick Delivery",
-    description: "Fast delivery in 30 minutes or less",
-    type: "featured",
-    theme: "whiskey",
+    image: "/newban.png",
     mobileOptimized: true
   },
   {
