@@ -221,7 +221,7 @@ const CATEGORY_ORDER = [
 function Products() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { addToCart, items } = useCart();
+  const { addToCart, items, updateQuantity } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -244,6 +244,7 @@ function Products() {
   const [canGoBack, setCanGoBack] = useState(false);
   const [canGoForward, setCanGoForward] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [quantityModal, setQuantityModal] = useState<{ product: Product, quantity: number } | null>(null);
 
   // Enhanced search function with debouncing
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
@@ -655,16 +656,16 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
       alcoholContent: product.alcoholContent
     });
 
-      // Add to local cart context with the correct type
-      const cartItem = {
-        id: parseInt(product._id) || Date.now(),
+    // Add to local cart context with the correct type
+    const cartItem = {
       productId: product._id,
       category: product.category,
       name: product.name,
       price: product.price,
-        image: product.image
-      };
-      addToCart(cartItem);
+      image: product.image,
+      volume: product.volume,
+    };
+    addToCart(cartItem);
 
     toast.success(`${product.name} added to cart!`, {
       position: "bottom-right",
@@ -740,7 +741,7 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
   // Add to state:
   const [sortBy, setSortBy] = useState<'price' | 'volume'>('price');
 
-  // Update filterProducts to handle volume filter
+  // Update filterProducts to handle new price range logic
   const filterProducts = () => {
     let filtered = [...products];
 
@@ -765,18 +766,19 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
       filtered = filtered.filter(product => product.brand === selectedBrand);
     }
 
-    if (priceRange !== 'all') {
-      if (priceRange.startsWith('vol-')) {
-        // Volume filter
-        const vol = parseInt(priceRange.replace('vol-', ''));
-        filtered = filtered.filter(product => product.volume === vol);
+    // Volume filter (first box)
+    if (isLiquorCategory && priceRange.startsWith('vol-')) {
+      const vol = parseInt(priceRange.replace('vol-', ''));
+      filtered = filtered.filter(product => product.volume === vol);
+    }
+
+    // Price range filter (second box)
+    if (priceRange !== 'all' && !priceRange.startsWith('vol-')) {
+      if (priceRange === '500+') {
+        filtered = filtered.filter(product => product.price > 500);
       } else {
-        // Price filter
         const [min, max] = priceRange.split('-').map(Number);
-        filtered = filtered.filter(product => {
-          if (max) return product.price >= min && product.price <= max;
-          return product.price >= min;
-        });
+        filtered = filtered.filter(product => product.price >= min && product.price <= max);
       }
     }
 
@@ -1002,6 +1004,62 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
       ))}
     </div>
   );
+
+  // Helper: Check if current category is liquor (drinks or soft drinks)
+  const isLiquorCategory = ['drinks', 'soft drinks'].includes(selectedCategory.toLowerCase()) || selectedCategory === 'all';
+
+  // Volume filter options for liquor
+  const volumeOptions = [
+    { label: 'All Volumes', value: 'all' },
+    { label: '180 ml', value: 'vol-180' },
+    { label: '375 ml', value: 'vol-375' },
+    { label: '750 ml', value: 'vol-750' },
+    { label: '1000 ml', value: 'vol-1000' },
+  ];
+
+  // Price range filter options
+  const priceRangeOptions = [
+    { label: 'All Prices', value: 'all' },
+    { label: 'Under ₹100', value: '0-100' },
+    { label: '₹100 - ₹200', value: '100-200' },
+    { label: '₹200 - ₹300', value: '200-300' },
+    { label: '₹300 - ₹400', value: '300-400' },
+    { label: '₹400 - ₹500', value: '400-500' },
+    { label: 'Over ₹500', value: '500+' },
+  ];
+
+  // Helper to open modal
+  function openQuantityModal(product: Product, quantity: number) {
+    setQuantityModal({ product, quantity });
+  }
+  function closeQuantityModal() {
+    setQuantityModal(null);
+  }
+
+  // Add this function to update cart quantity
+  const updateCartQuantity = async (product: Product, newQuantity: number) => {
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      toast.error('Please log in first');
+      navigate('/login');
+      return;
+    }
+    try {
+      await axios.post('https://peghouse.in/api/cart/update', {
+        userId,
+        productId: product._id,
+        quantity: newQuantity,
+      });
+      // Update local cart context
+      updateQuantity(product._id, newQuantity);
+      toast.success(`Cart updated! (${product.name}: Qty ${newQuantity})`, { autoClose: 2000 });
+      console.log(`Cart updated for ${product.name}: Qty ${newQuantity}`);
+    } catch (err) {
+      toast.error('Failed to update cart');
+    }
+  };
+
+  console.log('Cart items:', items);
 
   return (
     <div className="container mx-auto bg-white min-h-screen pb-20">
@@ -1261,66 +1319,72 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
 
         {/* Filters */}
         <div style={{ display: 'flex', justifyContent: 'space-between', margin: '20px 0', position: 'relative' }}>
-          {/* Price Filter */}
+          {/* Volume Filter (for liquor only) */}
           <div style={{ width: '30%', position: 'relative' }}>
-            <button
-              onClick={() => {
-                setShowPriceFilter(!showPriceFilter);
-                setShowBrandFilter(false);
-              }}
-              style={{
-                padding: '8px 16px',
-                background: '#f5f5f5',
-                border: 'none',
-                borderRadius: '8px',
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between'
-              }}
-            >
-              Price <ChevronDown size={16} />
-            </button>
-            {showPriceFilter && (
-              <div style={{
-                position: 'absolute',
-                top: '100%',
-                left: 0,
-                width: '100%',
-                background: 'white',
-                borderRadius: '8px',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-                zIndex: 10,
-                marginTop: '4px'
-              }}>
-                {getFilterOptions().map(option => (
-                  <button
-                    key={option.value}
-                    onClick={() => {
-                      setPriceRange(option.value);
-                      setShowPriceFilter(false);
-                    }}
-                    style={{
-                      width: '100%',
-                      padding: '8px 16px',
-                      border: 'none',
-                      background: 'none',
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                      color: priceRange === option.value ? '#cd6839' : 'black'
-                    }}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
+            {isLiquorCategory ? (
+              <>
+                <button
+                  onClick={() => {
+                    setShowPriceFilter(!showPriceFilter);
+                    setShowBrandFilter(false);
+                  }}
+                  style={{
+                    padding: '8px 16px',
+                    background: '#f5f5f5',
+                    border: 'none',
+                    borderRadius: '8px',
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}
+                >
+                  Volume (ml) <ChevronDown size={16} />
+                </button>
+                {showPriceFilter && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    width: '100%',
+                    background: 'white',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                    zIndex: 10,
+                    marginTop: '4px'
+                  }}>
+                    {volumeOptions.map(option => (
+                      <button
+                        key={option.value}
+                        onClick={() => {
+                          setPriceRange(option.value);
+                          setShowPriceFilter(false);
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '8px 16px',
+                          border: 'none',
+                          background: 'none',
+                          textAlign: 'left',
+                          cursor: 'pointer',
+                          color: priceRange === option.value ? '#cd6839' : 'black'
+                        }}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <button disabled style={{ width: '100%', padding: '8px 16px', background: '#f5f5f5', border: 'none', borderRadius: '8px', color: '#aaa' }}>Volume (ml)</button>
             )}
           </div>
-          {/* Sort By Filter (NEW) */}
+          {/* Price Range Filter (second box) */}
           <div style={{ width: '30%', position: 'relative' }}>
             <select
-              value={sortBy}
-              onChange={e => setSortBy(e.target.value as 'price' | 'volume')}
+              value={priceRange}
+              onChange={e => setPriceRange(e.target.value)}
               style={{
                 padding: '8px 16px',
                 background: '#f5f5f5',
@@ -1330,8 +1394,9 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
                 fontWeight: 500
               }}
             >
-              <option value="price">Sort by Price</option>
-              <option value="volume">Sort by Volume (ml)</option>
+              {priceRangeOptions.map(option => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
             </select>
           </div>
           {/* Relevance Button (unchanged) */}
@@ -1394,79 +1459,86 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
                 </p>
               </div>
             ) : (
-              filterProducts().map((product) => (
-              <div
-                key={product._id}
-                id={`product-${product._id}`}
-                className="product-card"
-                style={productCardStyle}
-              >
-                <div>
-                  <div style={productImageContainerStyle}>
-                    {product.category.toLowerCase() === 'Food' ? (
-                      <div 
-                        style={{
-                          ...productImageStyle,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          backgroundColor: '#f3f4f6',
-                          color: '#6b7280',
-                          fontSize: '10px',
-                          textAlign: 'center',
-                          padding: '4px'
-                        }}
-                      >
-                        {product.name}
+              filterProducts().map((product) => {
+                const cartItem = items.find(item => item.productId === product._id);
+                const productQuantity = cartItem ? cartItem.quantity : 0;
+                return (
+                  <div
+                    key={product._id}
+                    id={`product-${product._id}`}
+                    className="product-card"
+                    style={productCardStyle}
+                  >
+                    <div>
+                      <div style={productImageContainerStyle}>
+                        {product.category.toLowerCase() === 'Food' ? (
+                          <div 
+                            style={{
+                              ...productImageStyle,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              backgroundColor: '#f3f4f6',
+                              color: '#6b7280',
+                              fontSize: '10px',
+                              textAlign: 'center',
+                              padding: '4px'
+                            }}
+                          >
+                            {product.name}
+                          </div>
+                        ) : (
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className="product-image"
+                            style={productImageStyle}
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = 'https://via.placeholder.com/150?text=' + product.name;
+                            }}
+                          />
+                        )}
                       </div>
-                    ) : (
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="product-image"
-                        style={productImageStyle}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = 'https://via.placeholder.com/150?text=' + product.name;
-                        }}
-                      />
-                    )}
-                  </div>
-                  
-                  <div className="px-1">
-                    <div className="text-[13px] font-medium truncate" title={product.name}>
-                      {product.name}
+                      <div className="px-1">
+                        <div className="text-[13px] font-medium truncate" title={product.name}>
+                          {product.name}
+                        </div>
+                        <div className="flex justify-between items-center mt-1">
+                          {['drinks', 'soft drinks'].includes(product.category.toLowerCase()) ? (
+                            <>
+                              <span className="text-[10px] font-medium bg-blue-50 text-blue-600 py-0.5 px-1 rounded">
+                                {product.volume} ml
+                              </span>
+                              <span className="text-[13px] font-bold text-[#cd6839]">
+                                ₹{product.price}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-[13px] font-bold text-[#cd6839] w-full text-center">
+                              ₹{product.price}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    
-                    <div className="flex justify-between items-center mt-1">
-                      {['drinks', 'soft drinks'].includes(product.category.toLowerCase()) ? (
-                        <>
-                          <span className="text-[10px] font-medium bg-blue-50 text-blue-600 py-0.5 px-1 rounded">
-                            {product.volume} ml
-                          </span>
-                          <span className="text-[13px] font-bold text-[#cd6839]">
-                            ₹{product.price}
-                          </span>
-                        </>
-                      ) : (
-                        <span className="text-[13px] font-bold text-[#cd6839] w-full text-center">
-                          ₹{product.price}
-                        </span>
-                      )}
-                    </div>
+                    <button
+                      onClick={e => {
+                        if (productQuantity > 0) {
+                          openQuantityModal(product, productQuantity);
+                        } else {
+                          handleAddToCart(e, product);
+                        }
+                      }}
+                      className="w-full py-1 px-2 bg-[#cd6839] text-white text-[10px] rounded font-medium mt-2
+                                hover:bg-[#b55a31] transition-colors duration-200
+                                focus:outline-none focus:ring-1 focus:ring-[#cd6839] focus:ring-opacity-50"
+                    >
+                      {productQuantity > 0 ? `Add One More (Qty: ${productQuantity})` : 'Add to Cart'}
+                    </button>
                   </div>
-                </div>
-                
-                <button
-                  onClick={(e) => handleAddToCart(e, product)}
-                  className="w-full py-1 px-2 bg-[#cd6839] text-white text-[10px] rounded font-medium mt-2
-                            hover:bg-[#b55a31] transition-colors duration-200
-                            focus:outline-none focus:ring-1 focus:ring-[#cd6839] focus:ring-opacity-50"
-                >
-                  Add to Cart
-                </button>
-              </div>
-              ))
+                );
+              })
             )}
           </div>
         )}
@@ -1540,6 +1612,50 @@ const handleAddToCart = async (e: React.MouseEvent | null, product: Product) => 
           }
         `}
       </style>
+
+      {quantityModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 w-full max-w-xs mx-4 relative">
+            <button onClick={closeQuantityModal} className="absolute top-2 right-2 text-gray-500">
+              <X size={20} />
+            </button>
+            <div className="flex flex-col items-center">
+              <img src={quantityModal.product.image} alt={quantityModal.product.name} className="w-20 h-20 object-contain mb-2" />
+              <h3 className="font-semibold mb-2 text-center">{quantityModal.product.name}</h3>
+              <div className="flex items-center gap-3 mt-2">
+                <button
+                  onClick={() => {
+                    if (quantityModal.quantity > 1) {
+                      setQuantityModal(q => q && { ...q, quantity: q.quantity - 1 });
+                    }
+                  }}
+                  className="bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center text-xl"
+                  disabled={quantityModal.quantity <= 1}
+                >-</button>
+                <span className="text-lg font-bold">{quantityModal.quantity}</span>
+                <button
+                  onClick={() => {
+                    setQuantityModal(q => q && { ...q, quantity: q.quantity + 1 });
+                  }}
+                  className="bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center text-xl"
+                >+</button>
+              </div>
+              <button
+                onClick={async () => {
+                  if (quantityModal) {
+                    await updateCartQuantity(quantityModal.product, quantityModal.quantity);
+                    closeQuantityModal();
+                    navigate('/cart'); // Redirect to Cart page after update
+                  }
+                }}
+                className="mt-4 bg-[#cd6839] text-white px-4 py-2 rounded"
+              >
+                Update Cart
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
