@@ -3,13 +3,14 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 // 🛒 Define structure of each item in the cart
 export interface CartItem {
   category: string;
-  productId: any;
+  productId: string;
   _id?: any;
-  id: number;
+  // id: number; // Remove id
   name: string;
   price: number;
   image: string;
   quantity: number;
+  volume?: number;
 }
 
 // 📦 Define structure of the cart context
@@ -17,8 +18,8 @@ interface CartContextType {
   items: CartItem[];
   setItems: (items: CartItem[]) => void;
   addToCart: (product: Omit<CartItem, 'quantity'>) => void;
-  removeFromCart: (productId: number) => void;
-  updateQuantity: (productId: number, quantity: number) => void;
+  removeFromCart: (productId: string) => void;
+  updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
 }
 
@@ -31,11 +32,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addToCart = (product: Omit<CartItem, 'quantity'>) => {
     setItems(currentItems => {
-      const existingItem = currentItems.find(item => item.id === product.id);
+      const existingItem = currentItems.find(item => item.productId === product.productId);
 
       if (existingItem) {
         return currentItems.map(item =>
-          item.id === product.id
+          item.productId === product.productId
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
@@ -45,14 +46,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const removeFromCart = (productId: number) => {
-    setItems(currentItems => currentItems.filter(item => item.id !== productId));
+  const removeFromCart = (productId: string) => {
+    setItems(currentItems => currentItems.filter(item => item.productId !== productId));
   };
 
-  const updateQuantity = (productId: number, quantity: number) => {
+  const updateQuantity = (productId: string, quantity: number) => {
     setItems(currentItems =>
       currentItems.map(item =>
-        item.id === productId
+        item.productId === productId
           ? { ...item, quantity: Math.max(0, quantity) }
           : item
       ).filter(item => item.quantity > 0)
