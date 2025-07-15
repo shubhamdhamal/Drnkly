@@ -853,14 +853,19 @@ const updateAddress = async () => {
     autoComplete="bday"
   />
 </div>
-              <div className="mb-3">
+             <div className="mb-3">
   <label className="block text-gray-700 text-sm font-medium mb-1" htmlFor="email">Email Address</label>
   <input
     id="email"
     type="email"
     name="email"
     value={userInfo?.email || ''}
-    onChange={handleUserInfoChange}
+    onChange={(e) =>
+      setUserInfo((prev) => ({
+        ...prev,
+        [e.target.name]: e.target.value,
+      }))
+    }
     className="block w-full rounded border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
     placeholder="Email"
     autoComplete="email"
