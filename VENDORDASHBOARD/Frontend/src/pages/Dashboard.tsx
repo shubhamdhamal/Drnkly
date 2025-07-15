@@ -3,6 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { Package, ShoppingBag, TrendingUp, IndianRupeeIcon, CheckCircle, Tag, Plus, X, CheckSquare, Square, AlertTriangle, Percent } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { jwtDecode } from 'jwt-decode';
+
+
+interface DecodedToken {
+  vendorId: string;
+  exp: number;
+  iat: number;
+}
 
 interface Product {
   _id: string;
@@ -220,53 +228,104 @@ const Dashboard: React.FC = () => {
     .sort((a, b) => b.price - a.price)
     .slice(0, 5);
 
-  const stats = [
-    { 
-      title: 'Active Orders', 
-      value: '25', 
-      icon: ShoppingBag, 
-      changeType: 'positive',
-      description: 'Need your attention',
-      path: '/orders',
-      bgGradient: 'from-blue-50 to-blue-100',
-      iconColor: 'text-blue-600',
-      badgeColor: 'bg-blue-100 text-blue-700'
-    },
-    { 
-      title: 'Products', 
-      value: `${products.length}`, 
-      icon: Package,
-      changeType: 'neutral',
-      description: 'total in inventory',
-      path: '/products',
-      searchQuery: 'Old Monk Rum Free',
-      bgGradient: 'from-green-50 to-green-100',
-      iconColor: 'text-green-600',
-      badgeColor: 'bg-green-100 text-green-700'
-    },
-    { 
-      title: 'Completed Orders', 
-      value: '125', 
-      icon: CheckCircle,
-      changeType: 'positive',
-      description: 'this month',
-      path: '/orders',
-      bgGradient: 'from-purple-50 to-purple-100',
-      iconColor: 'text-purple-600',
-      badgeColor: 'bg-purple-100 text-purple-700'
-    },
-    { 
-      title: 'Total Sales', 
-      value: '₹45,231', 
-      icon: IndianRupeeIcon, 
-      changeType: 'positive',
-      description: 'vs. last month',
-      path: '/payouts',
-      bgGradient: 'from-amber-50 to-amber-100',
-      iconColor: 'text-amber-600',
-      badgeColor: 'bg-amber-100 text-amber-700'
+useEffect(() => {
+  const fetchStats = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        console.error('❌ No token found');
+        toast.error('Authentication error. Please log in again.');
+        return;
+      }
+
+      const decoded = jwtDecode<DecodedToken>(token);
+      const vendorId = decoded.vendorId;
+
+      if (!vendorId) {
+        console.error('❌ vendorId not found in token');
+        toast.error('Invalid token. Please log in again.');
+        return;
+      }
+
+      const res = await axios.get(`https://vendor.peghouse.in/api/vendor-stats?vendorId=${vendorId}`);
+
+      const { activeOrders, totalProducts, completedOrders, totalSales } = res.data;
+
+      setStats(prevStats =>
+        prevStats.map(stat => {
+          switch (stat.title) {
+            case 'Active Orders':
+              return { ...stat, value: `${activeOrders}` };
+            case 'Products':
+              return { ...stat, value: `${totalProducts}` };
+            case 'Completed Orders':
+              return { ...stat, value: `${completedOrders}` };
+            case 'Total Sales':
+              return { ...stat, value: `₹${totalSales.toLocaleString()}` };
+            default:
+              return stat;
+          }
+        })
+      );
+    } catch (err) {
+      console.error('❌ Failed to load vendor stats', err);
+      toast.error('Failed to load dashboard statistics');
     }
-  ];
+  };
+
+  fetchStats();
+}, []);
+
+
+
+const [stats, setStats] = useState([
+  {
+    title: 'Active Orders',
+    value: '0',
+    icon: ShoppingBag,
+    changeType: 'positive',
+    description: 'Need your attention',
+    path: '/orders',
+    bgGradient: 'from-blue-50 to-blue-100',
+    iconColor: 'text-blue-600',
+    badgeColor: 'bg-blue-100 text-blue-700',
+  },
+  {
+    title: 'Products',
+    value: '0',
+    icon: Package,
+    changeType: 'neutral',
+    description: 'total in inventory',
+    path: '/products',
+    searchQuery: 'Old Monk Rum Free',
+    bgGradient: 'from-green-50 to-green-100',
+    iconColor: 'text-green-600',
+    badgeColor: 'bg-green-100 text-green-700',
+  },
+  {
+    title: 'Completed Orders',
+    value: '0',
+    icon: CheckCircle,
+    changeType: 'positive',
+    description: 'this month',
+    path: '/orders',
+    bgGradient: 'from-purple-50 to-purple-100',
+    iconColor: 'text-purple-600',
+    badgeColor: 'bg-purple-100 text-purple-700',
+  },
+  {
+    title: 'Total Sales',
+    value: '₹0',
+    icon: IndianRupeeIcon,
+    changeType: 'positive',
+    description: 'vs. last month',
+    path: '/payouts',
+    bgGradient: 'from-amber-50 to-amber-100',
+    iconColor: 'text-amber-600',
+    badgeColor: 'bg-amber-100 text-amber-700',
+  }
+]);
+
 
   return (
     <div className="space-y-6 md:space-y-8">

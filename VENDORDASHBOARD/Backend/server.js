@@ -49,7 +49,9 @@ app.use('/api/vendor', vendorRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/delivery-partners', deliveryPartnerRoutes);
-app.use('/api/vendor',orderRoutes);
+app.use('/api/vendor', orderRoutes); // keep this if needed for other order APIs
+app.use('/api/vendor-stats', require('./routes/vendorStatsRoutes')); // ✅ NEW
+
 app.use('/api/issues', issueRoutes);
 app.use('/api/qr', require('./routes/qrRoutes'));
 
