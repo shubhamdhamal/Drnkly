@@ -806,6 +806,54 @@ const updateAddress = async () => {
               }}
             >
               <div className="mb-3">
+  <label className="block text-gray-700 text-sm font-medium mb-1" htmlFor="name">Full Name</label>
+  <input
+    id="name"
+    type="text"
+    name="name"
+    value={userInfo?.name || ''}
+    onChange={handleUserInfoChange}
+    className="block w-full rounded border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+    placeholder="Full Name"
+    autoComplete="name"
+  />
+</div>
+              <div className="mb-3">
+  <label className="block text-gray-700 text-sm font-medium mb-1" htmlFor="phone">Phone Number</label>
+  <input
+    id="phone"
+    type="tel"
+    name="phone"
+    value={userInfo?.phone || ''}
+    onChange={handleUserInfoChange}
+    className="block w-full rounded border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+    placeholder="Phone"
+    autoComplete="tel"
+    inputMode="numeric"
+    pattern="[0-9]*"
+    maxLength={10}
+    ref={phoneInputRef}
+  />
+  {userInfo?.phone && userInfo.phone.length !== 10 && (
+    <p className="text-red-500 text-sm mt-1">
+      Mobile number must be exactly 10 digits.
+    </p>
+  )}
+</div>
+              <div className="mb-3">
+  <label className="block text-gray-700 text-sm font-medium mb-1" htmlFor="dob">Date of Birth</label>
+  <input
+    id="dob"
+    type="date"
+    name="dob"
+    value={userInfo?.dob ? userInfo.dob.slice(0, 10) : ''}
+    onChange={handleUserInfoChange}
+    className="block w-full rounded border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+    placeholder="Date of Birth"
+    autoComplete="bday"
+  />
+</div>
+              <div className="mb-3">
   <label className="block text-gray-700 text-sm font-medium mb-1" htmlFor="email">Email Address</label>
   <input
     id="email"
@@ -848,59 +896,6 @@ const updateAddress = async () => {
     autoComplete="address-level2"
   />
 </div>
-
-<div className="mb-3">
-  <label className="block text-gray-700 text-sm font-medium mb-1" htmlFor="dob">Date of Birth</label>
-  <input
-    id="dob"
-    type="date"
-    name="dob"
-    value={userInfo?.dob ? userInfo.dob.slice(0, 10) : ''}
-    onChange={handleUserInfoChange}
-    className="block w-full rounded border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-    placeholder="Date of Birth"
-    autoComplete="bday"
-  />
-</div>
-
-
-<div className="mb-3">
-  <label className="block text-gray-700 text-sm font-medium mb-1" htmlFor="name">Full Name</label>
-  <input
-    id="name"
-    type="text"
-    name="name"
-    value={userInfo?.name || ''}
-    onChange={handleUserInfoChange}
-    className="block w-full rounded border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-    placeholder="Full Name"
-    autoComplete="name"
-  />
-</div>
-
-<div className="mb-3">
-  <label className="block text-gray-700 text-sm font-medium mb-1" htmlFor="phone">Phone Number</label>
-  <input
-    id="phone"
-    type="tel"
-    name="phone"
-    value={userInfo?.phone || ''}
-    onChange={handleUserInfoChange}
-    className="block w-full rounded border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-    placeholder="Phone"
-    autoComplete="tel"
-    inputMode="numeric"
-    pattern="[0-9]*"
-    maxLength={10}
-    ref={phoneInputRef}
-  />
-  {userInfo?.phone && userInfo.phone.length !== 10 && (
-    <p className="text-red-500 text-sm mt-1">
-      Mobile number must be exactly 10 digits.
-    </p>
-  )}
-</div>
-
 <div className="mt-4">
   <button
     id="saveProfileButton"
