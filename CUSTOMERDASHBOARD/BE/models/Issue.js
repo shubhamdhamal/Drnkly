@@ -1,3 +1,4 @@
+// models/Issue.js
 const mongoose = require('mongoose');
 
 const issueSchema = new mongoose.Schema({
@@ -26,10 +27,14 @@ const issueSchema = new mongoose.Schema({
   contactEmail: { type: String },
   contactPhone: { type: String },
   receiveUpdates: { type: Boolean, default: false },
+  status: {
+    type: String,
+    enum: ['pending', 'resolved', 'escalated'],
+    default: 'pending'
+  },
   createdAt: { type: Date, default: Date.now }
 });
 
-// ✅ Add custom validation to require EITHER userId OR vendorId
 issueSchema.pre('validate', function (next) {
   if (!this.userId && !this.vendorId) {
     return next(new Error('Either userId or vendorId must be provided.'));

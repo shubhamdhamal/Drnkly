@@ -33,6 +33,7 @@ const IssueReport: React.FC = () => {
 
     formData.append('category', category.trim());
     formData.append('description', description);
+  
     if (file) formData.append('file', file);
     formData.append('orderOrTransactionId', transactionId);
     formData.append('priority', priority.trim());

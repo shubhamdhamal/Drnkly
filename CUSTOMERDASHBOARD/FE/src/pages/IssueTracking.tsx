@@ -14,8 +14,8 @@ interface Issue {
   description: string;
   createdAt: string;
   priority: 'Low' | 'Medium' | 'High';
-  status?: 'Pending' | 'In Progress' | 'Resolved' | 'Closed'; // Optional for now
-  updates?: Update[]; // Optional for now
+  status: 'pending' | 'resolved' | 'escalated';
+  updates?: Update[];
 }
 
 const IssueTracking = () => {
@@ -50,7 +50,6 @@ const IssueTracking = () => {
 
   const handleUpdate = (id: string) => {
     setSelectedIssueId(id);
-    // You can optionally navigate to a detailed page
   };
 
   const formatDate = (iso: string) =>
@@ -79,13 +78,32 @@ const IssueTracking = () => {
               >
                 <div>
                   <p className="text-gray-600 font-medium">
-                    Ticket ID <span className="font-bold text-black">{issue._id.slice(-6)}</span>
+                    Ticket ID{' '}
+                    <span className="font-bold text-black">{issue._id.slice(-6)}</span>
                   </p>
                   <p className="text-black">{issue.category}</p>
                   <p className="text-gray-500">{formatDate(issue.createdAt)}</p>
                 </div>
 
                 <div className="flex flex-col sm:items-end gap-2">
+                  {/* Status */}
+                  {issue.status === 'pending' && (
+                    <span className="px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded-full">
+                      Pending
+                    </span>
+                  )}
+                  {issue.status === 'resolved' && (
+                    <span className="px-3 py-1 bg-green-500 text-white text-xs rounded-full">
+                      Resolved
+                    </span>
+                  )}
+                  {issue.status === 'escalated' && (
+                    <span className="px-3 py-1 bg-orange-500 text-white text-xs rounded-full">
+                      Escalated
+                    </span>
+                  )}
+
+                  {/* Priority */}
                   {issue.priority === 'Low' && (
                     <span className="px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded-full">
                       Low Priority
