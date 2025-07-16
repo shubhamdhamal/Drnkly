@@ -46,3 +46,14 @@ exports.reportIssue = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+
+exports.getUserIssues = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const issues = await Issue.find({ userId }).sort({ createdAt: -1 });
+    res.json(issues);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch issues' });
+  }
+};

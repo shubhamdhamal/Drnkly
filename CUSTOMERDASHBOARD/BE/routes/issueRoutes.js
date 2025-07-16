@@ -24,5 +24,7 @@ const upload = multer({ storage });
 
 // Route
 router.post('/report', upload.single('file'), issueController.reportIssue);
+router.get('/user/:userId', issueController.getUserIssues);
+
 
 module.exports = router;
