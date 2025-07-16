@@ -28,42 +28,7 @@ const DeliveryPartners: React.FC = () => {
     fetchDeliveryPartners();
   }, []);
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
 
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-      alert('You must be logged in');
-      return;
-    }
-
-    try {
-      const response = await axios.post(
-        'https://vendor.peghouse.in/api/delivery-partners/add',
-        {
-          name: partnerName,
-          email: partnerEmail,
-          phone: partnerPhone,
-          password: partnerPassword,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      // Add the newly created delivery partner to the state
-      setDeliveryPartners((prevPartners) => [...prevPartners, response.data.deliveryPartner]);
-
-      // Close the modal and reset the form
-      setShowModal(false);
-      setPartnerName('');
-      setPartnerEmail('');
-      setPartnerPhone('');
-      setPartnerPassword('');
-    } catch (error) {
-      console.error('Error adding delivery partner:', error);
-    }
-  };
 
   const handleViewDetails = (partner: any) => {
     alert(`Viewing details of: ${partner.name}`);
@@ -75,71 +40,8 @@ const DeliveryPartners: React.FC = () => {
         {/* Header with Add Delivery Partner button */}
         <div className="header-container">
           <h2 className="form-title">Delivery Partners</h2>
-          <Button className="add-partner-button" onClick={() => setShowModal(true)}>
-            Add Delivery Partner
-          </Button>
+          
         </div>
-
-        {/* Register New Delivery Partner Form Modal */}
-        {showModal && (
-          <div className="modal-overlay">
-            <div className="modal-box">
-              <h3 className="form-subtitle">Register New Delivery Partner</h3>
-              <form onSubmit={handleRegister} className="registration-form">
-                <div className="form-group">
-                  <label htmlFor="partnerName">Name</label>
-                  <input
-                    type="text"
-                    id="partnerName"
-                    value={partnerName}
-                    onChange={(e) => setPartnerName(e.target.value)}
-                    required
-                    className="form-input"
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="partnerEmail">Email</label>
-                  <input
-                    type="email"
-                    id="partnerEmail"
-                    value={partnerEmail}
-                    onChange={(e) => setPartnerEmail(e.target.value)}
-                    required
-                    className="form-input"
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="partnerPhone">Phone</label>
-                  <input
-                    type="text"
-                    id="partnerPhone"
-                    value={partnerPhone}
-                    onChange={(e) => setPartnerPhone(e.target.value)}
-                    required
-                    className="form-input"
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="partnerPassword">Password</label>
-                  <input
-                    type="password"
-                    id="partnerPassword"
-                    value={partnerPassword}
-                    onChange={(e) => setPartnerPassword(e.target.value)}
-                    required
-                    className="form-input"
-                  />
-                </div>
-                <Button type="submit" className="submit-button">
-                  Register Delivery Partner
-                </Button>
-              </form>
-              <Button className="close-button" onClick={() => setShowModal(false)}>
-                Close
-              </Button>
-            </div>
-          </div>
-        )}
 
         {/* Display List of Registered Delivery Partners */}
         <div className="partner-list-container">
