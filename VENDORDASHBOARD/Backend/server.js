@@ -12,6 +12,7 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const deliveryPartnerRoutes = require('./routes/deliveryPartnerRoutes');
 const issueRoutes = require('./routes/issueRoutes');
 const orderRoutes = require('./controllers/orderController');
+const payoutRoutes = require('./routes/payoutRoutes');
 
 const app = express();
 
@@ -54,6 +55,8 @@ app.use('/api/vendor-stats', require('./routes/vendorStatsRoutes')); // ✅ NEW
 
 app.use('/api/issues', issueRoutes);
 app.use('/api/qr', require('./routes/qrRoutes'));
+app.use('/api/payouts', payoutRoutes); // 👈 Add this line for payouts
+
 
 // ✅ 6. Start the server
 const PORT = process.env.PORT || 5001;

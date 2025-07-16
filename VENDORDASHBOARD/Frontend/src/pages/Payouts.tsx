@@ -18,6 +18,7 @@ interface PayoutData {
 const Payouts: React.FC = () => {
   const [qrPreview, setQrPreview] = useState('');
   const [uploadStatus, setUploadStatus] = useState('');
+  
   const [payouts, setPayouts] = useState<PayoutData[]>([]);
   const [payoutStats, setPayoutStats] = useState({
     totalEarnings: 0,
@@ -45,6 +46,26 @@ const Payouts: React.FC = () => {
 
     fetchQRCode();
     loadPayoutsData();
+  }, []);
+
+  
+  useEffect(() => {
+const fetchPayouts = async () => {
+  try {
+    const res = await axios.get('https://vendor.peghouse.in/api/payouts/payouts', {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('authToken')}`, // ✅ ADD THIS
+      },
+      withCredentials: true,
+    });
+    setPayouts(res.data.payouts);
+  } catch (err) {
+    console.error('Error fetching payouts:', err);
+  }
+};
+
+
+    fetchPayouts();
   }, []);
 
   // Load payouts data from localStorage and combine with existing data
