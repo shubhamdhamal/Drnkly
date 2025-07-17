@@ -32,16 +32,22 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 function App() {
-  // Session timeout logic (30 minutes)
+  // Session timeout logic (1 hour)
+  const SESSION_TIMEOUT = 60 * 60 * 1000; // 1 hour in ms
+  const [sessionExpired, setSessionExpired] = React.useState(false);
+
   React.useEffect(() => {
     let timeoutId: NodeJS.Timeout;
-    const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in ms
+
+    const handleSessionExpiry = () => {
+      localStorage.removeItem('authToken');
+      setSessionExpired(true);
+    };
 
     const resetTimer = () => {
       if (timeoutId) clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
-        localStorage.removeItem('authToken');
-        window.location.href = '/login';
+        handleSessionExpiry();
       }, SESSION_TIMEOUT);
     };
 
@@ -56,78 +62,116 @@ function App() {
     };
   }, []);
 
+  // Modal click handler
+  const handleModalClick = () => {
+    setSessionExpired(false);
+    window.location.href = '/login';
+  };
+
   return (
-    <Router>
-      <Routes>
-        <Route path="/welcome" element={
-          <ProtectedRoute>
-            <Welcome />
-          </ProtectedRoute>
-        } />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Registration />} />
-        <Route path="/" element={<Navigate to="/login" replace />} />
+    <>
+      {sessionExpired && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999
+        }}>
+          <div
+            style={{
+              background: 'white',
+              padding: '2rem 3rem',
+              borderRadius: '8px',
+              boxShadow: '0 2px 16px rgba(0,0,0,0.2)',
+              textAlign: 'center',
+              cursor: 'pointer',
+              fontSize: '1.2rem',
+              fontWeight: 500
+            }}
+            onClick={handleModalClick}
+          >
+            Session expired. Click here to login again.
+          </div>
+        </div>
+      )}
+      <Router>
+        <Routes>
+          <Route path="/welcome" element={
+            <ProtectedRoute>
+              <Welcome />
+            </ProtectedRoute>
+          } />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Registration />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
 
-        {/* Protected Routes */}
-        <Route path="/dashboard" element={
-          <ProtectedRoute>
-            <Layout><Dashboard /></Layout>
-          </ProtectedRoute>
-        } />
-        <Route path="/products" element={
-          <ProtectedRoute>
-            <Layout><Products /></Layout>
-          </ProtectedRoute>
-        } />
-        <Route path="/availability" element={
-          <ProtectedRoute>
-            <Layout><Availability /></Layout>
-          </ProtectedRoute>
-        } />
-        <Route path="/orders" element={
-          <ProtectedRoute>
-            <Layout><Orders /></Layout>
-          </ProtectedRoute>
-        } />
-        <Route path="/pickup" element={
-          <ProtectedRoute>
-            <Layout><Pickup /></Layout>
-          </ProtectedRoute>
-        } />
-        <Route path="/payouts" element={
-          <ProtectedRoute>
-            <Layout><Payouts /></Layout>
-          </ProtectedRoute>
-        } />
-        <Route path="/map" element={
-          <ProtectedRoute>
-            <MapView />
-          </ProtectedRoute>
-        } />
-        <Route path="/delivery-partners" element={
-          <ProtectedRoute>
-            <Layout><DeliveryPartners /></Layout>
-          </ProtectedRoute>
-        } />
-        <Route path="/profile" element={
-          <ProtectedRoute>
-            <Layout><Profile /></Layout>
-          </ProtectedRoute>
-        } />
+          {/* Protected Routes */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Layout><Dashboard /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/products" element={
+            <ProtectedRoute>
+              <Layout><Products /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/availability" element={
+            <ProtectedRoute>
+              <Layout><Availability /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/orders" element={
+            <ProtectedRoute>
+              <Layout><Orders /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/pickup" element={
+            <ProtectedRoute>
+              <Layout><Pickup /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/payouts" element={
+            <ProtectedRoute>
+              <Layout><Payouts /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/map" element={
+            <ProtectedRoute>
+              <MapView />
+            </ProtectedRoute>
+          } />
+          <Route path="/delivery-partners" element={
+            <ProtectedRoute>
+              <Layout><DeliveryPartners /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <Layout><Profile /></Layout>
+            </ProtectedRoute>
+          } />
 
-        {/* ✅ New Pages */}
-        <Route path="/issue-report" element={
-          <ProtectedRoute>
-            <Layout><IssueReport /></Layout>
-          </ProtectedRoute>
-        } />
-        <Route path="/issue-tracking" element={
-          <ProtectedRoute>
-            <Layout><IssueTracking /></Layout>
-          </ProtectedRoute>
-        } />
-      </Routes>
-    </Router>
+          {/* ✅ New Pages */}
+          <Route path="/issue-report" element={
+            <ProtectedRoute>
+              <Layout><IssueReport /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/issue-tracking" element={
+            <ProtectedRoute>
+              <Layout><IssueTracking /></Layout>
+            </ProtectedRoute>
+          } />
+        </Routes>
+      </Router>
+    </>
   );
 }
 
