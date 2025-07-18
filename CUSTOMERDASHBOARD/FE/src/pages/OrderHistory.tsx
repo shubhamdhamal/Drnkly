@@ -19,6 +19,8 @@ interface Order {
   totalAmount: number;
   paymentStatus: string;
   createdAt: string;
+  couponCode?: string; // Added couponCode to the interface
+  orderNumber?: string;
 }
 
 const OrderHistory: React.FC = () => {
@@ -59,7 +61,8 @@ const OrderHistory: React.FC = () => {
     const fetchOrders = async () => {
       try {
         const res = await axios.get(`https://peghouse.in/api/orders/user/${userId}`);
-        const sortedOrders = res.data.orders.sort((a: Order, b: Order) => 
+        const data: any = res.data;
+        const sortedOrders = data.orders.sort((a: Order, b: Order) => 
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
         setOrders(sortedOrders);
@@ -94,6 +97,29 @@ const OrderHistory: React.FC = () => {
     } else {
       return 'bg-gray-300'; // Gray for default
     }
+  };
+
+  // Returns color for each step based on step index and order item status
+  const getStepColor = (stepIndex: number, item: OrderItem) => {
+    // Step 1: Vendor Status
+    if (stepIndex === 1) {
+      if (item.status === 'accepted') return 'bg-green-500';
+      if (item.status === 'pending') return 'bg-orange-500';
+      return 'bg-gray-300';
+    }
+    // Step 2: Handover
+    if (stepIndex === 2) {
+      if (item.handoverStatus === 'handedOver') return 'bg-green-500';
+      if (item.status === 'accepted' && item.handoverStatus === 'pending') return 'bg-orange-500';
+      return 'bg-gray-300';
+    }
+    // Step 3: Delivery
+    if (stepIndex === 3) {
+      if (item.deliveryStatus === 'delivered') return 'bg-green-500';
+      if (item.handoverStatus === 'handedOver' && item.deliveryStatus === 'pending') return 'bg-orange-500';
+      return 'bg-gray-300';
+    }
+    return 'bg-gray-300';
   };
 
   return (
@@ -142,6 +168,9 @@ const OrderHistory: React.FC = () => {
                 <p className={`text-sm font-medium ${order.paymentStatus === 'paid' ? 'text-green-600' : 'text-red-600'}`}>
                   {order.paymentStatus === 'paid' ? 'Paid' : 'CASH ON DELIVERY'}
                 </p>
+                {order.couponCode && (
+                  <p className="text-green-600 text-sm">Coupon: {order.couponCode}</p>
+                )}
                 <p className="text-sm text-gray-500">{new Date(order.createdAt).toLocaleString()}</p>
                 <p className="font-bold text-lg mt-1">
   ₹{typeof order.totalAmount === 'number' ? order.totalAmount.toFixed(2) : '0.00'}
@@ -165,7 +194,7 @@ const OrderHistory: React.FC = () => {
                 <div className="flex flex-col items-start space-y-2 pl-4">
                   {/* Step 1 */}
                   <div className="flex items-center space-x-4">
-                    <div className={`w-10 h-10 flex items-center justify-center rounded-full text-white font-semibold ${getStatusColor(order.items[0].status, order.items[0].handoverStatus, order.items[0].deliveryStatus)}`}>
+                    <div className={`w-10 h-10 flex items-center justify-center rounded-full text-white font-semibold ${getStepColor(1, order.items[0])}`}>
                       1
                     </div>
                     <div className="flex flex-col ml-4">
@@ -177,7 +206,7 @@ const OrderHistory: React.FC = () => {
 
                   {/* Step 2 */}
                   <div className="flex items-center space-x-4">
-                    <div className={`w-10 h-10 flex items-center justify-center rounded-full text-white font-semibold ${getStatusColor(order.items[0].handoverStatus, order.items[0].status, order.items[0].deliveryStatus)}`}>
+                    <div className={`w-10 h-10 flex items-center justify-center rounded-full text-white font-semibold ${getStepColor(2, order.items[0])}`}>
                       2
                     </div>
                     <div className="flex flex-col ml-4">
@@ -189,7 +218,7 @@ const OrderHistory: React.FC = () => {
 
                   {/* Step 3 */}
                   <div className="flex items-center space-x-4">
-                    <div className={`w-10 h-10 flex items-center justify-center rounded-full text-white font-semibold ${getStatusColor(order.items[0].deliveryStatus, order.items[0].status, order.items[0].handoverStatus)}`}>
+                    <div className={`w-10 h-10 flex items-center justify-center rounded-full text-white font-semibold ${getStepColor(3, order.items[0])}`}>
                       3
                     </div>
                     <div className="flex flex-col ml-4">
