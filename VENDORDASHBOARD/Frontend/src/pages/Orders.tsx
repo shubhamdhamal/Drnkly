@@ -157,6 +157,20 @@ const Orders: React.FC = () => {
   const [soundEnabled, setSoundEnabled] = useState(false);
   const soundEnabledRef = useRef(false);
   const prevLiveOrderIdsRef = useRef<string[]>([]);
+  const [loading, setLoading] = useState(true); // <-- Add loading state
+
+  // Load cached orders on mount for instant display
+  useEffect(() => {
+    const cachedOrders = localStorage.getItem('cachedOrders');
+    if (cachedOrders) {
+      try {
+        setOrders(JSON.parse(cachedOrders));
+        setLoading(false);
+      } catch (e) {
+        // ignore
+      }
+    }
+  }, []);
 
   // Initialize audio context
   const initializeAudio = async () => {
@@ -344,9 +358,12 @@ const Orders: React.FC = () => {
       }
 
       setOrders(fetchedOrders);
+      localStorage.setItem('cachedOrders', JSON.stringify(fetchedOrders)); // <-- Cache orders
+      setLoading(false); // <-- Set loading false after fetch
     } catch (err) {
       console.error('Error fetching orders:', err);
       toast.error('Failed to load orders');
+      setLoading(false); // <-- Set loading false on error
     }
   };
 
@@ -357,13 +374,14 @@ const Orders: React.FC = () => {
     wsRef.current.onmessage = (event) => {
       const newOrder = JSON.parse(event.data);
       handleNewOrder(newOrder);
+      fetchOrders(); // Immediately refresh orders from API
     };
 
     fetchOrders();
     requestNotificationPermission();
     
-    // Set up auto-refresh every 30 seconds
-    pollingIntervalRef.current = setInterval(fetchOrders, 30000);
+    // Set up auto-refresh every 5 seconds (was 30 seconds)
+    pollingIntervalRef.current = setInterval(fetchOrders, 5000);
     
     return () => {
       if (wsRef.current) {
@@ -1058,6 +1076,7 @@ const Orders: React.FC = () => {
     );
   };
 
+  if (loading) return <div className="flex justify-center items-center min-h-screen"><div className="text-lg text-blue-600 animate-pulse">Loading orders...</div></div>;
   if (error) return <p className="text-center text-red-600 text-lg">{error}</p>;
 
   return (
