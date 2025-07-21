@@ -138,6 +138,20 @@ interface ApiResponse {
   }>;
 }
 
+// 1. Add Product type and products state at the top (after imports)
+interface Product {
+  _id: string;
+  name: string;
+  brand: string;
+  category: string;
+  alcoholContent: number;
+  price: number;
+  stock: number;
+  description: string;
+  volume: number;
+  image: string;
+}
+
 const Orders: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -158,6 +172,7 @@ const Orders: React.FC = () => {
   const soundEnabledRef = useRef(false);
   const prevLiveOrderIdsRef = useRef<string[]>([]);
   const [loading, setLoading] = useState(true); // <-- Add loading state
+  const [products, setProducts] = useState<Product[]>([]);
 
   // Load cached orders on mount for instant display
   useEffect(() => {
@@ -170,6 +185,23 @@ const Orders: React.FC = () => {
         // ignore
       }
     }
+  }, []);
+
+  // 2. Fetch products on mount (inside Orders component, after useEffect for cachedOrders)
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        if (!token) return;
+        const response = await axios.get('https://vendor.peghouse.in/api/products/vendor', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setProducts(response.data.products || []);
+      } catch (error) {
+        console.error('Failed to fetch products', error);
+      }
+    };
+    fetchProducts();
   }, []);
 
   // Initialize audio context
@@ -967,69 +999,81 @@ const Orders: React.FC = () => {
               Order Items
             </h4>
             <div className="space-y-3">
-              {order.items.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex justify-between items-center p-4 rounded-lg transition-all duration-200"
-                  style={{
-                    background: item.status === 'handedOver' ? 'linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)' : 
-                               item.status === 'accepted' ? 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)' :
-                               item.status === 'pending' ? 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)' : 
-                               'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)',
-                    border: `1px solid ${
-                      item.status === 'handedOver' ? '#4caf50' :
-                      item.status === 'accepted' ? '#2196f3' :
-                      item.status === 'pending' ? '#ff9800' : '#f44336'
-                    }`
-                  }}
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3">
-                      <span className="font-semibold text-gray-800">
-                        {item.quantity}x {item.name}
-                      </span>
-                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                        item.status === 'handedOver' ? 'bg-green-100 text-green-800' :
-                        item.status === 'accepted' ? 'bg-blue-100 text-blue-800' :
-                        item.status === 'pending' ? 'bg-orange-100 text-orange-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {item.status.toUpperCase()}
-                      </span>
+              {order.items.map((item, index) => {
+                // Find product by productId
+                const product = products.find(p => p._id === item.productId);
+                return (
+                  <div
+                    key={index}
+                    className="flex justify-between items-center p-4 rounded-lg transition-all duration-200"
+                    style={{
+                      background: item.status === 'handedOver' ? 'linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)' : 
+                                 item.status === 'accepted' ? 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)' :
+                                 item.status === 'pending' ? 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)' : 
+                                 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)',
+                      border: `1px solid ${
+                        item.status === 'handedOver' ? '#4caf50' :
+                        item.status === 'accepted' ? '#2196f3' :
+                        item.status === 'pending' ? '#ff9800' : '#f44336'
+                      }`
+                    }}
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3">
+                        <span className="font-semibold text-gray-800">
+                          {item.quantity}x {item.name}
+                        </span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                          item.status === 'handedOver' ? 'bg-green-100 text-green-800' :
+                          item.status === 'accepted' ? 'bg-blue-100 text-blue-800' :
+                          item.status === 'pending' ? 'bg-orange-100 text-orange-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
+                          {item.status.toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-4 mt-1">
+                        <p className="text-lg font-bold text-gray-800">₹{item.price}</p>
+                        {/* Show ml/volume if product found */}
+                        {product && (
+                          <span className="text-sm text-blue-700 bg-blue-50 px-2 py-1 rounded">
+                            {product.volume} ml
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-lg font-bold text-gray-800 mt-1">₹{item.price}</p>
+                    
+                    {!isPastOrder && item.status === 'pending' && (
+                      <div className="flex gap-2">
+                        <Button
+                          variant="success"
+                          icon={<Check className="w-4 h-4" />}
+                          onClick={() => updateOrderStatus(order.id, item.productId, 'accepted')}
+                        >
+                          Accept
+                        </Button>
+                        <Button
+                          variant="danger"
+                          icon={<X className="w-4 h-4" />}
+                          onClick={() => updateOrderStatus(order.id, item.productId, 'rejected')}
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    )}
+                    
+                    {!isPastOrder && item.status === 'accepted' && (
+                      <Button
+                        variant="primary"
+                        icon={<Truck className="w-4 h-4" />}
+                        onClick={() => updateOrderStatus(order.id, item.productId, 'handedOver')}
+                      >
+                        Hand Over
+                      </Button>
+                    )}
                   </div>
-                  
-                  {!isPastOrder && item.status === 'pending' && (
-                    <div className="flex gap-2">
-                      <Button
-                        variant="success"
-                        icon={<Check className="w-4 h-4" />}
-                        onClick={() => updateOrderStatus(order.id, item.productId, 'accepted')}
-                      >
-                        Accept
-                      </Button>
-                      <Button
-                        variant="danger"
-                        icon={<X className="w-4 h-4" />}
-                        onClick={() => updateOrderStatus(order.id, item.productId, 'rejected')}
-                      >
-                        Reject
-                      </Button>
-                    </div>
-                  )}
-                  
-                  {!isPastOrder && item.status === 'accepted' && (
-                    <Button
-                      variant="primary"
-                      icon={<Truck className="w-4 h-4" />}
-                      onClick={() => updateOrderStatus(order.id, item.productId, 'handedOver')}
-                    >
-                      Hand Over
-                    </Button>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
