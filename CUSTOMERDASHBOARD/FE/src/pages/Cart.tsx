@@ -268,16 +268,36 @@ const Cart = () => {
     return sum + price * quantity;
   }, 0);
 
-  // Drinks Fee (20%)
-  const drinksFee = items.reduce((sum, item) => {
-    const category = item?.category;
-    const price = Number(item.price) || 0;
-    const quantity = Number(item.quantity) || 1;
-    if (category === 'Drinks') {
-      return sum + price * quantity * 0.20;
-    }
-    return sum;
-  }, 0);
+function getServiceFeeRate() {
+  const now = new Date();
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+  const istOffset = 5.5 * 60 * 60 * 1000;
+  const ist = new Date(utc + istOffset);
+  const hours = ist.getHours();
+
+  // Between 11:00 PM and 2:00 AM
+  if (hours >= 23 || hours < 2) {
+    return 1.0; // 100%
+  }
+
+  return 0.2; // 20%
+}
+
+
+
+const serviceFeeRate = getServiceFeeRate();
+
+// Drinks Fee based on time
+const drinksFee = items.reduce((sum, item) => {
+  const category = item?.category;
+  const price = Number(item.price) || 0;
+  const quantity = Number(item.quantity) || 1;
+  if (category === 'Drinks') {
+    return sum + price * quantity * serviceFeeRate;
+  }
+  return sum;
+}, 0);
+
 
   let shipping = total > 500 ? 0 : 100;
 
@@ -384,9 +404,10 @@ const Cart = () => {
                         </p>
 
                         {item.category === 'Drinks' && (
-                          <p className="text-sm text-red-600 mt-1">
-                            + ₹{(Number(item.price) * Number(item.quantity) * 0.20).toFixed(2)} Service Fee (20%)
-                          </p>
+                         <p className="text-sm text-red-600 mt-1">
+  + ₹{(Number(item.price) * Number(item.quantity) * serviceFeeRate).toFixed(2)} Service Fee ({serviceFeeRate * 100}%)
+</p>
+
                         )}
                       </div>
                     </div>
@@ -439,10 +460,14 @@ const Cart = () => {
                 <span className="text-gray-900 font-medium">₹{total.toFixed(2)}</span>
               </div>
 
-              <div className="flex justify-between mb-4">
-                <span className="text-gray-600">Service Fee (20%)</span>
-                <span className="text-gray-900 font-medium">₹{drinksFee.toFixed(2)}</span>
-              </div>
+             <div className="flex justify-between mb-4">
+  <span className="text-gray-600">
+    Service Fee ({(serviceFeeRate * 100).toFixed(0)}%)
+  </span>
+  <span className="text-gray-900 font-medium">₹{drinksFee.toFixed(2)}</span>
+</div>
+
+
 
               <div className="flex justify-between mb-6">
                 <span className="text-gray-600">Shipping</span>
