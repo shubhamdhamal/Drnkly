@@ -23,6 +23,13 @@ const Cart = () => {
   // Shop Closed Modal
   const [showShopClosed, setShowShopClosed] = useState(false);
 
+  // Coupon state
+  const [showCouponModal, setShowCouponModal] = useState(false);
+  const [couponCode, setCouponCode] = useState('');
+  const [couponError, setCouponError] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
+  const [discountAmount, setDiscountAmount] = useState(0);
+
   // Initialize Facebook Pixel
   useEffect(() => {
     // Add Facebook Pixel base code
@@ -88,7 +95,6 @@ const Cart = () => {
       if (!userId) {
         toast.error('User not logged in');
         clearContextCart(); // Clear context cart if user is not logged in
-        // setItems([]); // Remove local state update
         return;
       }
 
@@ -98,7 +104,6 @@ const Cart = () => {
           ...item,
           category: item.productId?.category || null
         }));
-        // setItems(populatedItems); // Remove local state update
 
         // Update the cart context with the fetched items
         const contextItems = res.data.items.map((item: any) => ({
@@ -122,14 +127,12 @@ const Cart = () => {
       } catch (error) {
         toast.error('Failed to load cart');
         console.error(error);
-        // Clear both local and context cart on error
-        // setItems([]); // Remove local state update
         clearContextCart();
       }
     };
 
     fetchCart();
-  }, [userId, setContextItems, clearContextCart]);
+  }, [userId, setContextItems, clearContextCart, location.search]); // Added location.search to refresh when URL changes
 
   // Update quantity in backend
   const updateQuantity = async (productId: string, quantity: number) => {
@@ -268,42 +271,23 @@ const Cart = () => {
     return sum + price * quantity;
   }, 0);
 
-function getServiceFeeRate() {
-  const now = new Date();
-  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-  const istOffset = 5.5 * 60 * 60 * 1000;
-  const ist = new Date(utc + istOffset);
-  const hours = ist.getHours();
-
-  // Between 11:00 PM and 2:00 AM
-  if (hours >= 23 || hours < 2) {
-    return 1.0; // 100%
-  }
-
-  return 0.2; // 20%
-}
-
-
-
-const serviceFeeRate = getServiceFeeRate();
-
-// Drinks Fee based on time
-const drinksFee = items.reduce((sum, item) => {
-  const category = item?.category;
-  const price = Number(item.price) || 0;
-  const quantity = Number(item.quantity) || 1;
-  if (category === 'Drinks') {
-    return sum + price * quantity * serviceFeeRate;
-  }
-  return sum;
-}, 0);
-
+  // Drinks Fee (20%)
+  const drinksFee = items.reduce((sum, item) => {
+    const category = item?.category;
+    const price = Number(item.price) || 0;
+    const quantity = Number(item.quantity) || 1;
+    if (category === 'Drinks') {
+      return sum + price * quantity * 0.20;
+    }
+    return sum;
+  }, 0);
 
   let shipping = total > 500 ? 0 : 100;
 
   const platformFee = 12;
   const gst = (total + drinksFee) * 0.18;
-  const finalTotal = total + drinksFee + shipping + platformFee + gst;
+  // Update finalTotal to include discount
+  const finalTotal = total + drinksFee + shipping + platformFee + gst - discountAmount;
 
   // Helper to check if Indian time is between 2:00 AM and 10:00 AM
   function isShopClosed() {
@@ -317,6 +301,49 @@ const drinksFee = items.reduce((sum, item) => {
     // 2:00 <= hours < 10:00
     return hours >= 2 && hours < 10;
   }
+
+ // Coupon logic (mock)
+const handleApplyCoupon = async () => {
+  setCouponError('');
+  const code = couponCode.trim().toUpperCase();
+
+  try {
+    const res = await axios.get(`http://localhost:5000/api/coupons/${code}`);
+
+    if (res.data && res.data.code === code) {
+      // 10% off on all products (keep same logic)
+      const discount = total * 0.10;
+      setDiscountAmount(discount);
+      setAppliedCoupon(code);
+      setShowCouponModal(false);
+      toast.success('Coupon applied! 10% off on all products.');
+      // Store coupon info in localStorage
+      localStorage.setItem('appliedCoupon', code);
+      localStorage.setItem('discountAmount', discount.toString());
+    } else {
+      setCouponError('Invalid coupon code');
+      setAppliedCoupon(null);
+      setDiscountAmount(0);
+      localStorage.removeItem('appliedCoupon');
+      localStorage.removeItem('discountAmount');
+    }
+  } catch (error) {
+    setCouponError('Invalid coupon code');
+    setAppliedCoupon(null);
+    setDiscountAmount(0);
+    localStorage.removeItem('appliedCoupon');
+    localStorage.removeItem('discountAmount');
+    console.error('Coupon check failed:', error);
+  }
+};
+
+  // Add effect to load coupon info from localStorage on mount
+  useEffect(() => {
+    const coupon = localStorage.getItem('appliedCoupon');
+    const discount = parseFloat(localStorage.getItem('discountAmount') || '0');
+    if (coupon) setAppliedCoupon(coupon);
+    if (discount) setDiscountAmount(discount);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -336,7 +363,15 @@ const drinksFee = items.reduce((sum, item) => {
 
         <div className="flex items-center mb-6">
           <ShoppingCart className="h-8 w-8 text-gray-900 mr-3" />
-          <h1 className="text-2xl font-bold text-gray-900">Your Cart</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mr-4">Your Cart</h1>
+          {/* Small Apply Coupon Button in header */}
+          <button
+            onClick={() => setShowCouponModal(true)}
+            className="ml-2 px-3 py-1 text-sm border border-orange-500 text-orange-600 rounded hover:bg-orange-50 transition-colors disabled:opacity-60"
+            disabled={!!appliedCoupon}
+          >
+            {appliedCoupon ? `Coupon: ${appliedCoupon}` : 'Apply Coupon'}
+          </button>
         </div>
 
         {/* Delete confirmation modal */}
@@ -404,10 +439,9 @@ const drinksFee = items.reduce((sum, item) => {
                         </p>
 
                         {item.category === 'Drinks' && (
-                         <p className="text-sm text-red-600 mt-1">
-  + ₹{(Number(item.price) * Number(item.quantity) * serviceFeeRate).toFixed(2)} Service Fee ({serviceFeeRate * 100}%)
-</p>
-
+                          <p className="text-sm text-red-600 mt-1">
+                            + ₹{(Number(item.price) * Number(item.quantity) * 0.20).toFixed(2)} Service Fee (20%)
+                          </p>
                         )}
                       </div>
                     </div>
@@ -460,14 +494,10 @@ const drinksFee = items.reduce((sum, item) => {
                 <span className="text-gray-900 font-medium">₹{total.toFixed(2)}</span>
               </div>
 
-             <div className="flex justify-between mb-4">
-  <span className="text-gray-600">
-    Service Fee ({(serviceFeeRate * 100).toFixed(0)}%)
-  </span>
-  <span className="text-gray-900 font-medium">₹{drinksFee.toFixed(2)}</span>
-</div>
-
-
+              <div className="flex justify-between mb-4">
+                <span className="text-gray-600">Service Fee (20%)</span>
+                <span className="text-gray-900 font-medium">₹{drinksFee.toFixed(2)}</span>
+              </div>
 
               <div className="flex justify-between mb-6">
                 <span className="text-gray-600">Shipping</span>
@@ -484,10 +514,20 @@ const drinksFee = items.reduce((sum, item) => {
                 <span className="text-gray-900 font-medium">₹{gst.toFixed(2)}</span>
               </div>
 
+              {/* Coupon Discount */}
+              {discountAmount > 0 && (
+                <div className="flex justify-between mb-6">
+                  <span className="text-green-600">Coupon Discount ({appliedCoupon})</span>
+                  <span className="text-green-600">-₹{discountAmount.toFixed(2)}</span>
+                </div>
+              )}
+
               <div className="flex justify-between mb-6 text-lg font-semibold">
                 <span>Total</span>
                 <span>₹{finalTotal.toFixed(2)}</span>
               </div>
+
+              
 
               <button
                 onClick={() => {
@@ -537,6 +577,39 @@ const drinksFee = items.reduce((sum, item) => {
               >
                 OK
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Coupon Modal */}
+        {showCouponModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
+              <h3 className="text-lg font-bold mb-4">Apply Coupon</h3>
+              <input
+                type="text"
+                value={couponCode}
+                onChange={e => setCouponCode(e.target.value)}
+                placeholder="Enter coupon code"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 mb-3"
+                disabled={!!appliedCoupon}
+              />
+              {couponError && <p className="text-red-600 mb-2">{couponError}</p>}
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowCouponModal(false)}
+                  className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleApplyCoupon}
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                  disabled={!!appliedCoupon}
+                >
+                  Apply
+                </button>
+              </div>
             </div>
           </div>
         )}
