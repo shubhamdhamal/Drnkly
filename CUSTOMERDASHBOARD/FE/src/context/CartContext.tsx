@@ -51,13 +51,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
-    setItems(currentItems =>
-      currentItems.map(item =>
+    setItems(currentItems => {
+      // If quantity is 0, remove the item
+      if (quantity <= 0) {
+        return currentItems.filter(item => item.productId !== productId);
+      }
+      
+      // Check if item exists
+      const itemExists = currentItems.some(item => item.productId === productId);
+      
+      // If item doesn't exist and quantity > 0, we can't update it (this shouldn't happen)
+      if (!itemExists && quantity > 0) {
+        console.warn(`Tried to update quantity for non-existent product: ${productId}`);
+        return currentItems;
+      }
+      
+      // Update the quantity
+      return currentItems.map(item =>
         item.productId === productId
-          ? { ...item, quantity: Math.max(0, quantity) }
+          ? { ...item, quantity: quantity }
           : item
-      ).filter(item => item.quantity > 0)
-    );
+      );
+    });
   };
 
   const clearCart = () => {
