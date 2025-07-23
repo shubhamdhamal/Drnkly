@@ -132,11 +132,6 @@ function App() {
               <Layout><Orders /></Layout>
             </ProtectedRoute>
           } />
-          <Route path="/past-orders" element={
-            <ProtectedRoute>
-              <Layout><PastOrders /></Layout>
-            </ProtectedRoute>
-          } />
           <Route path="/pickup" element={
             <ProtectedRoute>
               <Layout><Pickup /></Layout>
