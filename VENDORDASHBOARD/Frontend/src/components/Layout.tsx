@@ -37,6 +37,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { icon: AlertCircle, label: 'Report Issue', path: '/issue-report' },
     { icon: AlertCircle, label: 'Track Issue', path: '/issue-tracking' }
   ];
+  
+  // Past Orders page is accessible only after handover, not from navigation
 
   const handleLogout = () => {
     // Clear all auth data
