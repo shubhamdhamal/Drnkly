@@ -308,7 +308,7 @@ const handleApplyCoupon = async () => {
   const code = couponCode.trim().toUpperCase();
 
   try {
-    const res = await axios.get(`http://localhost:5000/api/coupons/${code}`);
+    const res = await axios.get(`https://peghouse.in/api/coupons/${code}`);
 
     if (res.data && res.data.code === code) {
       // 10% off on all products (keep same logic)
