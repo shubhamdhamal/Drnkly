@@ -8,7 +8,6 @@ import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
 import Availability from './pages/Availability';
 import Orders from './pages/Orders';
-import PastOrders from './pages/PastOrders';
 import Pickup from './pages/Pickup';
 import Payouts from './pages/Payouts';
 import MapView from './pages/MapView';
