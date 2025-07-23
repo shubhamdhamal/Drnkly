@@ -1,5 +1,4 @@
 import React from 'react';
-
 import {
   Menu,
   Store,
@@ -29,8 +28,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { icon: Store, label: 'Dashboard', path: '/dashboard' },
     { icon: Package, label: 'Products', path: '/products' },
     { icon: Clock, label: 'Availability', path: '/availability' },
-    { icon: ShoppingBag, label: 'Live Orders', path: '/orders' },
-    { icon: ShoppingBag, label: 'Past Orders', path: '/past-orders' },
+    { icon: ShoppingBag, label: 'Orders', path: '/orders' },
     { icon: Truck, label: 'Ready for Pickup', path: '/pickup' },
     { icon: Wallet, label: 'Payouts', path: '/payouts' },
     { icon: User, label: 'Delivery Partner', path: '/delivery-partners' },
