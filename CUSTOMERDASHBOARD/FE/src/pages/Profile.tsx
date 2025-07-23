@@ -566,25 +566,17 @@ const getLiveLocation = () => {
       const longitude = position.coords.longitude;
 
       try {
-        const userId = localStorage.getItem('userId');
-
-        const response = await axios.get(`https://peghouse.in/api/addresses/from-coordinates`, {
-          params: { latitude, longitude, userId }
-        });
-
-        const addressData = response.data;
-
+        // Store only the coordinates, don't auto-fill the address
         setNewAddress(prev => ({
           ...prev,
-          fullAddress: addressData.address || '',
           latitude,
           longitude
         }));
 
-        alert('Location detected successfully! Please review and save.');
+        alert('Location detected successfully! Please enter your address manually.');
       } catch (error) {
-        console.error('Failed to get address from coordinates:', error);
-        alert('Location detected but could not get address details. Please fill manually.');
+        console.error('Failed to get location:', error);
+        alert('Location detected. Please enter your address manually.');
       } finally {
         setIsLocating(false); // Stop loading
       }
@@ -1037,25 +1029,55 @@ const updateAddress = async () => {
       case 'addresses':
         return (
           <div className="p-6 bg-white">
-            <div className="flex items-center mb-6">
-              <button 
-                onClick={() => setActiveTab('profile')} 
-                className="mr-3 hover:bg-gray-50 p-2 rounded-full transition-colors"
-              >
-                <ChevronRight className="h-6 w-6 transform rotate-180" />
-              </button>
-              <h2 className="text-2xl font-semibold text-gray-800">My Addresses</h2>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center">
+                <button 
+                  onClick={() => setActiveTab('profile')} 
+                  className="mr-3 hover:bg-gray-50 p-2 rounded-full transition-colors"
+                >
+                  <ChevronRight className="h-6 w-6 transform rotate-180" />
+                </button>
+                <h2 className="text-2xl font-semibold text-gray-800">My Addresses</h2>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setShowAddAddress(true);
+                    // Add auto-scroll to the form after a short delay
+                    setTimeout(() => {
+                      const formElement = document.getElementById('addAddressForm');
+                      if (formElement) {
+                        formElement.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }, 100);
+                  }}
+                  className="bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center"
+                >
+                  <span className="mr-1">+</span> Add Address
+                </button>
+                <button
+                  type="button"
+                  className="bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center"
+                  title="Use current location"
+                  onClick={() => {
+                    setShowAddAddress(true);
+                    setTimeout(() => { 
+                      getLiveLocation();
+                      const formElement = document.getElementById('addAddressForm');
+                      if (formElement) {
+                        formElement.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }, 100);
+                  }}
+                >
+                  <Navigation className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {addresses.length === 0 && !showAddAddress ? (
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 text-center">
                 <p className="text-gray-500 mb-4">No addresses saved yet</p>
-                <button 
-                  onClick={() => setShowAddAddress(true)}
-                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-                >
-                  Add New Address
-                </button>
               </div>
             ) : (
               <>
@@ -1096,7 +1118,7 @@ const updateAddress = async () => {
                 ))}
 
                 {showAddAddress ? (
-                  <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200 mt-4">
+                  <div id="addAddressForm" className="bg-white p-6 rounded-lg shadow-md border border-gray-200 mt-4">
                     <h3 className="font-semibold text-lg mb-4 text-gray-800">Add New Address</h3>
                     <div className="space-y-4">
                       <div>
