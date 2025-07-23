@@ -141,7 +141,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   );
 };
 
-export default import React from 'react';
 import {
   Menu,
   Store,
