@@ -12,6 +12,7 @@ const productRoutes = require('./routes/productRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const addressesRoutes=require('./routes/addressRoutes');
+const couponRoutes = require('./routes/couponRoutes');
 
 dotenv.config();         // ✅ Load environment variables
 connectDB();             // ✅ Connect to MongoDB
@@ -42,6 +43,7 @@ app.use('/api/cart', cartRoutes);
 app.use('/api', orderRoutes);         // General route (like /api/orders)
 app.use('/api/issues', issueRoutes);
 app.use('/api/addresses', addressesRoutes);
+app.use('/api/coupons', couponRoutes);  // ✅ This enables GET /api/coupons/:code
 
 // ✅ Health check route
 app.get('/', (req, res) => {
