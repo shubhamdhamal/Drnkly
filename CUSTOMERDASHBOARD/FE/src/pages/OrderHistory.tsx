@@ -168,8 +168,13 @@ const OrderHistory: React.FC = () => {
                 <p className={`text-sm font-medium ${order.paymentStatus === 'paid' ? 'text-green-600' : 'text-red-600'}`}>
                   {order.paymentStatus === 'paid' ? 'Paid' : 'CASH ON DELIVERY'}
                 </p>
-                {order.couponCode && (
-                  <p className="text-green-600 text-sm">Coupon: {order.couponCode}</p>
+                {order.couponCode && order.discountAmount > 0 && (
+                  <div>
+                    <p className="text-green-600 text-sm font-medium">Coupon {order.couponCode}: Saved ₹{order.discountAmount.toFixed(2)}</p>
+                    <p className="text-gray-500 text-sm line-through">
+                      Original: ₹{(Number(order.totalAmount) + Number(order.discountAmount)).toFixed(2)}
+                    </p>
+                  </div>
                 )}
                 <p className="text-sm text-gray-500">{new Date(order.createdAt).toLocaleString()}</p>
                 <p className="font-bold text-lg mt-1">
