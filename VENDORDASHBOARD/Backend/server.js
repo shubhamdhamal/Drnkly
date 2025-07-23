@@ -12,8 +12,7 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const deliveryPartnerRoutes = require('./routes/deliveryPartnerRoutes');
 const issueRoutes = require('./routes/issueRoutes');
 const orderRoutes = require('./controllers/orderController');
-const payouts = require('./routes/payoutRoutes');
-const stats = require('./routes/vendorStatsRoutes');
+
 const app = express();
 
 // ✅ 1. Ensure 'uploads' folder exists for storing product images
@@ -53,8 +52,6 @@ app.use('/api/delivery-partners', deliveryPartnerRoutes);
 app.use('/api/vendor',orderRoutes);
 app.use('/api/issues', issueRoutes);
 app.use('/api/qr', require('./routes/qrRoutes'));
-app.use('/api/payouts', payouts);
-app.use('/api/vendor-stats', stats);
 
 // ✅ 6. Start the server
 const PORT = process.env.PORT || 5001;
