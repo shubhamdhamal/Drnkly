@@ -53,9 +53,17 @@ const orderSchema = new mongoose.Schema({
   paymentProof: {
     type: String // 🔥 Screenshot image URL stored here
   },
-    transactionId: {
+  transactionId: {
     type: String, // Store the transaction ID here
     default: null,
+  },
+  couponCode: {
+    type: String, // Store the applied coupon code
+    default: null,
+  },
+  discountAmount: {
+    type: Number, // Store the discount amount
+    default: 0,
   },
   createdAt: {
     type: Date,
