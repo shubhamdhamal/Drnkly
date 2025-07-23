@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
   import { Wine, Search, ShoppingCart, ChevronDown, ArrowLeft, ShoppingBag, X, ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
   import { useCart } from '../context/CartContext';
   import CartCounter from '../components/CartCounter';
+  import CartNotificationPopup from '../components/CartNotificationPopup';
   import axios from 'axios';
   import { toast } from 'react-toastify';
 
@@ -31,7 +32,6 @@ import React, { useState, useEffect, useRef } from 'react';
 
   // Define local CartItem interface to extend the imported one
   interface LocalCartItem {
-    id: number;
     productId: string;
     category: string;
     name: string;
@@ -40,171 +40,6 @@ import React, { useState, useEffect, useRef } from 'react';
     quantity: number;
     volume?: number;
   }
-
-  // Cart Popup Component
-  interface CartPopupProps {
-    isOpen: boolean;
-    onClose: () => void;
-    onViewCart: () => void;
-  }
-
-  const CartPopup: React.FC<CartPopupProps> = ({ isOpen, onClose, onViewCart }) => {
-    const [items, setItems] = React.useState<LocalCartItem[]>([]);
-    const [loading, setLoading] = React.useState(false);
-
-    React.useEffect(() => {
-      if (!isOpen) return;
-
-      const fetchCartItems = async () => {
-        const userId = localStorage.getItem('userId');
-        if (!userId) return;
-
-        setLoading(true);
-        try {
-          const res = await axios.get(`https://peghouse.in/api/cart/${userId}`);
-          const fetchedItems = res.data.items.map((item: any) => ({
-            category: item.productId.category,
-            name: item.productId.name,
-            image: item.productId.image,
-            price: Number(item.productId.price),
-            productId: item.productId._id,
-            quantity: Number(item.quantity),
-          }));
-          setItems(fetchedItems);
-        } catch (err) {
-          console.error('Failed to fetch cart items', err);
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      fetchCartItems();
-    }, [isOpen]);
-
-    if (!isOpen) return null;
-
-    // Calculate subtotal
-    const subtotal = items.reduce((total, item) => total + (item.price * item.quantity), 0);
-    const deliveryCharge = 40; // Fixed delivery charge
-    const total = subtotal + deliveryCharge;
-
-    // Calculate progress toward free service fee
-    const FREE_SERVICE_THRESHOLD = 500;
-    const progress = Math.min((subtotal / FREE_SERVICE_THRESHOLD) * 100, 100);
-    const amountLeft = Math.max(FREE_SERVICE_THRESHOLD - subtotal, 0);
-    const isFree = subtotal >= FREE_SERVICE_THRESHOLD;
-
-    // Get the 3 most recently added items
-    const recentItems = [...items].slice(-3).reverse();
-    const remainingCount = items.length - recentItems.length;
-
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-        <div className="bg-white rounded-lg w-full max-w-md mx-4 relative overflow-hidden shadow-2xl animate-fadeIn">
-          {/* Close button */}
-          <button
-            onClick={onClose}
-            className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
-            aria-label="Close cart popup"
-          >
-            <X size={24} />
-          </button>
-
-          {/* Header */}
-          <div className="bg-[#cd6839] text-white p-4">
-            <h2 className="text-xl font-bold flex items-center">
-              <ShoppingCart className="mr-2" size={20} />
-              Product Added to Cart
-            </h2>
-          </div>
-
-          {loading ? (
-            <div className="p-4 text-center">Loading cart items...</div>
-          ) : (
-            <>
-              {/* Recently added items */}
-              <div className="px-4 py-3">
-                {recentItems.map((item) => (
-                  <div key={item.productId} className="flex items-center gap-3 py-2 border-b animate-slideIn">
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-14 h-14 object-contain bg-gray-100 rounded"
-                    />
-                    <div className="flex-1">
-                      <h3 className="font-medium text-sm">{item.name}</h3>
-                      <div className="flex justify-between mt-1">
-                        <span className="text-sm text-gray-600">Qty: {item.quantity}</span>
-                        <span className="font-medium">₹{item.price * item.quantity}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-                {remainingCount > 0 && (
-                  <div className="text-sm text-center text-gray-500 mt-2">
-                    +{remainingCount} more {remainingCount === 1 ? 'item' : 'items'} in cart
-                  </div>
-                )}
-              </div>
-
-              {/* Bill summary */}
-              <div className="px-4 py-3 bg-gray-50">
-                <div className="flex justify-between font-medium">
-                  <span>Total Items:</span>
-                  <span>{items.reduce((total, item) => total + item.quantity, 0)}</span>
-                </div>
-                <div className="flex justify-between font-medium mt-1">
-                  <span>Subtotal:</span>
-                  <span>₹{subtotal}</span>
-                </div>
-                {/* Service Fee Progress Bar */}
-                <div className="mt-4">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm font-medium text-gray-700">Shiping Fee</span>
-                    {isFree ? (
-                      <span className="text-green-600 font-semibold">FREE!</span>
-                    ) : (
-                      <span className="text-gray-600 text-xs">Add ₹{amountLeft} more</span>
-                    )}
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3 relative overflow-hidden">
-                    <div
-                      className={`h-3 rounded-full transition-all duration-300 ${isFree ? 'bg-green-500' : 'bg-orange-400'}`}
-                      style={{ width: `${progress}%` }}
-                    ></div>
-                    <span className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-semibold text-white">
-                      {Math.round(progress)}%
-                    </span>
-                  </div>
-                  {!isFree && (
-                    <div className="text-xs text-gray-500 mt-1">Add products worth ₹{amountLeft} more to get <span className="text-green-600 font-semibold">FREE shiping Fee</span>!</div>
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Action buttons */}
-          <div className="p-4 flex gap-3">
-            <button
-              onClick={onClose}
-              className="flex-1 py-2 px-4 border border-[#cd6839] text-[#cd6839] rounded-lg font-medium hover:bg-[#cd6839]/5 transition-colors"
-            >
-              Continue Shopping
-            </button>
-            <button
-              onClick={onViewCart}
-              className="flex-1 py-2 px-4 bg-[#cd6839] text-white rounded-lg font-medium hover:bg-[#b55a31] transition-colors flex items-center justify-center"
-            >
-              <ShoppingBag className="mr-2" size={16} />
-              View Cart
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   // Remove mock Food products data and replace with empty array
   const mockFoodProducts: Product[] = [];
@@ -235,6 +70,8 @@ import React, { useState, useEffect, useRef } from 'react';
     const [subBrands, setSubBrands] = useState<SubBrand[]>([]);
     const [sortMethod, setSortMethod] = useState<'price' | 'volume'>('price');
     const [isCartPopupOpen, setIsCartPopupOpen] = useState(false);
+    const [lastAddedProductId, setLastAddedProductId] = useState<string | undefined>(undefined);
+    const [isCartUpdate, setIsCartUpdate] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [allBrands, setAllBrands] = useState<string[]>([]);
     const [searchResults, setSearchResults] = useState<{products: Product[], brands: string[]}>({products: [], brands: []});
@@ -671,6 +508,12 @@ import React, { useState, useEffect, useRef } from 'react';
       const newQty = (items.find(i => i.productId === product._id)?.quantity || 0) + 1;
       updateQuantity(product._id, newQty);
 
+      // Set the last added product ID and show the cart popup
+      setLastAddedProductId(product._id);
+      setIsCartUpdate(false);
+      setIsCartPopupOpen(true);
+      
+      // Optional toast notification
       toast.success(`${product.name} added to cart!`, {
         position: "bottom-right",
         autoClose: 2000,
@@ -679,12 +522,6 @@ import React, { useState, useEffect, useRef } from 'react';
         pauseOnHover: true,
         draggable: true,
       });
-
-      // Directly open the quantity modal after adding
-      openQuantityModal(product, newQty);
-
-      // Optionally, you can still show the cart popup if needed:
-      // setIsCartPopupOpen(true);
     } catch (err: unknown) {
       if (err instanceof Error) {
         toast.error(err.message || 'Failed to add to cart');
@@ -1066,6 +903,11 @@ import React, { useState, useEffect, useRef } from 'react';
           await axios.delete('https://peghouse.in/api/cart/remove', {
             data: { userId, productId: product._id },
           });
+        } else {
+          // Show cart popup when quantity is updated (not zero)
+          setLastAddedProductId(product._id);
+          setIsCartUpdate(true);
+          setIsCartPopupOpen(true);
         }
         
         toast.success(`Cart updated! (${product.name}: Qty ${newQuantity})`, { autoClose: 2000 });
@@ -1561,14 +1403,16 @@ import React, { useState, useEffect, useRef } from 'react';
           )}
         </div>
 
-        {/* Add Cart Popup */}
-        <CartPopup 
+        {/* Add Cart Notification Popup */}
+        <CartNotificationPopup 
           isOpen={isCartPopupOpen}
           onClose={() => setIsCartPopupOpen(false)}
           onViewCart={() => {
             setIsCartPopupOpen(false);
             navigate('/cart');
           }}
+          productId={lastAddedProductId}
+          isUpdate={isCartUpdate}
         />
 
         {/* Add highlight animation styles */}
@@ -1583,6 +1427,24 @@ import React, { useState, useEffect, useRef } from 'react';
               0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(205, 104, 57, 0); }
               50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(205, 104, 57, 0.2); }
               100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(205, 104, 57, 0); }
+            }
+            
+            @keyframes fadeIn {
+              from { opacity: 0; transform: translateY(-20px); }
+              to { opacity: 1; transform: translateY(0); }
+            }
+            
+            @keyframes slideIn {
+              from { opacity: 0; transform: translateX(-20px); }
+              to { opacity: 1; transform: translateX(0); }
+            }
+            
+            .animate-fadeIn {
+              animation: fadeIn 0.3s ease-out forwards;
+            }
+            
+            .animate-slideIn {
+              animation: slideIn 0.3s ease-out forwards;
             }
             
             .highlight-product {
