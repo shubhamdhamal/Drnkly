@@ -215,7 +215,7 @@ const Pickup: React.FC = () => {
   const fetchPickupOrders = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const res = await axios.get<ApiResponse>('http://localhost:5001/api/vendor/ready-for-pickup', {
+      const res = await axios.get<ApiResponse>('https://vendor.peghouse.in/api/vendor/ready-for-pickup', {
         headers: { Authorization: `Bearer ${token}` },
       });
       
@@ -256,7 +256,7 @@ const Pickup: React.FC = () => {
     try {
       // First try to add to payouts tracking in backend
       await axios.post(
-        'http://localhost:5001/api/vendor/payouts/track',
+        'https://vendor.peghouse.in/api/vendor/payouts/track',
         {
           orderId: groupedOrder.items[0].orderId,
           orderNumber: groupedOrder.orderNumber,
@@ -325,7 +325,7 @@ const Pickup: React.FC = () => {
       // Then update the order status to handed over
       const handoverPromises = groupedOrder.items.map(item => 
         axios.put(
-          `http://localhost:5001/api/vendor/orders/handover`,
+          `https://vendor.peghouse.in/api/vendor/orders/handover`,
           { 
             productId: item.productId, 
             orderNumber: item.orderNumber 
@@ -365,9 +365,13 @@ const Pickup: React.FC = () => {
       
       toast.success('Order group handed over to delivery successfully!');
       
-      // Navigate to PastOrders page with the order number as a query parameter
-      // This will automatically open the past orders page after handover
-      window.location.href = `/past-orders?orderNumber=${groupedOrder.orderNumber}`;
+      // Navigate to Orders page and scroll to past orders section
+      navigate('/orders', { 
+        state: { 
+          scrollToPastOrders: true,
+          orderNumber: groupedOrder.orderNumber 
+        }
+      });
         
     } catch (err) {
       console.error('Error handing over order group', err);
