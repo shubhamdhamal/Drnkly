@@ -365,13 +365,9 @@ const Pickup: React.FC = () => {
       
       toast.success('Order group handed over to delivery successfully!');
       
-      // Navigate to Orders page and scroll to past orders section
-      navigate('/orders', { 
-        state: { 
-          scrollToPastOrders: true,
-          orderNumber: groupedOrder.orderNumber 
-        }
-      });
+      // Navigate to PastOrders page with the order number as a query parameter
+      // This will automatically open the past orders page after handover
+      window.location.href = `/past-orders?orderNumber=${groupedOrder.orderNumber}`;
         
     } catch (err) {
       console.error('Error handing over order group', err);
