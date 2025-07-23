@@ -494,10 +494,35 @@ const Orders: React.FC = () => {
 
       // If this is the last pending item and we're accepting it, redirect immediately
       if (shouldRedirectToPickup) {
+        // Update local state first for immediate feedback
+        setOrders((prev) => prev.filter(o => o.id !== orderId));
+        
         // Redirect immediately to pickup page
         window.location.href = '/pickup';
+        
+        // Make API calls in the background
+        axios.put(
+          `http://localhost:5001/api/vendor/orders/${orderId}/status`,
+          { productId, status },
+          { headers: { Authorization: `Bearer ${token}` } }
+        ).then(() => {
+          return axios.put(
+            `http://localhost:5001/api/vendor/orders/${orderId}/ready-for-pickup`,
+            { 
+              orderId: orderId, 
+              orderNumber: currentOrder.orderNumber,
+              status: 'accepted'
+            },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+        }).catch(err => {
+          console.error('Error updating order status in background:', err);
+        });
+        
+        return; // Exit early since we're redirecting
       }
 
+      // For non-redirect cases, proceed normally
       const response = await axios.put(
         `http://localhost:5001/api/vendor/orders/${orderId}/status`,
         { productId, status },
@@ -530,21 +555,12 @@ const Orders: React.FC = () => {
           return updatedOrders;
         });
 
-        if (shouldRedirectToPickup) {
-          // We've already redirected, but still make the API call in the background
-          axios.put(
-            `http://localhost:5001/api/vendor/orders/${orderId}/ready-for-pickup`,
-            { 
-              orderId: orderId, 
-              orderNumber: currentOrder.orderNumber,
-              status: 'accepted'
-            },
-            { headers: { Authorization: `Bearer ${token}` } }
-          ).catch(err => console.error('Error marking order ready for pickup:', err));
-        } else if (status === 'accepted') {
+        if (status === 'accepted') {
           toast.success('Item accepted successfully!');
         } else if (status === 'handedOver') {
           toast.success('Order handed over to delivery successfully!');
+          // Redirect to past orders page when handed over
+          window.location.href = `/past-orders?orderNumber=${currentOrder.orderNumber}`;
         }
       }
     } catch (err) {
@@ -691,8 +707,10 @@ const Orders: React.FC = () => {
   const handleOrderAccept = async (order: Order) => {
     enableAudio();
     try {
-      // First mark the order as ready for pickup immediately
       const token = localStorage.getItem('authToken');
+      
+      // First update the local state to give immediate feedback
+      setOrders(prev => prev.filter(o => o.id !== order.id));
       
       // Redirect immediately to pickup page
       window.location.href = '/pickup';
@@ -708,19 +726,22 @@ const Orders: React.FC = () => {
           )
         );
       
-      await Promise.all(updatePromises);
-      
-      await axios.put(
-        `http://localhost:5001/api/vendor/orders/${order.id}/ready-for-pickup`,
-        { 
-          orderId: order.id, 
-          orderNumber: order.orderNumber,
-          status: 'accepted'
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      // Execute API calls in the background
+      Promise.all(updatePromises).then(() => {
+        return axios.put(
+          `http://localhost:5001/api/vendor/orders/${order.id}/ready-for-pickup`,
+          { 
+            orderId: order.id, 
+            orderNumber: order.orderNumber,
+            status: 'accepted'
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }).catch(err => {
+        console.error('Failed to accept order in background:', err);
+      });
     } catch (err) {
-      console.error('Failed to accept order', err);
+      console.error('Failed to accept order:', err);
     }
   };
 
@@ -1179,7 +1200,7 @@ const Orders: React.FC = () => {
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">Live Orders</h1>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">Orders</h1>
               <p className="text-gray-600">Manage your incoming orders</p>
             </div>
             
@@ -1237,17 +1258,6 @@ const Orders: React.FC = () => {
               </div>
             )}
           </div>
-        </div>
-        
-        <div className="flex justify-center mt-8 mb-4">
-          <Button
-            variant="secondary"
-            icon={<Clock className="w-5 h-5" />}
-            onClick={() => navigate('/past-orders')}
-            className="text-lg px-8 py-3"
-          >
-            View Past Orders
-          </Button>
         </div>
       </div>
 
