@@ -193,7 +193,7 @@ const Orders: React.FC = () => {
       try {
         const token = localStorage.getItem('authToken');
         if (!token) return;
-        const response = await axios.get('http://localhost:5001/api/products/vendor', {
+        const response = await axios.get('https://vendor.peghouse.in/api/products/vendor', {
           headers: { Authorization: `Bearer ${token}` },
         });
         setProducts(response.data.products || []);
@@ -317,7 +317,7 @@ const Orders: React.FC = () => {
   const fetchOrders = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const res = await axios.get<ApiResponse>('http://localhost:5001/api/vendor/orders', {
+      const res = await axios.get<ApiResponse>('https://vendor.peghouse.in/api/vendor/orders', {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -492,39 +492,8 @@ const Orders: React.FC = () => {
 
       const shouldRedirectToPickup = status === 'accepted' && isLastPendingItem(currentOrder, productId);
 
-      // If this is the last pending item and we're accepting it, redirect immediately
-      if (shouldRedirectToPickup) {
-        // Update local state first for immediate feedback
-        setOrders((prev) => prev.filter(o => o.id !== orderId));
-        
-        // Redirect immediately to pickup page
-        window.location.href = '/pickup';
-        
-        // Make API calls in the background
-        axios.put(
-          `http://localhost:5001/api/vendor/orders/${orderId}/status`,
-          { productId, status },
-          { headers: { Authorization: `Bearer ${token}` } }
-        ).then(() => {
-          return axios.put(
-            `http://localhost:5001/api/vendor/orders/${orderId}/ready-for-pickup`,
-            { 
-              orderId: orderId, 
-              orderNumber: currentOrder.orderNumber,
-              status: 'accepted'
-            },
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-        }).catch(err => {
-          console.error('Error updating order status in background:', err);
-        });
-        
-        return; // Exit early since we're redirecting
-      }
-
-      // For non-redirect cases, proceed normally
       const response = await axios.put(
-        `http://localhost:5001/api/vendor/orders/${orderId}/status`,
+        `https://vendor.peghouse.in/api/vendor/orders/${orderId}/status`,
         { productId, status },
         {
           headers: {
@@ -555,12 +524,25 @@ const Orders: React.FC = () => {
           return updatedOrders;
         });
 
-        if (status === 'accepted') {
+        if (shouldRedirectToPickup) {
+          const pickupResponse = await axios.put(
+            `https://vendor.peghouse.in/api/vendor/orders/${orderId}/ready-for-pickup`,
+            { 
+              orderId: orderId, 
+              orderNumber: currentOrder.orderNumber,
+              status: 'accepted'
+            },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+
+          if (pickupResponse.status === 200) {
+            toast.success('Order accepted and ready for pickup!');
+            navigate('/pickup');
+          }
+        } else if (status === 'accepted') {
           toast.success('Item accepted successfully!');
         } else if (status === 'handedOver') {
           toast.success('Order handed over to delivery successfully!');
-          // Redirect to past orders page when handed over
-          window.location.href = `/past-orders?orderNumber=${currentOrder.orderNumber}`;
         }
       }
     } catch (err) {
@@ -709,39 +691,30 @@ const Orders: React.FC = () => {
     try {
       const token = localStorage.getItem('authToken');
       
-      // First update the local state to give immediate feedback
-      setOrders(prev => prev.filter(o => o.id !== order.id));
-      
-      // Redirect immediately to pickup page
-      window.location.href = '/pickup';
-      
-      // The following code will run in the background after redirect
       const updatePromises = order.items
         .filter(item => item.status === 'pending')
-        .map(item => 
-          axios.put(
-            `http://localhost:5001/api/vendor/orders/${order.id}/status`,
-            { productId: item.productId, status: 'accepted' },
-            { headers: { Authorization: `Bearer ${token}` } }
-          )
-        );
+        .map(item => updateOrderStatus(order.id, item.productId, 'accepted'));
       
-      // Execute API calls in the background
-      Promise.all(updatePromises).then(() => {
-        return axios.put(
-          `http://localhost:5001/api/vendor/orders/${order.id}/ready-for-pickup`,
-          { 
-            orderId: order.id, 
-            orderNumber: order.orderNumber,
-            status: 'accepted'
-          },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-      }).catch(err => {
-        console.error('Failed to accept order in background:', err);
-      });
+      await Promise.all(updatePromises);
+      
+      const response = await axios.put(
+        `https://vendor.peghouse.in/api/vendor/orders/${order.id}/ready-for-pickup`,
+        { 
+          orderId: order.id, 
+          orderNumber: order.orderNumber,
+          status: 'accepted'
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      if (response.status === 200) {
+        setOrders(prev => prev.filter(o => o.id !== order.id));
+        toast.success('Order accepted and ready for pickup!');
+        navigate('/pickup');
+      }
     } catch (err) {
-      console.error('Failed to accept order:', err);
+      console.error('Failed to accept order', err);
+      toast.error('Failed to accept order');
     }
   };
 
@@ -762,7 +735,7 @@ const Orders: React.FC = () => {
         .filter(item => item.status === 'accepted')
         .map(item => 
           axios.put(
-            `http://localhost:5001/api/vendor/orders/${order.id}/status`,
+            `https://vendor.peghouse.in/api/vendor/orders/${order.id}/status`,
             { productId: item.productId, status: 'handedOver' },
             { headers: { Authorization: `Bearer ${token}` } }
           )
@@ -772,7 +745,7 @@ const Orders: React.FC = () => {
 
       try {
         await axios.post(
-          'http://localhost:5001/api/vendor/payouts/track',
+          'https://vendor.peghouse.in/api/vendor/payouts/track',
           {
             orderId: order.id,
             orderNumber: order.orderNumber,
@@ -842,9 +815,7 @@ const Orders: React.FC = () => {
       });
 
       toast.success('Order handed over to delivery successfully!');
-      
-      // Automatically navigate to past orders page after handover
-      window.location.href = `/past-orders?orderNumber=${order.orderNumber}`;
+      fetchOrders();
     } catch (err) {
       console.error('Failed to hand over order', err);
       toast.error('Failed to hand over order');
@@ -1200,8 +1171,8 @@ const Orders: React.FC = () => {
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">Orders</h1>
-              <p className="text-gray-600">Manage your incoming orders</p>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">Order Management</h1>
+              <p className="text-gray-600">Manage your incoming and completed orders</p>
             </div>
             
             <div className="flex items-center gap-4">
@@ -1255,6 +1226,35 @@ const Orders: React.FC = () => {
             ) : (
               <div className="space-y-6">
                 {liveOrders.map((order, index) => renderOrderCard(order, index))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div 
+          ref={pastOrdersRef}
+          className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden"
+        >
+          <div className="bg-gradient-to-r from-gray-600 to-gray-700 px-8 py-6">
+            <div className="flex items-center gap-4">
+              <div className="w-4 h-4 bg-gray-400 rounded-full"></div>
+              <h2 className="text-2xl font-bold text-white">Past Orders</h2>
+              <span className="bg-white bg-opacity-20 text-white px-3 py-1 rounded-full text-sm font-medium">
+                {pastOrders.length} Completed
+              </span>
+            </div>
+          </div>
+
+          <div className="p-8">
+            {pastOrders.length === 0 ? (
+              <div className="text-center py-16">
+                <Clock className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-600 mb-2">No Past Orders</h3>
+                <p className="text-gray-500">Completed orders will appear here</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {pastOrders.map((order, index) => renderOrderCard(order, index, true))}
               </div>
             )}
           </div>
