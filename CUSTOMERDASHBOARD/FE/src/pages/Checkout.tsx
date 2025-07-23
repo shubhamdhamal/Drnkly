@@ -20,6 +20,8 @@ function Checkout() {
   const [phoneError, setPhoneError] = useState('');
   const [formError, setFormError] = useState('');
   const userId = localStorage.getItem('userId');
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
+  const [discountAmount, setDiscountAmount] = useState<number>(0);
 
   // Fetch user profile information
   useEffect(() => {
@@ -89,6 +91,15 @@ const drinksFee = items.reduce((sum, item) => {
   const gst = 18.00;
   const gstAmount = ((orderTotal+drinksFee) * gst) / 100;
   const total = orderTotal + deliveryCharges +platform + gstAmount+drinksFee;
+
+  useEffect(() => {
+    const coupon = localStorage.getItem('appliedCoupon');
+    const discount = parseFloat(localStorage.getItem('discountAmount') || '0');
+    setAppliedCoupon(coupon);
+    setDiscountAmount(discount);
+  }, []);
+
+  const finalTotal = total - discountAmount;
 
   // 🧾 Submit Order
   const handleSubmit = async (e: React.FormEvent) => {
@@ -405,9 +416,15 @@ const drinksFee = items.reduce((sum, item) => {
               <span>GST (18%)</span>
               <span>₹{gstAmount.toFixed(2)}</span>
             </div>
+            {discountAmount > 0 && (
+  <div className="flex justify-between text-green-600">
+    <span>Coupon Discount ({appliedCoupon})</span>
+    <span>-₹{discountAmount.toFixed(2)}</span>
+  </div>
+)}
             <div className="flex justify-between font-semibold text-lg pt-2">
               <span>Total</span>
-              <span>₹{total.toFixed(2)}</span>
+              <span>₹{finalTotal.toFixed(2)}</span>
             </div>
           </div>
         </div>
