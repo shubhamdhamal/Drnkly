@@ -15,6 +15,8 @@ const Payment = () => {
   const paymentMethodRef = useRef<HTMLDivElement>(null);
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
+  const [discountAmount, setDiscountAmount] = useState<number>(0);
 
   const isPaymentDetailsProvided = isScreenshotUploaded || transactionId.trim().length > 0;
 
@@ -87,6 +89,11 @@ const Payment = () => {
       navigate('/checkout');
     }
 
+    const coupon = localStorage.getItem('appliedCoupon');
+    const discount = parseFloat(localStorage.getItem('discountAmount') || '0');
+    setAppliedCoupon(coupon);
+    setDiscountAmount(discount);
+
     if (paymentMethodRef.current) {
       setTimeout(() => {
         paymentMethodRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -144,7 +151,9 @@ const getDrinksFeeRate = () => {
         userId: pendingOrder.userId,
         address: pendingOrder.address,
         items: pendingOrder.items,
-        totalAmount: total,
+        totalAmount: finalTotal,
+        couponCode: appliedCoupon || null,
+        discountAmount: discountAmount || 0
       };
 
       const createOrderResponse = await axios.post('https://peghouse.in/api/orders', finalOrderData, {
@@ -186,6 +195,8 @@ const getDrinksFeeRate = () => {
             window.dispatchEvent(event);
           }
         }
+        localStorage.removeItem('appliedCoupon');
+        localStorage.removeItem('discountAmount');
         navigate('/order-success');
       } else {
         console.error("Payment failed:", paymentResponse.data);
@@ -198,6 +209,8 @@ const getDrinksFeeRate = () => {
       setIsLoading(false);
     }
   };
+
+  const finalTotal = total - discountAmount;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -326,10 +339,16 @@ const getDrinksFeeRate = () => {
               <span className="text-gray-600">GST (18%)</span>
               <span className="font-semibold">₹{gstAmount.toFixed(2)}</span>
             </div>
+            {discountAmount > 0 && (
+              <div className="flex justify-between text-green-600">
+                <span>Coupon Discount ({appliedCoupon})</span>
+                <span>-₹{discountAmount.toFixed(2)}</span>
+              </div>
+            )}
             <div className="pt-3 mt-1 border-t">
               <div className="flex justify-between items-center">
                 <span className="text-xl font-semibold">Total</span>
-                <span className="text-xl font-semibold">₹{total.toFixed(2)}</span>
+                <span className="text-xl font-semibold">₹{finalTotal.toFixed(2)}</span>
               </div>
             </div>
           </div>
