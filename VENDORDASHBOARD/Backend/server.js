@@ -11,10 +11,7 @@ const vendorRoutes = require('./routes/vendorRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const deliveryPartnerRoutes = require('./routes/deliveryPartnerRoutes');
 const issueRoutes = require('./routes/issueRoutes');
-const orderRoutes = require('./routes/orderRoutes');
-
-const stats = require('./routes/vendorStatsRoutes');
-const payouts = require('./routes/payoutRoutes');
+const orderRoutes = require('./controllers/orderController');
 
 const app = express();
 
@@ -28,7 +25,7 @@ if (!fs.existsSync(uploadDir)) {
 
 app.use('/uploads', express.static('/var/www/Drnkly/images/uploads'));
 
-// This serves files from the 'uploads' folder
+  // This serves files from the 'uploads' folder
 
 //✅ 3. Apply middlewares
 app.use(cors({
@@ -51,15 +48,10 @@ mongoose.connect(process.env.MONGO_URI, {
 app.use('/api/vendor', vendorRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
-
 app.use('/api/delivery-partners', deliveryPartnerRoutes);
 app.use('/api/vendor',orderRoutes);
 app.use('/api/issues', issueRoutes);
 app.use('/api/qr', require('./routes/qrRoutes'));
-
-
-//app.use('/api/vendor-stats', stats);
-//app.use('/api/payouts', payouts);
 
 // ✅ 6. Start the server
 const PORT = process.env.PORT || 5001;
