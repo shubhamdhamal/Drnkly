@@ -11,7 +11,7 @@ const vendorRoutes = require('./routes/vendorRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const deliveryPartnerRoutes = require('./routes/deliveryPartnerRoutes');
 const issueRoutes = require('./routes/issueRoutes');
-const orderRoutes = require('./controllers/orderControllerzz');
+const orderRoutes = require('./controllers/orderController');
 
 const app = express();
 
