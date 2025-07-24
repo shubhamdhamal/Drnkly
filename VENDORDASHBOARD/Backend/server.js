@@ -46,8 +46,8 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/delivery-partners', deliveryPartnerRoutes);
 app.use('/api/issues', issueRoutes);
 app.use('/api/qr', require('./routes/qrRoutes'));
-app.use('/api/payouts', payouts);
-app.use('/api/vendor-stats', stats);
+//app.use('/api/payouts', payouts);
+//app.use('/api/vendor-stats', stats);
 app.use('/api/orders', orderRoutes);               // ✅ orders handled separately
 
 // ✅ Start server
