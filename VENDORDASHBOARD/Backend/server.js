@@ -59,7 +59,7 @@ app.use('/api/qr', require('./routes/qrRoutes'));
 
 
 //app.use('/api/vendor-stats', stats);
-app.use('/api/payouts', payouts);
+//app.use('/api/payouts', payouts);
 
 // ✅ 6. Start the server
 const PORT = process.env.PORT || 5001;
