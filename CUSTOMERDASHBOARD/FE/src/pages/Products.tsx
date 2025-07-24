@@ -659,47 +659,47 @@ import React, { useState, useEffect, useRef } from 'react';
       return filtered;
     };
 
-    // Update the productContainerStyle to make cards larger
+    // Update the productContainerStyle with responsive grid
     const productContainerStyle = {
       display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', // Increased from 120px to 160px
-      gap: '12px', // Increased from 8px to 12px
-      padding: '0 8px', // Increased from 6px to 8px
+      gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', // Smaller on mobile
+      gap: '8px', // Smaller gap on mobile
+      padding: '0 6px',
       maxWidth: '1920px',
       margin: '0 auto',
       alignItems: 'stretch'
     };
 
-    // Update the productCardStyle to be larger
+    // Update the productCardStyle to be smaller on mobile
     const productCardStyle = {
       background: 'white',
-      borderRadius: '8px', // Increased from 6px to 8px
-      padding: '8px', // Increased from 6px to 8px
+      borderRadius: '6px',
+      padding: '6px',
       textAlign: 'center' as const,
       display: 'flex',
       flexDirection: 'column' as const,
       height: '100%',
       justifyContent: 'space-between',
       position: 'relative' as const,
-      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)', // Increased shadow
+      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
       cursor: 'pointer',
       transition: 'all 0.2s ease',
       transform: 'translateY(0)',
       border: '1px solid rgba(229, 231, 235, 0.5)'
     };
 
-    // Update the productImageContainerStyle to be larger
+    // Update the productImageContainerStyle to be smaller on mobile
     const productImageContainerStyle = {
       width: '100%',
-      height: '130px', // Increased from 100px to 130px
+      height: '100px',
       position: 'relative' as const,
-      borderRadius: '6px', // Increased from 4px to 6px
+      borderRadius: '4px',
       overflow: 'hidden',
-      marginBottom: '6px', // Increased from 4px to 6px
+      marginBottom: '4px',
       background: 'white'
     };
 
-    // Update the productImageStyle
+    // Update the productImageStyle for smaller images
     const productImageStyle = {
       position: 'absolute' as const,
       top: '0',
@@ -707,10 +707,10 @@ import React, { useState, useEffect, useRef } from 'react';
       width: '100%',
       height: '100%',
       objectFit: 'contain' as const,
-      borderRadius: '6px', // Increased from 4px to 6px
+      borderRadius: '4px',
       backgroundColor: 'white',
       transition: 'transform 0.3s ease',
-      padding: '4px' // Increased from 3px to 4px
+      padding: '3px'
     };
 
     // Update the hoverZoomClass to be simpler
@@ -744,9 +744,9 @@ import React, { useState, useEffect, useRef } from 'react';
         className="product-grid"
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
-          gap: '12px',
-          padding: '0 8px 120px 8px',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+          gap: '8px',
+          padding: '0 6px 120px 6px',
           maxWidth: '1920px',
           margin: '0 auto',
           alignItems: 'stretch',
@@ -759,8 +759,8 @@ import React, { useState, useEffect, useRef } from 'react';
             className="product-card animate-pulse"
             style={{
               background: 'white',
-              borderRadius: '8px',
-              padding: '8px',
+              borderRadius: '6px',
+              padding: '6px',
               textAlign: 'center',
               display: 'flex',
               flexDirection: 'column',
@@ -777,9 +777,9 @@ import React, { useState, useEffect, useRef } from 'react';
               <div 
                 style={{
                   width: '100%',
-                  height: '130px',
+                  height: '100px',
                   position: 'relative',
-                  borderRadius: '6px',
+                  borderRadius: '4px',
                   overflow: 'hidden',
                   marginBottom: '6px',
                   background: '#f3f4f6'
@@ -1284,13 +1284,13 @@ import React, { useState, useEffect, useRef } from 'react';
               className="product-grid"
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
-                gap: '12px',
-                padding: '0 8px 120px 8px', // Added 120px bottom padding
-                maxWidth: '1920px',
-                margin: '0 auto',
-                alignItems: 'stretch',
-                minHeight: 'calc(100vh - 400px)'
+    gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+    gap: '12px',
+    padding: '0 8px 20px 8px',  // ✅ Updated padding
+    maxWidth: '1920px',
+    margin: '0 auto',
+    alignItems: 'stretch',
+    minHeight: 'auto'
               }}
             >
               {selectedCategory === 'Food' ? (
@@ -1360,21 +1360,21 @@ import React, { useState, useEffect, useRef } from 'react';
                           )}
                         </div>
                         <div className="px-1">
-                          <div className="text-[13px] font-medium truncate" title={product.name}>
+                          <div className="text-[11px] sm:text-[12px] md:text-[13px] font-medium truncate" title={product.name}>
                             {product.name}
                           </div>
                           <div className="flex justify-between items-center mt-1">
                             {['drinks', 'soft drinks'].includes(product.category.toLowerCase()) ? (
                               <>
-                                <span className="text-[10px] font-medium bg-blue-50 text-blue-600 py-0.5 px-1 rounded">
+                                <span className="text-[8px] sm:text-[9px] md:text-[10px] font-medium bg-blue-50 text-blue-600 py-0.5 px-1 rounded">
                                   {product.volume} ml
                                 </span>
-                                <span className="text-[13px] font-bold text-[#cd6839]">
+                                <span className="text-[11px] sm:text-[12px] md:text-[13px] font-bold text-[#cd6839]">
                                   ₹{product.price}
                                 </span>
                               </>
                             ) : (
-                              <span className="text-[13px] font-bold text-[#cd6839] w-full text-center">
+                              <span className="text-[11px] sm:text-[12px] md:text-[13px] font-bold text-[#cd6839] w-full text-center">
                                 ₹{product.price}
                               </span>
                             )}
@@ -1389,7 +1389,7 @@ import React, { useState, useEffect, useRef } from 'react';
                             handleAddToCart(e, product);
                           }
                         }}
-                        className="w-full py-1 px-2 bg-[#cd6839] text-white text-[10px] rounded font-medium mt-2
+                        className="w-full py-1 px-2 bg-[#cd6839] text-white text-[9px] sm:text-[10px] rounded font-medium mt-2
                                   hover:bg-[#b55a31] transition-colors duration-200
                                   focus:outline-none focus:ring-1 focus:ring-[#cd6839] focus:ring-opacity-50"
                       >
@@ -1457,14 +1457,40 @@ import React, { useState, useEffect, useRef } from 'react';
               display: flex !important;
               flex-direction: column !important;
               height: 100% !important;
-              min-height: 200px !important;
+              min-height: 180px !important;
               background: white !important;
-              border-radius: 8px !important;
-              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+              border-radius: 6px !important;
+              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
               transition: all 0.2s ease !important;
               overflow: hidden !important;
               margin: 0 !important;
-              padding: 8px !important;
+              padding: 6px !important;
+            }
+            
+            /* Responsive styles for larger screens */
+            @media (min-width: 640px) {
+              .product-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+                gap: 10px !important;
+              }
+              
+              .product-card {
+                min-height: 190px !important;
+                padding: 7px !important;
+              }
+            }
+            
+            @media (min-width: 768px) {
+              .product-grid {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;
+                gap: 12px !important;
+              }
+              
+              .product-card {
+                min-height: 200px !important;
+                padding: 8px !important;
+                border-radius: 8px !important;
+              }
             }
 
             /* Fix for last row products */
