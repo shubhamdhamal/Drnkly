@@ -48,18 +48,19 @@ const Payment = () => {
 
 const handleScreenshotFileChange = async (
   e: React.ChangeEvent<HTMLInputElement>,
-  orderId: string // 👈 Pass orderId from component state or props
+  orderId: string
 ) => {
   const file = e.target.files?.[0];
   if (!file) return;
 
   const formData = new FormData();
-  formData.append('screenshot', file);    // 📁 Image file
-  formData.append('orderId', orderId);    // 🆔 Order ID
+  formData.append('screenshot', file);                   // 📁 Attach screenshot file
+  formData.append('screenshotUploaded', 'true');         // ✅ Indicate screenshot upload
+  formData.append('transactionId', 'yourTxnIdHere');     // Optional: pass transaction ID
 
   try {
-    const res = await axios.post(
-      'https://peghouse.in/api/uploads/upload-screenshot',
+    const res = await axios.put(
+      `https://peghouse.in/api/orders/${orderId}/pay`,
       formData,
       {
         headers: {
@@ -67,12 +68,13 @@ const handleScreenshotFileChange = async (
         },
       }
     );
-    console.log('✅ Upload success:', res.data);
-    // Optional: Show toast or update order UI
+    console.log('✅ Screenshot uploaded & payment updated:', res.data);
+    // Optionally: refresh order list or show toast
   } catch (err) {
     console.error('❌ Upload failed:', err);
   }
 };
+
 
 
 
