@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const router = express.Router();
+const Order = require('../models/Order'); // make sure this path is correct
 
 // Configure storage
 const storage = multer.diskStorage({
@@ -15,16 +16,26 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+
 router.post('/upload-screenshot', upload.single('screenshot'), async (req, res) => {
   try {
+    const { orderId } = req.body;
+
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    const { orderId } = req.body; // 👈 Make sure frontend sends orderId
+    if (!orderId) {
+      return res.status(400).json({ message: 'Missing orderId' });
+    }
+
     const imageUrl = `https://peghouse.in/uploads/${req.file.filename}`;
 
-    // ✅ Update the order document with paymentProof
+    // 🧪 Debug log
+    console.log("📤 Uploading screenshot for order:", orderId);
+    console.log("📷 File:", req.file.filename);
+    console.log("🌐 Image URL:", imageUrl);
+
     const updatedOrder = await Order.findByIdAndUpdate(
       orderId,
       { paymentProof: imageUrl },
@@ -32,6 +43,7 @@ router.post('/upload-screenshot', upload.single('screenshot'), async (req, res) 
     );
 
     if (!updatedOrder) {
+      console.error('❌ Order not found');
       return res.status(404).json({ message: 'Order not found' });
     }
 
@@ -41,8 +53,8 @@ router.post('/upload-screenshot', upload.single('screenshot'), async (req, res) 
       updatedOrder,
     });
   } catch (err) {
-    console.error('❌ Upload Error:', err);
-    res.status(500).json({ message: 'Server Error' });
+    console.error("❌ Server error during screenshot upload:", err);
+    res.status(500).json({ message: 'Server Error', error: err.message });
   }
 });
 
