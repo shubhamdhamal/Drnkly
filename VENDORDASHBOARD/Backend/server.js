@@ -11,10 +11,7 @@ const vendorRoutes = require('./routes/vendorRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const deliveryPartnerRoutes = require('./routes/deliveryPartnerRoutes');
 const issueRoutes = require('./routes/issueRoutes');
-const orderRoutes = require('./routes/orderRoutes');
-
-const payouts = require('./routes/payoutRoutes');
-const stats = require('./routes/vendorStatsRoutes');
+const orderRoutes = require('./controllers/orderController');
 
 const app = express();
 
@@ -48,9 +45,6 @@ mongoose.connect(process.env.MONGO_URI, {
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
 // ✅ 5. Register API routes
-//app.use('/api/payouts', payouts);
-//app.use('/api/vendor-stats', stats);
-
 app.use('/api/vendor', vendorRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
@@ -58,8 +52,6 @@ app.use('/api/delivery-partners', deliveryPartnerRoutes);
 app.use('/api/vendor',orderRoutes);
 app.use('/api/issues', issueRoutes);
 app.use('/api/qr', require('./routes/qrRoutes'));
-
-
 
 // ✅ 6. Start the server
 const PORT = process.env.PORT || 5001;
