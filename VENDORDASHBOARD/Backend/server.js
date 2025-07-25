@@ -48,16 +48,18 @@ mongoose.connect(process.env.MONGO_URI, {
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
 // ✅ 5. Register API routes
+app.use('/api/payouts', payouts);
+app.use('/api/vendor-stats', stats);
+
 app.use('/api/vendor', vendorRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/delivery-partners', deliveryPartnerRoutes);
-app.use('/api/vendor/orders', orderRoutes);
+app.use('/api/vendor',orderRoutes);
 app.use('/api/issues', issueRoutes);
 app.use('/api/qr', require('./routes/qrRoutes'));
 
-app.use('/api/payouts',payouts);
-app.use('/api/vendor-stats',stats);
+
 
 // ✅ 6. Start the server
 const PORT = process.env.PORT || 5001;

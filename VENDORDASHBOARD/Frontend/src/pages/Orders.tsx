@@ -317,7 +317,7 @@ const Orders: React.FC = () => {
   const fetchOrders = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const res = await axios.get<ApiResponse>('https://vendor.peghouse.in/api/vendor/orders/orders', {
+      const res = await axios.get<ApiResponse>('https://vendor.peghouse.in/api/vendor/orders', {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -502,12 +502,12 @@ const Orders: React.FC = () => {
         
         // Make API calls in the background
         axios.put(
-          `https://vendor.peghouse.in/api/vendor/orders/orders/${orderId}/status`,
+          `https://vendor.peghouse.in/api/vendor/orders/${orderId}/status`,
           { productId, status },
           { headers: { Authorization: `Bearer ${token}` } }
         ).then(() => {
           return axios.put(
-            `https://vendor.peghouse.in/api/vendor/orders/orders/${orderId}/ready-for-pickup`,
+            `https://vendor.peghouse.in/api/vendor/orders/${orderId}/ready-for-pickup`,
             { 
               orderId: orderId, 
               orderNumber: currentOrder.orderNumber,
@@ -524,7 +524,7 @@ const Orders: React.FC = () => {
 
       // For non-redirect cases, proceed normally
       const response = await axios.put(
-        `https://vendor.peghouse.in/api/vendor/orders/orders/${orderId}/status`,
+        `https://vendor.peghouse.in/api/vendor/orders/${orderId}/status`,
         { productId, status },
         {
           headers: {
@@ -720,7 +720,7 @@ const Orders: React.FC = () => {
         .filter(item => item.status === 'pending')
         .map(item => 
           axios.put(
-            `https://vendor.peghouse.in/api/vendor/orders/orders/${order.id}/status`,
+            `https://vendor.peghouse.in/api/vendor/orders/${order.id}/status`,
             { productId: item.productId, status: 'accepted' },
             { headers: { Authorization: `Bearer ${token}` } }
           )
@@ -729,7 +729,7 @@ const Orders: React.FC = () => {
       // Execute API calls in the background
       Promise.all(updatePromises).then(() => {
         return axios.put(
-          `https://vendor.peghouse.in/api/vendor/orders/orders/${order.id}/ready-for-pickup`,
+          `https://vendor.peghouse.in/api/vendor/orders/${order.id}/ready-for-pickup`,
           { 
             orderId: order.id, 
             orderNumber: order.orderNumber,
@@ -762,7 +762,7 @@ const Orders: React.FC = () => {
         .filter(item => item.status === 'accepted')
         .map(item => 
           axios.put(
-            `https://vendor.peghouse.in/api/vendor/orders/orders/${order.id}/status`,
+            `https://vendor.peghouse.in/api/vendor/orders/${order.id}/status`,
             { productId: item.productId, status: 'handedOver' },
             { headers: { Authorization: `Bearer ${token}` } }
           )
