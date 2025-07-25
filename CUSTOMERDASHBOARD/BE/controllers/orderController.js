@@ -22,28 +22,32 @@ exports.placeOrder = async (req, res) => {
 exports.updatePaymentStatus = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const { screenshotUploaded, transactionId, isCashOnDelivery } = req.body;  // Get all data from request
+    const { screenshotUploaded, transactionId, isCashOnDelivery } = req.body;
 
-    console.log("Request body:", req.body); // Log the request body
+    console.log("Request body:", req.body);
 
     if (screenshotUploaded === undefined && isCashOnDelivery === undefined) {
       return res.status(400).json({ message: 'Payment status is required' });
     }
 
     let paymentStatus = 'pending';
-    
+    let paymentProof = null;
+
     if (isCashOnDelivery) {
-      paymentStatus = 'cash on delivery'; // Update payment status to COD
-    } else if (screenshotUploaded) {
-      paymentStatus = 'paid'; // Update payment status to paid
+      paymentStatus = 'cash on delivery';
+    } else if (screenshotUploaded || req.file) {
+      paymentStatus = 'paid';
+      if (req.file) {
+        paymentProof = `https://peghouse.in/uploads/${req.file.filename}`;
+      }
     }
 
-    // Update order with appropriate payment status
     const updated = await Order.findByIdAndUpdate(
       orderId,
       {
         paymentStatus,
-        transactionId: transactionId || null, // Store transaction ID if provided
+        transactionId: transactionId || null,
+        ...(paymentProof && { paymentProof })
       },
       { new: true }
     );
@@ -52,12 +56,16 @@ exports.updatePaymentStatus = async (req, res) => {
       return res.status(404).json({ message: 'Order not found' });
     }
 
-    res.status(200).json({ message: 'Payment status updated successfully', order: updated });
+    res.status(200).json({
+      message: 'Payment status updated successfully',
+      order: updated,
+    });
   } catch (error) {
     console.error('Error updating payment status:', error);
     res.status(500).json({ message: 'Error updating payment status', error: error.message });
   }
 };
+
 
 
 
