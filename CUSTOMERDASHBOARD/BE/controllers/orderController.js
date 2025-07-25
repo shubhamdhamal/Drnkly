@@ -3,13 +3,26 @@ const path = require('path');
 
 exports.placeOrder = async (req, res) => {
   try {
-    const { userId, items, address, totalAmount } = req.body;
+    const {
+      userId,
+      totalAmount,
+      transactionId,
+      paymentStatus
+    } = req.body;
+
+    const items = JSON.parse(req.body.items);
+    const address = JSON.parse(req.body.address);
+
+    const paymentProof = req.file ? `/uploads/${req.file.filename}` : null;
 
     const newOrder = new Order({
       userId,
       items,
       deliveryAddress: address,
-      totalAmount
+      totalAmount,
+      transactionId,
+      paymentStatus,
+      paymentProof
     });
 
     await newOrder.save();
@@ -19,6 +32,7 @@ exports.placeOrder = async (req, res) => {
     res.status(500).json({ error: 'Failed to place order' });
   }
 };
+
 exports.updatePaymentStatus = async (req, res) => {
   try {
     const { orderId } = req.params;
