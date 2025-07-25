@@ -51,8 +51,9 @@ const orderSchema = new mongoose.Schema({
     default: 'pending'
   },
   paymentProof: {
-    type: String // 🔥 Screenshot image URL stored here
-  },
+  type: String,
+  default: null
+},
   transactionId: {
     type: String, // Store the transaction ID here
     default: null,
