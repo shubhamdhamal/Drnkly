@@ -18,7 +18,7 @@ interface PayoutData {
 const Payouts: React.FC = () => {
   const [qrPreview, setQrPreview] = useState('');
   const [uploadStatus, setUploadStatus] = useState('');
-  
+
   const [payouts, setPayouts] = useState<PayoutData[]>([]);
   const [payoutStats, setPayoutStats] = useState({
     totalEarnings: 0,
@@ -31,7 +31,7 @@ const Payouts: React.FC = () => {
   useEffect(() => {
     const fetchQRCode = async () => {
       try {
-        const res = await axios.get('https://vendor.peghouse.in/api/qr/get-qr', {
+        const res = await axios.get('http://localhost:5001/api/qr/get-qr', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("authToken")}`,
           },
@@ -48,21 +48,21 @@ const Payouts: React.FC = () => {
     loadPayoutsData();
   }, []);
 
-  
+
   useEffect(() => {
-const fetchPayouts = async () => {
-  try {
-    const res = await axios.get('https://vendor.peghouse.in/api/payouts/payouts', {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('authToken')}`, // ✅ ADD THIS
-      },
-      withCredentials: true,
-    });
-    setPayouts(res.data.payouts);
-  } catch (err) {
-    console.error('Error fetching payouts:', err);
-  }
-};
+    const fetchPayouts = async () => {
+      try {
+        const res = await axios.get('http://localhost:5001/api/payouts/payouts', {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('authToken')}`, // ✅ ADD THIS
+          },
+          withCredentials: true,
+        });
+        setPayouts(res.data.payouts);
+      } catch (err) {
+        console.error('Error fetching payouts:', err);
+      }
+    };
 
 
     fetchPayouts();
@@ -90,24 +90,24 @@ const fetchPayouts = async () => {
 
     // Get any handed over orders from localStorage
     const storedPayouts = JSON.parse(localStorage.getItem('payoutsData') || '[]');
-    
+
     // Combine all payouts
     const allPayouts = [...defaultPayouts, ...storedPayouts];
-    
+
     // Sort by date (newest first)
     allPayouts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    
+
     setPayouts(allPayouts);
-    
+
     // Calculate stats
     const totalEarnings = allPayouts.reduce((sum, payout) => sum + payout.amount, 0);
     const totalCommission = allPayouts.reduce((sum, payout) => sum + payout.commission, 0);
     const pendingAmount = allPayouts
       .filter(payout => payout.status === 'pending')
       .reduce((sum, payout) => sum + payout.amount, 0);
-    
+
     const lastPaidPayout = allPayouts.find(payout => payout.status === 'paid');
-    
+
     setPayoutStats({
       totalEarnings,
       commission: totalCommission,
@@ -172,7 +172,7 @@ const fetchPayouts = async () => {
     formData.append('qrCode', file);
 
     try {
-      const res = await axios.post('https://vendor.peghouse.in/api/qr/upload-qr', formData, {
+      const res = await axios.post('http://localhost:5001/api/qr/upload-qr', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${localStorage.getItem('authToken')}`,
@@ -309,11 +309,10 @@ const fetchPayouts = async () => {
                   <td className="px-6 py-4 whitespace-nowrap">₹{payout.commission}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
-                      className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        payout.status === 'paid'
+                      className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${payout.status === 'paid'
                           ? 'bg-green-100 text-green-800'
                           : 'bg-yellow-100 text-yellow-800'
-                      }`}
+                        }`}
                     >
                       {payout.status}
                     </span>

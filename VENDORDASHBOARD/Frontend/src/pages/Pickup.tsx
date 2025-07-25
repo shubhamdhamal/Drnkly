@@ -13,16 +13,16 @@ interface ButtonProps {
   className?: string;
 }
 
-const Button: React.FC<ButtonProps> = ({ 
-  children, 
-  variant = 'primary', 
-  icon, 
-  onClick, 
+const Button: React.FC<ButtonProps> = ({
+  children,
+  variant = 'primary',
+  icon,
+  onClick,
   disabled = false,
   className = ''
 }) => {
   const baseStyles = "inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 active:scale-95";
-  
+
   const variantStyles = {
     primary: "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl",
     secondary: "bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 border border-gray-300 shadow-md hover:shadow-lg",
@@ -105,7 +105,7 @@ const Pickup: React.FC = () => {
   const groupOrdersByCustomer = (orders: PickupOrder[]): GroupedOrder[] => {
     const grouped = orders.reduce((acc: { [key: string]: GroupedOrder }, order) => {
       const key = order.orderNumber;
-      
+
       if (!acc[key]) {
         acc[key] = {
           orderNumber: order.orderNumber,
@@ -119,31 +119,31 @@ const Pickup: React.FC = () => {
           acceptedAt: order.acceptedAt
         };
       }
-      
+
       acc[key].items.push(order);
       acc[key].totalAmount += order.price * order.quantity;
-      
+
       if (order.handoverStatus === 'handedOver') {
         acc[key].handoverStatus = 'handedOver';
       }
-      
+
       return acc;
     }, {});
-    
+
     return Object.values(grouped);
   };
 
   useEffect(() => {
     // Setup WebSocket connection for real-time updates
     wsRef.current = new WebSocket('ws://localhost:5000/ws/pickup');
-    
+
     wsRef.current.onmessage = (event) => {
       const updatedOrder = JSON.parse(event.data);
       handleOrderUpdate(updatedOrder);
     };
 
     fetchPickupOrders();
-    
+
     // Set up auto-refresh every 30 seconds
     pollingIntervalRef.current = setInterval(fetchPickupOrders, 30000);
 
@@ -160,7 +160,7 @@ const Pickup: React.FC = () => {
   const handleOrderUpdate = (updatedOrder: PickupOrder) => {
     setOrders(prev => {
       if (updatedOrder.handoverStatus === 'handedOver') {
-        const filteredOrders = prev.filter(o => 
+        const filteredOrders = prev.filter(o =>
           !(o.orderNumber === updatedOrder.orderNumber && o.productId === updatedOrder.productId)
         );
         const newGrouped = groupOrdersByCustomer(filteredOrders);
@@ -169,11 +169,11 @@ const Pickup: React.FC = () => {
       }
 
       const updatedOrders = [...prev];
-      const existingOrderIndex = updatedOrders.findIndex(o => 
-        o.orderNumber === updatedOrder.orderNumber && 
+      const existingOrderIndex = updatedOrders.findIndex(o =>
+        o.orderNumber === updatedOrder.orderNumber &&
         o.productId === updatedOrder.productId
       );
-      
+
       if (existingOrderIndex === -1) {
         updatedOrders.unshift(updatedOrder);
         // Show notification for new pickup order
@@ -181,7 +181,7 @@ const Pickup: React.FC = () => {
       } else {
         updatedOrders[existingOrderIndex] = updatedOrder;
       }
-      
+
       const newGrouped = groupOrdersByCustomer(updatedOrders);
       setGroupedOrders(newGrouped);
       return updatedOrders;
@@ -192,11 +192,11 @@ const Pickup: React.FC = () => {
     const message = `${newOrder.customerName} का ऑर्डर pickup के लिए तैयार है!`;
     setNotificationMessage(message);
     setShowNotification(true);
-    
+
     setTimeout(() => {
       setShowNotification(false);
     }, 15000);
-    
+
     // Browser notification
     if ("Notification" in window && Notification.permission === "granted") {
       new Notification("Pickup Ready!", {
@@ -215,34 +215,34 @@ const Pickup: React.FC = () => {
   const fetchPickupOrders = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const res = await axios.get<ApiResponse>('https://vendor.peghouse.in/api/vendor/ready-for-pickup', {
+      const res = await axios.get<ApiResponse>('http://localhost:5001/api/vendor/ready-for-pickup', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       // Get the list of handed over orders from localStorage
       const handedOverOrders = JSON.parse(localStorage.getItem('handedOverOrders') || '[]');
-      
+
       // Filter out orders that are either handed over in the API response or in localStorage
       const filteredOrders = res.data.orders.filter((order: PickupOrder) => {
         // Check if order is handed over in API response
         const isHandedOverInAPI = order.handoverStatus === 'handedOver';
-        
+
         // Check if order is in localStorage (meaning it was handed over)
-        const isHandedOverInStorage = handedOverOrders.some((handedOver: any) => 
+        const isHandedOverInStorage = handedOverOrders.some((handedOver: any) =>
           handedOver.orderNumber === order.orderNumber
         );
-        
+
         // Only show orders that are NOT handed over in either place
         return !isHandedOverInAPI && !isHandedOverInStorage;
       });
-      
+
       // Sort orders by time
       const sortedOrders = filteredOrders.sort((a: PickupOrder, b: PickupOrder) => {
         const timeA = a.acceptedAt ? new Date(a.acceptedAt).getTime() : new Date(a.readyTime).getTime();
         const timeB = b.acceptedAt ? new Date(b.acceptedAt).getTime() : new Date(b.readyTime).getTime();
         return timeB - timeA;
       });
-      
+
       setOrders(sortedOrders);
       setGroupedOrders(groupOrdersByCustomer(sortedOrders));
     } catch (err) {
@@ -256,7 +256,7 @@ const Pickup: React.FC = () => {
     try {
       // First try to add to payouts tracking in backend
       await axios.post(
-        'https://vendor.peghouse.in/api/vendor/payouts/track',
+        'http://localhost:5001/api/vendor/payouts/track',
         {
           orderId: groupedOrder.items[0].orderId,
           orderNumber: groupedOrder.orderNumber,
@@ -291,10 +291,10 @@ const Pickup: React.FC = () => {
           price: item.price
         }))
       };
-      
+
       const updatedPayouts = [newPayout, ...storedPayouts];
       localStorage.setItem('payoutsData', JSON.stringify(updatedPayouts));
-      
+
       return true;
     } catch (error) {
       console.error('Failed to track order in payouts:', error);
@@ -309,33 +309,33 @@ const Pickup: React.FC = () => {
         toast.error('Authentication required');
         return;
       }
-      
+
       // First remove the order from pickup page immediately
-      setOrders(prev => prev.filter(order => 
-        !groupedOrder.items.some(item => 
-          item.orderNumber === order.orderNumber && 
+      setOrders(prev => prev.filter(order =>
+        !groupedOrder.items.some(item =>
+          item.orderNumber === order.orderNumber &&
           item.productId === order.productId
         )
       ));
-      
-      setGroupedOrders(prev => prev.filter(group => 
+
+      setGroupedOrders(prev => prev.filter(group =>
         group.orderNumber !== groupedOrder.orderNumber
       ));
-      
+
       // Then update the order status to handed over
-      const handoverPromises = groupedOrder.items.map(item => 
+      const handoverPromises = groupedOrder.items.map(item =>
         axios.put(
-          `https://vendor.peghouse.in/api/vendor/orders/handover`,
-          { 
-            productId: item.productId, 
-            orderNumber: item.orderNumber 
+          `http://localhost:5001/api/vendor/orders/handover`,
+          {
+            productId: item.productId,
+            orderNumber: item.orderNumber
           },
           { headers: { Authorization: `Bearer ${token}` } }
         )
       );
 
       await Promise.all(handoverPromises);
-      
+
       // Store handed over orders in localStorage for Orders page
       const handedOverOrders = JSON.parse(localStorage.getItem('handedOverOrders') || '[]');
       const newHandedOverOrders = [
@@ -362,13 +362,13 @@ const Pickup: React.FC = () => {
       if (!payoutTracked) {
         toast.warning('Order handed over but payout tracking failed');
       }
-      
+
       toast.success('Order group handed over to delivery successfully!');
-      
+
       // Navigate to PastOrders page with the order number as a query parameter
       // This will automatically open the past orders page after handover
       window.location.href = `/past-orders?orderNumber=${groupedOrder.orderNumber}`;
-        
+
     } catch (err) {
       console.error('Error handing over order group', err);
       toast.error('Failed to hand over the order group');
@@ -381,17 +381,17 @@ const Pickup: React.FC = () => {
       const handedOverOrders = JSON.parse(localStorage.getItem('handedOverOrders') || '[]');
       const oneDayAgo = new Date();
       oneDayAgo.setDate(oneDayAgo.getDate() - 1);
-      
-      const recentHandedOverOrders = handedOverOrders.filter((order: any) => 
+
+      const recentHandedOverOrders = handedOverOrders.filter((order: any) =>
         new Date(order.handedOverAt) > oneDayAgo
       );
-      
+
       localStorage.setItem('handedOverOrders', JSON.stringify(recentHandedOverOrders));
     };
 
     // Clean up old handed over orders every hour
     const cleanupInterval = setInterval(cleanupHandedOverOrders, 3600000);
-    
+
     return () => clearInterval(cleanupInterval);
   }, []);
 
@@ -408,7 +408,7 @@ const Pickup: React.FC = () => {
 
       {/* Enhanced Notification Popup */}
       {showNotification && (
-        <div 
+        <div
           onClick={handleNotificationClick}
           className="fixed top-6 right-6 z-50 cursor-pointer transform transition-all duration-300 hover:scale-105"
           style={{
@@ -445,7 +445,7 @@ const Pickup: React.FC = () => {
               </h1>
               <p className="text-gray-600">Orders ready for delivery pickup</p>
             </div>
-            
+
             <div className="flex items-center gap-6">
               {/* Order Count Badge */}
               <div className="flex items-center gap-4">
@@ -458,7 +458,7 @@ const Pickup: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-lg">
                   <Clock className="w-5 h-5 text-blue-600" />
                   <span className="text-sm font-medium text-blue-800">Auto-refresh: ON</span>
@@ -505,12 +505,12 @@ const Pickup: React.FC = () => {
             <div className="p-8">
               <div className="space-y-8">
                 {groupedOrders.map((group, idx) => (
-                  <div 
-                    key={group.orderNumber} 
+                  <div
+                    key={group.orderNumber}
                     className="relative overflow-hidden rounded-2xl border-2 border-gray-200 transition-all duration-300 hover:shadow-2xl hover:border-blue-300 transform hover:-translate-y-1"
-                    style={{ 
-                      background: group.handoverStatus === 'handedOver' 
-                        ? 'linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)' 
+                    style={{
+                      background: group.handoverStatus === 'handedOver'
+                        ? 'linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)'
                         : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
                     }}
                   >
@@ -537,7 +537,7 @@ const Pickup: React.FC = () => {
                                 </p>
                               </div>
                             </div>
-                            
+
                             {/* Status Badge */}
                             {group.handoverStatus === 'handedOver' ? (
                               <span className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white text-sm font-bold rounded-full flex items-center gap-2">
@@ -560,7 +560,7 @@ const Pickup: React.FC = () => {
                                 <p className="font-bold text-gray-800 text-lg">{group.customerName}</p>
                               </div>
                             </div>
-                            
+
                             {group.customerPhone && (
                               <div className="flex items-center gap-3 p-4 bg-white bg-opacity-60 rounded-xl">
                                 <Phone className="w-6 h-6 text-green-600" />
@@ -610,11 +610,11 @@ const Pickup: React.FC = () => {
                             Order Items ({group.items.length})
                           </h4>
                         </div>
-                        
+
                         <div className="divide-y divide-gray-100">
                           {group.items.map((item, itemIdx) => (
-                            <div 
-                              key={item.productId} 
+                            <div
+                              key={item.productId}
                               className="flex justify-between items-center p-6 hover:bg-gray-50 transition-colors duration-200"
                             >
                               <div className="flex items-center gap-4">
@@ -626,14 +626,13 @@ const Pickup: React.FC = () => {
                                   <p className="text-gray-600">₹{item.price} each</p>
                                 </div>
                               </div>
-                              
+
                               <div className="text-right">
                                 <p className="font-bold text-xl text-gray-800">₹{(item.price * item.quantity).toFixed(2)}</p>
-                                <span className={`inline-flex px-3 py-1 rounded-full text-xs font-bold ${
-                                  item.handoverStatus === 'handedOver' 
-                                    ? 'bg-green-100 text-green-800' 
+                                <span className={`inline-flex px-3 py-1 rounded-full text-xs font-bold ${item.handoverStatus === 'handedOver'
+                                    ? 'bg-green-100 text-green-800'
                                     : 'bg-orange-100 text-orange-800'
-                                }`}>
+                                  }`}>
                                   {item.handoverStatus === 'handedOver' ? 'HANDED OVER' : 'READY'}
                                 </span>
                               </div>

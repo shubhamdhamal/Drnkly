@@ -4,6 +4,7 @@ import { Package, ShoppingBag, TrendingUp, IndianRupeeIcon, CheckCircle, Tag, Pl
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { jwtDecode } from 'jwt-decode';
+import { API_BASE_URL } from '../config';
 
 
 interface DecodedToken {
@@ -40,90 +41,90 @@ const Dashboard: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [alcoholProducts, setAlcoholProducts] = useState<Product[]>([]);
   const [offers, setOffers] = useState<Offer[]>([
-    { 
-      id: '1', 
-      title: 'Weekend Special', 
+    {
+      id: '1',
+      title: 'Weekend Special',
       description: '10% off on all premium whiskeys',
       discountPercentage: 10,
       isActive: true,
       appliedToProducts: [],
       couponCode: 'WEEKEND10'
     },
-    { 
-      id: '2', 
-      title: 'Happy Hour', 
+    {
+      id: '2',
+      title: 'Happy Hour',
       description: '15% off on beer between 5-7 PM',
       discountPercentage: 15,
       isActive: false,
       appliedToProducts: [],
       couponCode: 'HAPPY15'
     },
-    { 
-      id: '3', 
-      title: 'Buy 2 Get 1', 
+    {
+      id: '3',
+      title: 'Buy 2 Get 1',
       description: 'Special deal on wine purchases',
       discountPercentage: 33,
       isActive: false,
       appliedToProducts: [],
       couponCode: 'WINE2GET1'
     },
-    { 
-      id: '4', 
-      title: 'First-Time Discount', 
+    {
+      id: '4',
+      title: 'First-Time Discount',
       description: '5% off on first order',
       discountPercentage: 5,
       isActive: true,
       appliedToProducts: [],
       couponCode: 'FIRST5'
     },
-    { 
-      id: '5', 
-      title: 'Bulk Purchase', 
+    {
+      id: '5',
+      title: 'Bulk Purchase',
       description: '20% off on orders above ₹2000',
       discountPercentage: 20,
       isActive: false,
       appliedToProducts: [],
       couponCode: 'BULK20'
     },
-    { 
-      id: '6', 
-      title: 'Festive Offer', 
+    {
+      id: '6',
+      title: 'Festive Offer',
       description: 'Special discounts for the holiday season',
       discountPercentage: 12,
       isActive: true,
       appliedToProducts: [],
       couponCode: 'FESTIVAL12'
     },
-    { 
-      id: '7', 
-      title: 'Clearance Sale', 
+    {
+      id: '7',
+      title: 'Clearance Sale',
       description: 'Discounts on selected items to clear inventory',
       discountPercentage: 25,
       isActive: false,
       appliedToProducts: [],
       couponCode: 'CLEAR25'
     },
-    { 
-      id: '8', 
-      title: 'Member Discount', 
+    {
+      id: '8',
+      title: 'Member Discount',
       description: 'Special pricing for loyalty members',
       discountPercentage: 8,
       isActive: true,
       appliedToProducts: [],
       couponCode: 'MEMBER8'
     },
-    { 
-      id: '9', 
-      title: 'New Year Offer', 
+    {
+      id: '9',
+      title: 'New Year Offer',
       description: '15% off to celebrate the new year',
       discountPercentage: 15,
       isActive: false,
       appliedToProducts: [],
       couponCode: 'NEWYEAR15'
     },
-    { 
-      id: '10', 
-      title: 'Premium Selection', 
+    {
+      id: '10',
+      title: 'Premium Selection',
       description: '10% off on premium spirits',
       discountPercentage: 10,
       isActive: true,
@@ -134,6 +135,8 @@ const Dashboard: React.FC = () => {
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [showOfferModal, setShowOfferModal] = useState(false);
+  const [loadingStats, setLoadingStats] = useState(false);
+  const [statsError, setStatsError] = useState<string | null>(null);
 
   // Fetch the products for the logged-in vendor
   useEffect(() => {
@@ -141,18 +144,18 @@ const Dashboard: React.FC = () => {
       try {
         const token = localStorage.getItem('authToken');
         if (token) {
-          const response = await axios.get('https://vendor.peghouse.in/api/vendor/products', {
+          const response = await axios.get(`${API_BASE_URL}/api/vendor/products`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           });
-          
+
           const allProducts = response.data.products || [];
           setProducts(allProducts);
-          
+
           // Filter only alcohol products
-          const alcoholOnly = allProducts.filter((product: Product) => 
-            product.category.toLowerCase() === 'drinks' || 
+          const alcoholOnly = allProducts.filter((product: Product) =>
+            product.category.toLowerCase() === 'drinks' ||
             product.alcoholContent > 0
           );
           setAlcoholProducts(alcoholOnly);
@@ -169,9 +172,9 @@ const Dashboard: React.FC = () => {
 
   // Function to toggle product selection
   const toggleProductSelection = (productId: string) => {
-    setSelectedProducts(prev => 
-      prev.includes(productId) 
-        ? prev.filter(id => id !== productId) 
+    setSelectedProducts(prev =>
+      prev.includes(productId)
+        ? prev.filter(id => id !== productId)
         : [...prev, productId]
     );
   };
@@ -181,17 +184,17 @@ const Dashboard: React.FC = () => {
     if (!selectedOffer) return;
 
     // If no products are selected, select all alcohol products
-    const productsToApply = selectedProducts.length > 0 
-      ? selectedProducts 
+    const productsToApply = selectedProducts.length > 0
+      ? selectedProducts
       : alcoholProducts.map(p => p._id);
 
     // Update the offer with selected products and set isActive to true
-    const updatedOffers = offers.map(offer => 
-      offer.id === selectedOffer.id 
-        ? { ...offer, appliedToProducts: productsToApply, isActive: true } 
+    const updatedOffers = offers.map(offer =>
+      offer.id === selectedOffer.id
+        ? { ...offer, appliedToProducts: productsToApply, isActive: true }
         : offer
     );
-    
+
     setOffers(updatedOffers);
     toast.success(`${selectedOffer.title} activated and applied to ${productsToApply.length} products`);
     setShowOfferModal(false);
@@ -218,7 +221,7 @@ const Dashboard: React.FC = () => {
       appliedToProducts: [],
       couponCode: randomCode
     };
-    
+
     setOffers(prev => [...prev, newOffer]);
     openOfferModal(newOffer);
   };
@@ -228,103 +231,109 @@ const Dashboard: React.FC = () => {
     .sort((a, b) => b.price - a.price)
     .slice(0, 5);
 
-useEffect(() => {
-  const fetchStats = async () => {
-    try {
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        console.error('❌ No token found');
-        toast.error('Authentication error. Please log in again.');
-        return;
+  useEffect(() => {
+    const fetchStats = async () => {
+      setLoadingStats(true);
+      setStatsError(null);
+      try {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+          setStatsError('Authentication error. Please log in again.');
+          toast.error('Authentication error. Please log in again.');
+          setLoadingStats(false);
+          return;
+        }
+
+        const decoded = jwtDecode<DecodedToken>(token);
+        const vendorId = decoded.vendorId;
+
+        if (!vendorId) {
+          setStatsError('Invalid token. Please log in again.');
+          toast.error('Invalid token. Please log in again.');
+          setLoadingStats(false);
+          return;
+        }
+
+        const res = await axios.get(`${API_BASE_URL}/api/vendor-stats?vendorId=${vendorId}`);
+
+        const { activeOrders, totalProducts, completedOrders, totalSales } = res.data;
+
+        setStats(prevStats =>
+          prevStats.map(stat => {
+            switch (stat.title) {
+              case 'Active Orders':
+                return { ...stat, value: `${activeOrders}` };
+              case 'Products':
+                return { ...stat, value: `${totalProducts}` };
+              case 'Completed Orders':
+                return { ...stat, value: `${completedOrders}` };
+              case 'Total Sales':
+                return { ...stat, value: `₹${totalSales.toLocaleString()}` };
+              default:
+                return stat;
+            }
+          })
+        );
+        setLoadingStats(false);
+      } catch (err) {
+        setStatsError('Failed to load dashboard statistics');
+        toast.error('Failed to load dashboard statistics');
+        setLoadingStats(false);
       }
+    };
 
-      const decoded = jwtDecode<DecodedToken>(token);
-      const vendorId = decoded.vendorId;
+    fetchStats();
+  }, []);
 
-      if (!vendorId) {
-        console.error('❌ vendorId not found in token');
-        toast.error('Invalid token. Please log in again.');
-        return;
-      }
 
-      const res = await axios.get(`https://vendor.peghouse.in/api/vendor-stats?vendorId=${vendorId}`);
 
-      const { activeOrders, totalProducts, completedOrders, totalSales } = res.data;
-
-      setStats(prevStats =>
-        prevStats.map(stat => {
-          switch (stat.title) {
-            case 'Active Orders':
-              return { ...stat, value: `${activeOrders}` };
-            case 'Products':
-              return { ...stat, value: `${totalProducts}` };
-            case 'Completed Orders':
-              return { ...stat, value: `${completedOrders}` };
-            case 'Total Sales':
-              return { ...stat, value: `₹${totalSales.toLocaleString()}` };
-            default:
-              return stat;
-          }
-        })
-      );
-    } catch (err) {
-      console.error('❌ Failed to load vendor stats', err);
-      toast.error('Failed to load dashboard statistics');
+  const [stats, setStats] = useState([
+    {
+      title: 'Active Orders',
+      value: '0',
+      icon: ShoppingBag,
+      changeType: 'positive',
+      description: 'Need your attention',
+      path: '/orders',
+      bgGradient: 'from-blue-50 to-blue-100',
+      iconColor: 'text-blue-600',
+      badgeColor: 'bg-blue-100 text-blue-700',
+    },
+    {
+      title: 'Products',
+      value: '0',
+      icon: Package,
+      changeType: 'neutral',
+      description: 'total in inventory',
+      path: '/products',
+      searchQuery: 'Old Monk Rum Free',
+      bgGradient: 'from-green-50 to-green-100',
+      iconColor: 'text-green-600',
+      badgeColor: 'bg-green-100 text-green-700',
+    },
+    {
+      title: 'Completed Orders',
+      value: '0',
+      icon: CheckCircle,
+      changeType: 'positive',
+      description: 'this month',
+      path: '/orders',
+      bgGradient: 'from-purple-50 to-purple-100',
+      iconColor: 'text-purple-600',
+      badgeColor: 'bg-purple-100 text-purple-700',
+    },
+    {
+      title: 'Total Sales',
+      value: '₹0',
+      icon: IndianRupeeIcon,
+      changeType: 'positive',
+      description: 'vs. last month',
+      path: '/payouts',
+      bgGradient: 'from-amber-50 to-amber-100',
+      iconColor: 'text-amber-600',
+      badgeColor: 'bg-amber-100 text-amber-700',
     }
-  };
-
-  fetchStats();
-}, []);
-
-
-
-const [stats, setStats] = useState([
-  {
-    title: 'Active Orders',
-    value: '0',
-    icon: ShoppingBag,
-    changeType: 'positive',
-    description: 'Need your attention',
-    path: '/orders',
-    bgGradient: 'from-blue-50 to-blue-100',
-    iconColor: 'text-blue-600',
-    badgeColor: 'bg-blue-100 text-blue-700',
-  },
-  {
-    title: 'Products',
-    value: '0',
-    icon: Package,
-    changeType: 'neutral',
-    description: 'total in inventory',
-    path: '/products',
-    searchQuery: 'Old Monk Rum Free',
-    bgGradient: 'from-green-50 to-green-100',
-    iconColor: 'text-green-600',
-    badgeColor: 'bg-green-100 text-green-700',
-  },
-  {
-    title: 'Completed Orders',
-    value: '0',
-    icon: CheckCircle,
-    changeType: 'positive',
-    description: 'this month',
-    path: '/orders',
-    bgGradient: 'from-purple-50 to-purple-100',
-    iconColor: 'text-purple-600',
-    badgeColor: 'bg-purple-100 text-purple-700',
-  },
-  {
-    title: 'Total Sales',
-    value: '₹0',
-    icon: IndianRupeeIcon,
-    changeType: 'positive',
-    description: 'vs. last month',
-    path: '/payouts',
-    bgGradient: 'from-amber-50 to-amber-100',
-    iconColor: 'text-amber-600',
-    badgeColor: 'bg-amber-100 text-amber-700',
-  }
-]);
+  ]);
 
 
   return (
@@ -342,65 +351,76 @@ const [stats, setStats] = useState([
           </select>
         </div>
       </div>
-      
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <div 
-              key={index} 
-              className={`bg-white rounded-xl p-5 md:p-6 shadow-lg border border-gray-100 
+        {loadingStats ? (
+          <div className="col-span-4 flex justify-center items-center min-h-[120px]">
+            <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+            </svg>
+          </div>
+        ) : statsError ? (
+          <div className="col-span-4 text-center text-red-500 font-semibold min-h-[120px]">{statsError}</div>
+        ) : (
+          stats.map((stat, index) => {
+            const Icon = stat.icon;
+            return (
+              <div
+                key={index}
+                className={`bg-white rounded-xl p-5 md:p-6 shadow-lg border border-gray-100 
                 hover:shadow-xl transition-all duration-300 transform hover:translate-y-[-5px] 
                 overflow-hidden relative ${stat.path ? 'cursor-pointer' : ''}`}
-              onClick={() => {
-                if (stat.title === 'Completed Orders') {
-                  localStorage.setItem('showPastOrders', 'true');
-                  navigate('/orders');
-                } else if (stat.title === 'Total Sales') {
-                  navigate('/payouts');
-                } else if (stat.path) {
-                  if (stat.searchQuery) {
-                    localStorage.setItem('productSearchQuery', stat.searchQuery);
+                onClick={() => {
+                  if (stat.title === 'Completed Orders') {
+                    localStorage.setItem('showPastOrders', 'true');
+                    navigate('/orders');
+                  } else if (stat.title === 'Total Sales') {
+                    navigate('/payouts');
+                  } else if (stat.path) {
+                    if (stat.searchQuery) {
+                      localStorage.setItem('productSearchQuery', stat.searchQuery);
+                    }
+                    navigate(stat.path);
                   }
-                  navigate(stat.path);
-                }
-              }}
-            >
-              {/* Background gradient */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${stat.bgGradient} opacity-40`}></div>
-              
-              <div className="relative z-10">
-              <div className="flex items-center justify-between">
-                  <div className={`bg-white p-3 rounded-lg shadow-sm border border-gray-100`}>
-                    <Icon className={`w-7 h-7 ${stat.iconColor}`} />
+                }}
+              >
+                {/* Background gradient */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${stat.bgGradient} opacity-40`}></div>
+
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between">
+                    <div className={`bg-white p-3 rounded-lg shadow-sm border border-gray-100`}>
+                      <Icon className={`w-7 h-7 ${stat.iconColor}`} />
+                    </div>
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs md:text-sm font-medium ${stat.badgeColor}`}>
+                      {stat.changeType === 'positive' && '+3.2%'}
+                      {stat.changeType === 'negative' && '-1.4%'}
+                      {stat.changeType === 'neutral' && 'Current'}
+                    </span>
+                  </div>
+                  <div className="mt-4">
+                    <h3 className="text-sm font-medium text-gray-600">{stat.title}</h3>
+                    <p className="text-2xl md:text-3xl font-bold text-gray-900 mt-1">{stat.value}</p>
+                    <p className="text-xs md:text-sm text-gray-500 mt-2">{stat.description}</p>
+                  </div>
+
+                  {/* Action indicator */}
+                  <div className="mt-4 flex items-center text-sm font-medium text-blue-600">
+                    <span>View Details</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
                 </div>
-                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs md:text-sm font-medium ${stat.badgeColor}`}>
-                  {stat.changeType === 'positive' && '+3.2%'}
-                  {stat.changeType === 'negative' && '-1.4%'}
-                    {stat.changeType === 'neutral' && 'Current'}
-                </span>
+
+                {/* Decorative elements */}
+                <div className="absolute top-0 right-0 h-20 w-20 bg-gradient-to-bl from-white to-transparent opacity-60 transform rotate-45"></div>
+                <div className="absolute bottom-0 left-0 h-16 w-16 bg-gradient-to-tr from-white to-transparent opacity-60 transform -rotate-45"></div>
               </div>
-              <div className="mt-4">
-                <h3 className="text-sm font-medium text-gray-600">{stat.title}</h3>
-                  <p className="text-2xl md:text-3xl font-bold text-gray-900 mt-1">{stat.value}</p>
-                  <p className="text-xs md:text-sm text-gray-500 mt-2">{stat.description}</p>
-                </div>
-                
-                {/* Action indicator */}
-                <div className="mt-4 flex items-center text-sm font-medium text-blue-600">
-                  <span>View Details</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </div>
-              
-              {/* Decorative elements */}
-              <div className="absolute top-0 right-0 h-20 w-20 bg-gradient-to-bl from-white to-transparent opacity-60 transform rotate-45"></div>
-              <div className="absolute bottom-0 left-0 h-16 w-16 bg-gradient-to-tr from-white to-transparent opacity-60 transform -rotate-45"></div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
@@ -411,7 +431,7 @@ const [stats, setStats] = useState([
               <h2 className="text-lg font-semibold text-gray-800">Active Offers</h2>
               <p className="text-sm text-gray-600 mt-1">Current available offers</p>
             </div>
-            <button 
+            <button
               onClick={createNewOffer}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-1 hover:bg-blue-700 transition-colors shadow-sm"
             >
@@ -438,7 +458,7 @@ const [stats, setStats] = useState([
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="font-semibold text-green-700 bg-green-50 px-3 py-1 rounded-full text-sm">{offer.discountPercentage}% off</span>
-                      <button 
+                      <button
                         onClick={() => openOfferModal(offer)}
                         className="bg-white hover:bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm transition-colors border border-gray-200 shadow-sm hover:shadow"
                       >
@@ -448,7 +468,7 @@ const [stats, setStats] = useState([
                   </div>
                 </div>
               ))}
-            
+
             {offers.filter(offer => offer.isActive).length === 0 && (
               <div className="p-8 text-center text-gray-500">
                 <AlertTriangle className="w-8 h-8 mx-auto mb-3 text-gray-400" />
@@ -481,7 +501,7 @@ const [stats, setStats] = useState([
                       <span className="font-semibold text-blue-700 bg-blue-50 px-3 py-1 rounded-full text-sm">{offer.discountPercentage}% off</span>
                     </div>
                     <p className="text-sm text-gray-600 ml-11">{offer.description}</p>
-                    
+
                     <div className="mt-3 ml-11 pt-3 border-t border-gray-100">
                       <p className="text-sm font-medium mb-3">Applied to {offer.appliedToProducts.length} products:</p>
                       <div className="flex flex-wrap gap-2 mb-4">
@@ -491,7 +511,7 @@ const [stats, setStats] = useState([
                           .map(product => (
                             <div key={product._id} className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-100">
                               <div className="w-8 h-8 bg-white rounded-md overflow-hidden shadow-sm">
-                                <img 
+                                <img
                                   src={product.image || `https://via.placeholder.com/50?text=${product.name}`}
                                   alt={product.name}
                                   className="w-full h-full object-contain"
@@ -508,7 +528,7 @@ const [stats, setStats] = useState([
                         )}
                       </div>
                       <div className="flex gap-3">
-                        <button 
+                        <button
                           onClick={() => openOfferModal(offer)}
                           className="bg-blue-50 text-blue-700 hover:bg-blue-100 px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 border border-blue-200 shadow-sm hover:shadow"
                         >
@@ -518,10 +538,10 @@ const [stats, setStats] = useState([
                           </svg>
                           Edit
                         </button>
-                        <button 
+                        <button
                           onClick={() => {
-                            const updatedOffers = offers.map(o => 
-                              o.id === offer.id ? {...o, appliedToProducts: []} : o
+                            const updatedOffers = offers.map(o =>
+                              o.id === offer.id ? { ...o, appliedToProducts: [] } : o
                             );
                             setOffers(updatedOffers);
                             toast.success(`${offer.title} removed from all products`);
@@ -540,12 +560,12 @@ const [stats, setStats] = useState([
                   </div>
                 </div>
               ))}
-              
+
             {!offers.some(offer => offer.isActive && offer.appliedToProducts.length > 0) && (
               <div className="p-8 text-center text-gray-500">
                 <AlertTriangle className="w-8 h-8 mx-auto mb-3 text-gray-400" />
                 <p className="font-medium">You haven't applied any offers to your products yet</p>
-                <button 
+                <button
                   onClick={createNewOffer}
                   className="mt-3 text-blue-600 hover:text-blue-800 text-sm font-medium bg-blue-50 px-4 py-2 rounded-lg border border-blue-100 hover:bg-blue-100 transition-colors"
                 >
@@ -576,7 +596,7 @@ const [stats, setStats] = useState([
                         <p className="font-medium text-gray-800">{offer.title}</p>
                       </div>
                       <p className="text-sm text-gray-600 mt-2 ml-11">{offer.description}</p>
-                      
+
                       {/* Display coupon code */}
                       {offer.couponCode && (
                         <div className="mt-2 ml-11">
@@ -588,20 +608,20 @@ const [stats, setStats] = useState([
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="font-medium text-gray-600 bg-gray-100 px-3 py-1 rounded-full text-sm">{offer.discountPercentage}% off</span>
-                      <button 
+                      <button
                         onClick={() => {
                           // Pre-select all alcohol products for this offer and directly apply it
                           setSelectedOffer(offer);
                           const allProductIds = alcoholProducts.map(p => p._id);
                           setSelectedProducts(allProductIds);
-                          
+
                           // Create updated offer with these products and active status
-                          const updatedOffers = offers.map(o => 
-                            o.id === offer.id 
-                              ? { ...o, appliedToProducts: allProductIds, isActive: true } 
+                          const updatedOffers = offers.map(o =>
+                            o.id === offer.id
+                              ? { ...o, appliedToProducts: allProductIds, isActive: true }
                               : o
                           );
-                          
+
                           setOffers(updatedOffers);
                           toast.success(`${offer.title} activated and applied to all ${allProductIds.length} products`);
                         }}
@@ -633,7 +653,7 @@ const [stats, setStats] = useState([
               <h3 className="font-semibold text-lg">
                 {selectedOffer.isActive ? 'Edit Offer' : 'New Offer'}
               </h3>
-              <button 
+              <button
                 onClick={() => {
                   setShowOfferModal(false);
                   setSelectedOffer(null);
@@ -644,64 +664,64 @@ const [stats, setStats] = useState([
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <div className="p-4 border-b">
               <div className="space-y-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Offer Title</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={selectedOffer.title}
-                    onChange={(e) => setSelectedOffer({...selectedOffer, title: e.target.value})}
+                    onChange={(e) => setSelectedOffer({ ...selectedOffer, title: e.target.value })}
                     className="w-full px-3 py-2 border rounded-lg"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={selectedOffer.description}
-                    onChange={(e) => setSelectedOffer({...selectedOffer, description: e.target.value})}
+                    onChange={(e) => setSelectedOffer({ ...selectedOffer, description: e.target.value })}
                     className="w-full px-3 py-2 border rounded-lg"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Discount Percentage</label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     min="1"
                     max="99"
                     value={selectedOffer.discountPercentage}
-                    onChange={(e) => setSelectedOffer({...selectedOffer, discountPercentage: parseInt(e.target.value) || 0})}
+                    onChange={(e) => setSelectedOffer({ ...selectedOffer, discountPercentage: parseInt(e.target.value) || 0 })}
                     className="w-full px-3 py-2 border rounded-lg"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Coupon Code</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={selectedOffer.couponCode || ''}
-                    onChange={(e) => setSelectedOffer({...selectedOffer, couponCode: e.target.value})}
+                    onChange={(e) => setSelectedOffer({ ...selectedOffer, couponCode: e.target.value })}
                     className="w-full px-3 py-2 border rounded-lg uppercase"
                     placeholder="e.g. SUMMER20"
                   />
                 </div>
               </div>
             </div>
-            
+
             <div className="p-4 flex-1 overflow-y-auto">
               <h4 className="font-medium mb-2">Select Products for this Offer</h4>
-              
+
               <div className="flex items-center justify-between mb-4">
                 <p className="text-sm text-gray-600">{selectedProducts.length} of {alcoholProducts.length} products selected</p>
                 <div className="flex items-center gap-2">
-                  <button 
+                  <button
                     onClick={() => setSelectedProducts(alcoholProducts.map(p => p._id))}
                     className="text-xs text-blue-600 hover:text-blue-800"
                   >
                     Select All
                   </button>
-                  <button 
+                  <button
                     onClick={() => setSelectedProducts([])}
                     className="text-xs text-red-600 hover:text-red-800"
                   >
@@ -709,17 +729,16 @@ const [stats, setStats] = useState([
                   </button>
                 </div>
               </div>
-              
+
               <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
                 {alcoholProducts.map(product => (
-                  <div 
+                  <div
                     key={product._id}
                     onClick={() => toggleProductSelection(product._id)}
-                    className={`flex items-center p-3 rounded-lg border transition-colors cursor-pointer ${
-                      selectedProducts.includes(product._id) 
-                        ? 'bg-blue-50 border-blue-300' 
-                        : 'bg-white border-gray-200 hover:border-gray-300'
-                    }`}
+                    className={`flex items-center p-3 rounded-lg border transition-colors cursor-pointer ${selectedProducts.includes(product._id)
+                      ? 'bg-blue-50 border-blue-300'
+                      : 'bg-white border-gray-200 hover:border-gray-300'
+                      }`}
                   >
                     <div className="mr-3">
                       {selectedProducts.includes(product._id) ? (
@@ -730,7 +749,7 @@ const [stats, setStats] = useState([
                     </div>
                     <div className="flex items-center flex-1 gap-3">
                       <div className="w-12 h-12 bg-gray-100 rounded overflow-hidden">
-                        <img 
+                        <img
                           src={product.image || `https://via.placeholder.com/100?text=${product.name}`}
                           alt={product.name}
                           className="w-full h-full object-contain"
@@ -744,14 +763,14 @@ const [stats, setStats] = useState([
                         <p className="font-semibold">₹{product.price}</p>
                         {selectedOffer.discountPercentage > 0 && (
                           <p className="text-xs text-green-600">
-                            ₹{Math.round(product.price * (1 - selectedOffer.discountPercentage/100))} after discount
+                            ₹{Math.round(product.price * (1 - selectedOffer.discountPercentage / 100))} after discount
                           </p>
                         )}
                       </div>
                     </div>
                   </div>
                 ))}
-                
+
                 {alcoholProducts.length === 0 && (
                   <div className="p-4 text-center text-gray-500 border border-dashed rounded-lg">
                     <AlertTriangle className="w-5 h-5 mx-auto mb-2" />
@@ -760,9 +779,9 @@ const [stats, setStats] = useState([
                 )}
               </div>
             </div>
-            
+
             <div className="p-4 border-t bg-gray-50 flex justify-end gap-3 sticky bottom-0">
-              <button 
+              <button
                 onClick={() => {
                   setShowOfferModal(false);
                   setSelectedOffer(null);
@@ -772,14 +791,13 @@ const [stats, setStats] = useState([
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={applyOfferToProducts}
                 disabled={selectedProducts.length === 0}
-                className={`px-4 py-2 rounded-lg text-white ${
-                  selectedProducts.length > 0 
-                    ? 'bg-blue-600 hover:bg-blue-700' 
-                    : 'bg-gray-400 cursor-not-allowed'
-                } transition-colors`}
+                className={`px-4 py-2 rounded-lg text-white ${selectedProducts.length > 0
+                  ? 'bg-blue-600 hover:bg-blue-700'
+                  : 'bg-gray-400 cursor-not-allowed'
+                  } transition-colors`}
               >
                 Apply Offer
               </button>

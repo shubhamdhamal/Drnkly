@@ -55,7 +55,7 @@ const Registration: React.FC = () => {
     if (!vendorId) return;
     const fetchStatus = async () => {
       try {
-        const res = await axios.get(`https://vendor.peghouse.in/api/vendor/status/${vendorId}`);
+        const res = await axios.get(`http://localhost:5001/api/vendor/status/${vendorId}`);
         setVerificationStatus(res.data.verificationStatus);
       } catch (err) {
         console.error('Error fetching vendor status:', err);
@@ -107,23 +107,23 @@ const Registration: React.FC = () => {
     try {
       setResendDisabled(true);
       setCountdown(60); // 60 seconds countdown
-      
+
       // Show loading state
       setOtpError('Sending OTP...');
-      
+
       // Send OTP to the user's email
-      const response = await axios.post('https://vendor.peghouse.in/api/vendor/send-otp', {
+      const response = await axios.post('http://localhost:5001/api/vendor/send-otp', {
         email: businessEmail
       });
-      
+
       setOtpSent(true);
       setOtpError('');
-      
+
       // Show success message
       alert(`OTP has been sent to ${businessEmail}. Please check your inbox and spam folder.`);
     } catch (error: any) {
       console.error('Failed to send OTP:', error);
-      
+
       // Provide specific error messages based on response
       if (error.response) {
         if (error.response.status === 404) {
@@ -139,7 +139,7 @@ const Registration: React.FC = () => {
       } else {
         setOtpError('Failed to send OTP. Please try again.');
       }
-      
+
       setResendDisabled(false);
     }
   };
@@ -147,18 +147,18 @@ const Registration: React.FC = () => {
   const verifyOtp = async () => {
     try {
       setOtpError('Verifying OTP...');
-      
-      const response = await axios.post('https://vendor.peghouse.in/api/vendor/verify-otp', {
+
+      const response = await axios.post('http://localhost:5001/api/vendor/verify-otp', {
         email: businessEmail,
         otp: otp
       });
-      
+
       // If OTP verification is successful, proceed with registration
       setOtpError('');
       return true;
     } catch (error: any) {
       console.error('OTP verification failed:', error);
-      
+
       // Provide specific error messages based on response
       if (error.response) {
         if (error.response.status === 404) {
@@ -174,14 +174,14 @@ const Registration: React.FC = () => {
       } else {
         setOtpError('Invalid OTP. Please try again.');
       }
-      
+
       return false;
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
+
     if (step === 1) {
       if (!businessName || !businessEmail || !businessPhone || !password) {
         setErrors((prev: any) => ({
@@ -197,7 +197,7 @@ const Registration: React.FC = () => {
         }));
         return;
       }
-      
+
       if (!isPasswordValid()) {
         setErrors((prev: any) => ({
           ...prev,
@@ -205,12 +205,12 @@ const Registration: React.FC = () => {
         }));
         return;
       }
-  
+
       setErrors({});
       setStep(step + 1);
       return;
     }
-  
+
     if (step === 2) {
       if (!uploadedFiles.license) {
         setErrors((prev: any) => ({
@@ -219,7 +219,7 @@ const Registration: React.FC = () => {
         }));
         return;
       }
-    
+
       // Double-check that the uploaded license is a valid File object
       if (!(uploadedFiles.license instanceof File)) {
         setErrors((prev: any) => ({
@@ -228,12 +228,12 @@ const Registration: React.FC = () => {
         }));
         return;
       }
-    
+
       setErrors({});
       setStep(3);
       return;
     }
-  
+
     if (step === 3) {
       if (!location.addressLine1 || !location.city || !location.state || !location.postalCode) {
         setErrors((prev: any) => ({
@@ -246,19 +246,19 @@ const Registration: React.FC = () => {
       setStep(step + 1);
       return;
     }
-  
+
     if (step === 4) {
       // Move to Step 5 without API call yet
       setStep(5);
       return;
     }
-  
+
     if (step === 5) {
       // Move to verification method selection
       setStep(6);
       return;
     }
-  
+
     if (step === 6) {
       if (verificationMethod === 'otp') {
         // Send OTP and move to OTP verification step
@@ -286,34 +286,34 @@ const Registration: React.FC = () => {
       submitRegistration();
     }
   };
-  
+
   const submitRegistration = async () => {
     try {
-  const registrationData = {
-    businessName,
-    businessEmail,
-    businessPhone,
-    password,
-    location,
-    productCategories: selectedCategories,
+      const registrationData = {
+        businessName,
+        businessEmail,
+        businessPhone,
+        password,
+        location,
+        productCategories: selectedCategories,
         verificationMethod
-  };
+      };
 
-    const res = await axios.post('https://vendor.peghouse.in/api/vendor/register', registrationData);
-    setVendorId(res.data.vendorId);
-    setVerificationStatus('pending');
-    
+      const res = await axios.post('http://localhost:5001/api/vendor/register', registrationData);
+      setVendorId(res.data.vendorId);
+      setVerificationStatus('pending');
+
       if (verificationMethod === 'admin') {
         // Show admin approval waiting screen
         setStep(8);
       } else {
         // OTP verified, go to login
-    navigate('/login');
+        navigate('/login');
       }
-  } catch (error: any) {
-    console.error('❌ Registration failed:', error.response?.data || error.message);
+    } catch (error: any) {
+      console.error('❌ Registration failed:', error.response?.data || error.message);
       alert('Registration failed: ' + (error.response?.data?.error || error.message));
-}
+    }
   };
 
   const renderStep = () => {
@@ -356,7 +356,7 @@ const Registration: React.FC = () => {
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
-            
+
             <div className="mt-2 space-y-1 text-sm">
               <p className="font-medium text-gray-700">Password must contain:</p>
               <ul className="pl-4 space-y-1">
@@ -374,7 +374,7 @@ const Registration: React.FC = () => {
                 </li>
               </ul>
             </div>
-            
+
             {errors.password && <p className="text-red-500">{errors.password}</p>}
             {errors.businessInfo && <p className="text-red-500">{errors.businessInfo}</p>}
           </div>
@@ -402,28 +402,28 @@ const Registration: React.FC = () => {
             {errors.locationInfo && <p className="text-red-500">{errors.locationInfo}</p>}
           </div>
         );
-        case 4:
-          return (
-            <div className="space-y-6">
-              <h2 className="text-xl font-semibold">Product Categories</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {categories.map(category => (
-                  <div key={category} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id={`category-${category}`}
-                      checked={selectedCategories.includes(category)}
-                      onChange={() => handleCategoryToggle(category)}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                    <label htmlFor={`category-${category}`} className="ml-2 text-gray-700">
-                      {category}
-                    </label>
-                  </div>
-                ))}
-              </div>
+      case 4:
+        return (
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold">Product Categories</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {categories.map(category => (
+                <div key={category} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id={`category-${category}`}
+                    checked={selectedCategories.includes(category)}
+                    onChange={() => handleCategoryToggle(category)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor={`category-${category}`} className="ml-2 text-gray-700">
+                    {category}
+                  </label>
+                </div>
+              ))}
             </div>
-          );
+          </div>
+        );
       case 5:
         return (
           <div className="space-y-6">
@@ -434,19 +434,19 @@ const Registration: React.FC = () => {
               <p><span className="font-medium">Email:</span> {businessEmail}</p>
               <p><span className="font-medium">Phone:</span> {businessPhone}</p>
             </div>
-            
+
             <div className="bg-gray-50 p-4 rounded-lg">
               <h3 className="font-medium mb-2">Location</h3>
               <p>{location.addressLine1}</p>
               {location.addressLine2 && <p>{location.addressLine2}</p>}
               <p>{location.city}, {location.state} {location.postalCode}</p>
             </div>
-            
+
             <div className="bg-gray-50 p-4 rounded-lg">
               <h3 className="font-medium mb-2">Product Categories</h3>
               <p>{selectedCategories.join(', ') || 'None selected'}</p>
             </div>
-            
+
             <p className="text-sm text-gray-600">
               Please review your information carefully before proceeding to the next step.
             </p>
@@ -457,9 +457,9 @@ const Registration: React.FC = () => {
           <div className="space-y-6">
             <h2 className="text-xl font-semibold">Choose Verification Method</h2>
             <p className="text-gray-600">Select how you want to verify your account:</p>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-              <div 
+              <div
                 className={`border rounded-lg p-6 cursor-pointer transition-all ${verificationMethod === 'otp' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'}`}
                 onClick={() => setVerificationMethod('otp')}
               >
@@ -471,19 +471,19 @@ const Registration: React.FC = () => {
                   We'll send a one-time password to your email. Verify it to complete registration instantly.
                 </p>
                 <div className="mt-4 flex items-center">
-                  <input 
-                    type="radio" 
-                    id="otp-method" 
-                    name="verification-method" 
-                    checked={verificationMethod === 'otp'} 
+                  <input
+                    type="radio"
+                    id="otp-method"
+                    name="verification-method"
+                    checked={verificationMethod === 'otp'}
                     onChange={() => setVerificationMethod('otp')}
                     className="w-4 h-4 text-blue-600"
                   />
                   <label htmlFor="otp-method" className="ml-2 text-gray-700">Select</label>
                 </div>
               </div>
-              
-              <div 
+
+              <div
                 className={`border rounded-lg p-6 cursor-pointer transition-all ${verificationMethod === 'admin' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'}`}
                 onClick={() => setVerificationMethod('admin')}
               >
@@ -495,11 +495,11 @@ const Registration: React.FC = () => {
                   Submit your registration for admin review. You'll be notified when your account is approved.
                 </p>
                 <div className="mt-4 flex items-center">
-                  <input 
-                    type="radio" 
-                    id="admin-method" 
-                    name="verification-method" 
-                    checked={verificationMethod === 'admin'} 
+                  <input
+                    type="radio"
+                    id="admin-method"
+                    name="verification-method"
+                    checked={verificationMethod === 'admin'}
                     onChange={() => setVerificationMethod('admin')}
                     className="w-4 h-4 text-blue-600"
                   />
@@ -518,28 +518,28 @@ const Registration: React.FC = () => {
               <div>
                 <h3 className="font-medium text-blue-800">Verify your email address</h3>
                 <p className="text-sm text-blue-600 mt-1">
-                  We've sent a verification code to <span className="font-medium">{businessEmail}</span>. 
+                  We've sent a verification code to <span className="font-medium">{businessEmail}</span>.
                   Please check your inbox and enter the code below.
                 </p>
               </div>
             </div>
-            
+
             <div className="mt-4">
-              <Input 
-                label="Enter OTP" 
-                value={otp} 
+              <Input
+                label="Enter OTP"
+                value={otp}
                 onChange={(e) => {
                   const value = e.target.value.replace(/[^0-9]/g, '');
                   if (value.length <= 6) {
                     setOtp(value);
                     setOtpError('');
                   }
-                }} 
-                placeholder="6-digit code" 
+                }}
+                placeholder="6-digit code"
                 maxLength={6}
               />
               {otpError && <p className="text-red-500 mt-2">{otpError}</p>}
-              
+
               <div className="mt-4 flex justify-between items-center">
                 <button
                   type="button"
@@ -569,11 +569,11 @@ const Registration: React.FC = () => {
                 pending
               </div>
             </div>
-            
+
             <p className="text-gray-600">
               You will receive an email notification when your account is approved. Once approved, you can log in to your vendor dashboard.
             </p>
-            
+
             <div className="mt-6">
               <Button type="button" onClick={() => navigate('/login')} variant="secondary">
                 Go to Login Page
@@ -616,9 +616,9 @@ const Registration: React.FC = () => {
               )}
               <div className="flex flex-col">
                 {step !== 8 && (
-                <Button type="submit">
+                  <Button type="submit">
                     {step === 7 ? 'Verify & Register' : step === 6 ? 'Continue with ' + (verificationMethod === 'otp' ? 'OTP' : 'Admin Approval') : 'Continue'}
-</Button>
+                  </Button>
                 )}
                 {step === 6 && (
                   <p className="text-sm text-gray-600 mt-2">

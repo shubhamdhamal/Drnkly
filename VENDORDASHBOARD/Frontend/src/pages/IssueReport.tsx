@@ -44,7 +44,7 @@ function App() {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       setFile(e.dataTransfer.files[0]);
     }
@@ -73,7 +73,7 @@ function App() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!description.trim()) {
       alert('Please provide an issue description.');
       return;
@@ -95,7 +95,7 @@ function App() {
     try {
       // Simulate API call for demo purposes
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       // In real implementation, uncomment below:
       /*
       const token = localStorage.getItem('authToken');
@@ -105,7 +105,7 @@ function App() {
         return;
       }
 
-      const response = await fetch('https://vendor.peghouse.in/api/issues/report', {
+      const response = await fetch('http://localhost:5001/api/issues/report', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -121,7 +121,7 @@ function App() {
       */
 
       setSubmitStatus('success');
-      
+
       // Reset form
       setCategory('Order Issues');
       setDescription('');
@@ -184,11 +184,10 @@ function App() {
                   {categories.map((cat) => (
                     <label
                       key={cat.name}
-                      className={`relative cursor-pointer rounded-xl border-2 p-4 transition-all duration-200 hover:shadow-md ${
-                        category === cat.name
+                      className={`relative cursor-pointer rounded-xl border-2 p-4 transition-all duration-200 hover:shadow-md ${category === cat.name
                           ? `${cat.color} border-current shadow-md`
                           : 'border-gray-200 hover:border-gray-300'
-                      }`}
+                        }`}
                     >
                       <input
                         type="radio"
@@ -231,13 +230,12 @@ function App() {
                   Attach File (Optional)
                 </label>
                 <div
-                  className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 ${
-                    dragActive
+                  className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 ${dragActive
                       ? 'border-blue-400 bg-blue-50'
                       : file
-                      ? 'border-green-300 bg-green-50'
-                      : 'border-gray-300 hover:border-gray-400'
-                  }`}
+                        ? 'border-green-300 bg-green-50'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
                   onDragEnter={handleDrag}
                   onDragLeave={handleDrag}
                   onDragOver={handleDrag}
@@ -250,8 +248,8 @@ function App() {
                     onChange={handleFileChange}
                     accept="image/*,.pdf,.doc,.docx,.txt"
                   />
-                  
- {file ? (
+
+                  {file ? (
                     <div className="space-y-3">
                       <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 rounded-full">
                         <CheckCircle className="w-6 h-6 text-green-600" />
@@ -318,11 +316,10 @@ function App() {
                     return (
                       <label
                         key={level.name}
-                        className={`relative cursor-pointer rounded-xl border-2 p-4 transition-all duration-200 hover:shadow-md ${
-                          priority === level.name
+                        className={`relative cursor-pointer rounded-xl border-2 p-4 transition-all duration-200 hover:shadow-md ${priority === level.name
                             ? `${level.bgColor} border-current shadow-md`
                             : 'border-gray-200 hover:border-gray-300'
-                        }`}
+                          }`}
                       >
                         <input
                           type="radio"
@@ -409,7 +406,7 @@ function App() {
 
         {/* Footer */}
         <div className="text-center mt-8 text-sm text-gray-500">
-        
+
         </div>
       </div>
     </div>

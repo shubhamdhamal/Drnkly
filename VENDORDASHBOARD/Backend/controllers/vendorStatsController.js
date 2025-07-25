@@ -1,5 +1,5 @@
 const Order = require('../models/Order');
-const Product = require('../models/Product');
+const Product = require('../models/product');
 
 exports.getVendorStats = async (req, res) => {
   const { vendorId } = req.query;
@@ -9,7 +9,11 @@ exports.getVendorStats = async (req, res) => {
   }
 
   try {
-    // Step 1: Get all orders
+    // Step 1: Get all product IDs for this vendor
+    const vendorProducts = await Product.find({ vendorId }, '_id');
+    const vendorProductIds = new Set(vendorProducts.map(p => p._id.toString()));
+
+    // Step 2: Get all orders
     const allOrders = await Order.find();
 
     let activeOrders = 0;
@@ -18,11 +22,8 @@ exports.getVendorStats = async (req, res) => {
 
     for (const order of allOrders) {
       for (const item of order.items) {
-        const product = await Product.findById(item.productId);
-
-        if (!product || product.vendorId.toString() !== vendorId.toString()) {
-          continue;
-        }
+        if (!item.productId) continue;
+        if (!vendorProductIds.has(item.productId.toString())) continue;
 
         // ✅ Active Orders
         if (item.status === 'pending') {
@@ -37,10 +38,10 @@ exports.getVendorStats = async (req, res) => {
       }
     }
 
-    // Step 2: Get vendor's product count
-    const totalProducts = await Product.countDocuments({ vendorId });
+    // Step 3: Get vendor's product count
+    const totalProducts = vendorProducts.length;
 
-    // Step 3: Send back the stats
+    // Step 4: Send back the stats
     return res.status(200).json({
       activeOrders,
       totalProducts,

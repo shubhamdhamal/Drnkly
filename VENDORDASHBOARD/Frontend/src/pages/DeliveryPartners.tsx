@@ -16,7 +16,7 @@ const DeliveryPartners: React.FC = () => {
   useEffect(() => {
     const fetchDeliveryPartners = async () => {
       try {
-        const response = await axios.get('https://vendor.peghouse.in/api/delivery-partners', {
+        const response = await axios.get('http://localhost:5001/api/delivery-partners', {
           headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` },
         });
         setDeliveryPartners(response.data.deliveryPartners);
@@ -40,7 +40,7 @@ const DeliveryPartners: React.FC = () => {
         {/* Header with Add Delivery Partner button */}
         <div className="header-container">
           <h2 className="form-title">Delivery Partners</h2>
-          
+
         </div>
 
         {/* Display List of Registered Delivery Partners */}

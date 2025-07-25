@@ -26,7 +26,7 @@ const Navbar: React.FC = () => {
       try {
         const token = localStorage.getItem('authToken'); // Get the auth token from localStorage
         if (token) {
-          const response = await axios.get('https://vendor.peghouse.in/api/vendor/profile', {
+          const response = await axios.get('http://localhost:5001/api/vendor/profile', {
             headers: {
               Authorization: `Bearer ${token}`, // Send token in Authorization header
             },
@@ -59,7 +59,7 @@ const Navbar: React.FC = () => {
       const token = localStorage.getItem('authToken'); // Get the auth token from localStorage
       if (token) {
         // Send updated profile data to the server
-        const response = await axios.put('https://vendor.peghouse.in/api/vendor/profile', updatedData, {
+        const response = await axios.put('http://localhost:5001/api/vendor/profile', updatedData, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

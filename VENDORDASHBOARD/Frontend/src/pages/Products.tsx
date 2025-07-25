@@ -4,6 +4,7 @@ import Button from '../components/Button';
 import Input from '../components/Input';
 import FileUpload from '../components/FileUpload';
 import axios from 'axios';
+import { API_BASE_URL } from '../config';
 
 interface Product {
   inStock: any;
@@ -66,60 +67,60 @@ const Products: React.FC = () => {
           console.error('No authentication token found');
           return;
         }
-  
-        const response = await axios.get('https://vendor.peghouse.in/api/products/vendor', {
+
+        const response = await axios.get(`${API_BASE_URL}/api/products/vendor`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-  
+
         setProducts(response.data.products); // Set vendor's products
       } catch (error) {
         console.error('Error fetching vendor products:', error);
       }
     };
-  
+
     const fetchCategories = async () => {
       try {
-        const response = await axios.get('https://vendor.peghouse.in/api/categories');
+        const response = await axios.get(`${API_BASE_URL}/api/categories`);
         setCategories(response.data.categories); // Update state with categories
       } catch (error) {
         console.error('Error fetching categories:', error);
       }
     };
-  
+
     fetchProducts();
     fetchCategories();
   }, []);
-  
 
-const handleAddProduct = async (e: React.FormEvent) => {
-  e.preventDefault();
-  const form = e.target as HTMLFormElement;
-  const formData = new FormData(form);
 
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    console.error('No authentication token found');
-    return;
-  }
+  const handleAddProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
 
-  try {
-    const response = await axios.post('https://vendor.peghouse.in/api/products/add', formData, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        // ❌ REMOVE manual Content-Type!
-        // Let Axios set it with proper boundary.
-      },
-    });
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      console.error('No authentication token found');
+      return;
+    }
 
-    setProducts((prevProducts) => [...prevProducts, response.data.product]);
-    setShowAddProduct(false);
-    form.reset();
-  } catch (error) {
-    console.error('Error adding product:', error);
-  }
-};
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/products/add`, formData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          // ❌ REMOVE manual Content-Type!
+          // Let Axios set it with proper boundary.
+        },
+      });
+
+      setProducts((prevProducts) => [...prevProducts, response.data.product]);
+      setShowAddProduct(false);
+      form.reset();
+    } catch (error) {
+      console.error('Error adding product:', error);
+    }
+  };
 
 
 
@@ -155,7 +156,7 @@ const handleAddProduct = async (e: React.FormEvent) => {
 
       // Sending the PUT request to update the product
       const response = await axios.put(
-        `https://vendor.peghouse.in/api/products/${updatedProduct._id}`, // Use _id instead of id
+        `${API_BASE_URL}/api/products/${updatedProduct._id}`, // Use _id instead of id
         updatedProduct,
         {
           headers: {
@@ -190,7 +191,7 @@ const handleAddProduct = async (e: React.FormEvent) => {
         }
 
         // Send DELETE request to backend
-        await axios.delete(`https://vendor.peghouse.in/api/products/${productId}`, {
+        await axios.delete(`${API_BASE_URL}/api/products/${productId}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -207,7 +208,7 @@ const handleAddProduct = async (e: React.FormEvent) => {
   // Improved search filter function
   const filteredProducts = products.filter((product) => {
     const searchTerms = debouncedSearchQuery.toLowerCase().trim().split(/\s+/);
-    
+
     // Search in multiple fields
     const searchableText = [
       product.name,
@@ -217,12 +218,12 @@ const handleAddProduct = async (e: React.FormEvent) => {
     ].map(text => text?.toLowerCase() || '').join(' ');
 
     // Check if all search terms are found in any of the searchable fields
-    const matchesSearch = searchTerms.every(term => 
+    const matchesSearch = searchTerms.every(term =>
       searchableText.includes(term)
     );
 
     // Category filter
-    const matchesCategory = selectedCategory === 'all' || 
+    const matchesCategory = selectedCategory === 'all' ||
       product.category.toLowerCase() === selectedCategory.toLowerCase();
 
     return matchesSearch && matchesCategory;
@@ -231,7 +232,7 @@ const handleAddProduct = async (e: React.FormEvent) => {
   // Get immediate search results for dropdown
   const getSearchResults = (query: string) => {
     if (!query.trim()) return [];
-    
+
     const searchTerms = query.toLowerCase().trim().split(/\s+/);
     return products.filter(product => {
       const searchableText = [
@@ -319,15 +320,15 @@ const handleAddProduct = async (e: React.FormEvent) => {
       </div>
 
       <div>
-  <label className="block text-sm font-medium text-gray-700 mb-1">Product Image</label>
-  <input
-    type="file"
-    name="image"
-    accept=".jpg,.jpeg,.png"
-    className="w-full px-3 py-2 border rounded-lg"
-    required={!isEditing}
-  />
-</div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Product Image</label>
+        <input
+          type="file"
+          name="image"
+          accept=".jpg,.jpeg,.png"
+          className="w-full px-3 py-2 border rounded-lg"
+          required={!isEditing}
+        />
+      </div>
 
       <div className="flex gap-2 justify-end">
         <Button
@@ -381,7 +382,7 @@ const handleAddProduct = async (e: React.FormEvent) => {
               <X className="w-4 h-4 text-gray-400" />
             </button>
           )}
-          
+
           {/* Search Dropdown */}
           {showSearchDropdown && searchQuery && (
             <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg z-50 max-h-[300px] overflow-y-auto">
@@ -432,42 +433,41 @@ const handleAddProduct = async (e: React.FormEvent) => {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
         {filteredProducts.map((product) => (
-          <div 
-  id={`product-${product._id}`}
-  key={product._id} 
-  className={`product-card bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all ${
-    !product.inStock ? 'opacity-60 grayscale pointer-events-none' : ''
-  }`}
-  style={{
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100%',
-    justifyContent: 'space-between',
-    position: 'relative',
-    boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease',
-    maxWidth: '220px',
-    margin: '0 auto',
-    width: '100%'
-  }}
->
+          <div
+            id={`product-${product._id}`}
+            key={product._id}
+            className={`product-card bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all ${!product.inStock ? 'opacity-60 grayscale pointer-events-none' : ''
+              }`}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%',
+              justifyContent: 'space-between',
+              position: 'relative',
+              boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              maxWidth: '220px',
+              margin: '0 auto',
+              width: '100%'
+            }}
+          >
 
-{!product.inStock && (
-  <div style={{
-    position: 'absolute',
-    top: '5px',
-    left: '5px',
-    backgroundColor: '#ef4444',
-    color: 'white',
-    fontSize: '12px',
-    padding: '2px 6px',
-    borderRadius: '4px',
-    zIndex: 10
-  }}>
-    Out of Stock
-  </div>
-)}
+            {!product.inStock && (
+              <div style={{
+                position: 'absolute',
+                top: '5px',
+                left: '5px',
+                backgroundColor: '#ef4444',
+                color: 'white',
+                fontSize: '12px',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                zIndex: 10
+              }}>
+                Out of Stock
+              </div>
+            )}
 
 
             <div className="relative"> {/* Content wrapper */}
@@ -480,7 +480,7 @@ const handleAddProduct = async (e: React.FormEvent) => {
               }}>
                 <img
                   src={product.image}
-                alt={product.name}
+                  alt={product.name}
                   className="product-image"
                   style={{
                     position: 'absolute',
@@ -492,13 +492,13 @@ const handleAddProduct = async (e: React.FormEvent) => {
                     backgroundColor: 'white',
                     transition: 'transform 0.3s ease'
                   }}
-              />
+                />
                 <div className="ribbon">{product.alcoholContent}% ABV</div>
               </div>
               <div className="p-2">
                 <h3 style={{ fontSize: '14px', fontWeight: 600, height: '36px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{product.name}</h3>
                 <p className="text-xs text-gray-600 mb-1">{product.brand}</p>
-                
+
                 {/* Show volume for drinks */}
                 {['drinks', 'soft drinks'].includes(product.category.toLowerCase()) ? (
                   <div className="flex justify-between items-center mt-1">
@@ -507,37 +507,37 @@ const handleAddProduct = async (e: React.FormEvent) => {
                     </span>
                     <span className="text-base font-bold text-[#cd6839]">
                       ₹{product.price}
-              </span>
-            </div>
+                    </span>
+                  </div>
                 ) : (
                   <p style={{ color: '#cd6839', fontWeight: 'bold', margin: '2px 0', fontSize: '16px' }}>₹{product.price}</p>
                 )}
-                
+
                 <div className={`text-xs mt-1 ${product.inStock ? 'text-green-600' : 'text-red-600'}`}>
-  {product.inStock ? `${product.stock} in stock` : 'Out of Stock'}
-</div>
+                  {product.inStock ? `${product.stock} in stock` : 'Out of Stock'}
+                </div>
 
               </div>
-              </div>
-            
+            </div>
+
             <div className="p-2 mt-auto grid grid-cols-2 gap-1">
               <Button variant="secondary" icon={<Edit className="w-3 h-3" />} onClick={(e) => {
                 e.stopPropagation();
-                  setIsEditing(true);
-                  setEditingProduct(product);
+                setIsEditing(true);
+                setEditingProduct(product);
               }}
-              className="text-xs py-1 px-2"
+                className="text-xs py-1 px-2"
               >
-                  Edit
-                </Button>
+                Edit
+              </Button>
               <Button variant="danger" icon={<Trash2 className="w-3 h-3" />} onClick={(e) => {
                 e.stopPropagation();
                 handleDeleteProduct(product._id);
               }}
-              className="text-xs py-1 px-2"
+                className="text-xs py-1 px-2"
               >
-                  Delete
-                </Button>
+                Delete
+              </Button>
             </div>
           </div>
         ))}

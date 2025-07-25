@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Button from '../components/Button';
+import { API_BASE_URL } from '../config';
 
 const Availability: React.FC = () => {
   const [products, setProducts] = useState<any[]>([]);
@@ -15,7 +16,7 @@ const Availability: React.FC = () => {
           return;
         }
 
-        const response = await axios.get('https://vendor.peghouse.in/api/vendor/products', {
+        const response = await axios.get(`${API_BASE_URL}/api/vendor/products`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -44,7 +45,7 @@ const Availability: React.FC = () => {
       if (!token) return;
 
       await axios.put(
-        'https://vendor.peghouse.in/api/products/update-stock',
+        `${API_BASE_URL}/api/products/update-stock`,
         {
           products: [{ productId, inStock: updatedStockStatus }],
         },
@@ -76,7 +77,7 @@ const Availability: React.FC = () => {
       }));
 
       const response = await axios.put(
-        'https://vendor.peghouse.in/api/products/update-stock',
+        `${API_BASE_URL}/api/products/update-stock`,
         { products: updatedProducts },
         {
           headers: {

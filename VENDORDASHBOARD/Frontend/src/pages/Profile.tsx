@@ -4,6 +4,7 @@ import axios from 'axios';
 import { User, BookOpen } from 'lucide-react';
 import NavButton from '../components/NavButton';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../config';
 
 const Profile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -29,7 +30,7 @@ const Profile: React.FC = () => {
 
       try {
         // Send the request to the backend to fetch the profile data
-        const response = await axios.get('https://vendor.peghouse.in/api/vendor/profile', {
+        const response = await axios.get(`${API_BASE_URL}/api/vendor/profile`, {
           headers: {
             Authorization: `Bearer ${token}`, // Send token in Authorization header
           },

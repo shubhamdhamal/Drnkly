@@ -13,16 +13,16 @@ interface ButtonProps {
   className?: string;
 }
 
-const Button: React.FC<ButtonProps> = ({ 
-  children, 
-  variant = 'primary', 
-  icon, 
-  onClick, 
+const Button: React.FC<ButtonProps> = ({
+  children,
+  variant = 'primary',
+  icon,
+  onClick,
   disabled = false,
   className = ''
 }) => {
   const baseStyles = "inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed";
-  
+
   const variantStyles = {
     primary: "bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg",
     secondary: "bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300",
@@ -64,9 +64,8 @@ const Input: React.FC<InputProps> = ({ placeholder, icon, value, onChange, style
         placeholder={placeholder}
         value={value}
         onChange={onChange}
-        className={`w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-          icon ? 'pl-10' : ''
-        }`}
+        className={`w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${icon ? 'pl-10' : ''
+          }`}
       />
     </div>
   );
@@ -182,7 +181,7 @@ const PastOrders: React.FC = () => {
       try {
         const token = localStorage.getItem('authToken');
         if (!token) return;
-        const response = await axios.get('https://vendor.peghouse.in/api/products/vendor', {
+        const response = await axios.get('http://localhost:5001/api/products/vendor', {
           headers: { Authorization: `Bearer ${token}` },
         });
         setProducts(response.data.products || []);
@@ -196,7 +195,7 @@ const PastOrders: React.FC = () => {
   const fetchOrders = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const res = await axios.get<ApiResponse>('https://vendor.peghouse.in/api/vendor/orders', {
+      const res = await axios.get<ApiResponse>('http://localhost:5001/api/vendor/orders', {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -235,10 +234,10 @@ const PastOrders: React.FC = () => {
 
   useEffect(() => {
     fetchOrders();
-    
+
     // Set up auto-refresh every 30 seconds
     const pollingInterval = setInterval(fetchOrders, 30000);
-    
+
     return () => {
       clearInterval(pollingInterval);
     };
@@ -248,11 +247,11 @@ const PastOrders: React.FC = () => {
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
     const orderNumber = urlParams.get('orderNumber');
-    
+
     if (orderNumber && highlightedOrderRef.current) {
       setTimeout(() => {
         highlightedOrderRef.current?.scrollIntoView({ behavior: 'smooth' });
-        
+
         const orderElement = document.getElementById(`order-${orderNumber}`);
         if (orderElement) {
           orderElement.classList.add('highlight-order');
@@ -274,7 +273,7 @@ const PastOrders: React.FC = () => {
     const allItemsRejected = order.items.every(item => item.status === 'rejected');
     const isHandedOverInStorage = JSON.parse(localStorage.getItem('handedOverOrders') || '[]')
       .some((handedOver: any) => handedOver.orderId === order.id);
-    
+
     return hasHandedOverItems || allItemsRejected || isHandedOverInStorage;
   }).filter((order) => {
     const matchesSearch =
@@ -288,14 +287,14 @@ const PastOrders: React.FC = () => {
     const handedOverOrders = JSON.parse(localStorage.getItem('handedOverOrders') || '[]');
     const aHandedOver = handedOverOrders.find((order: any) => order.orderId === a.id);
     const bHandedOver = handedOverOrders.find((order: any) => order.orderId === b.id);
-    
+
     if (aHandedOver && bHandedOver) {
       return new Date(bHandedOver.handedOverAt).getTime() - new Date(aHandedOver.handedOverAt).getTime();
     }
-    
+
     if (aHandedOver) return -1;
     if (bHandedOver) return 1;
-    
+
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
@@ -315,18 +314,18 @@ const PastOrders: React.FC = () => {
         ref={isHighlighted ? highlightedOrderRef : null}
         className={`order-card past-order ${isHighlighted ? 'highlighted-order' : ''}`}
         style={{
-          background: allItemsHandedOver ? 'linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)' : 
-                     allItemsRejected ? 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)' :
-                     hasHandedOverItems ? 'linear-gradient(135deg, #f1f8e9 0%, #dcedc8 100%)' : 
-                     'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+          background: allItemsHandedOver ? 'linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)' :
+            allItemsRejected ? 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)' :
+              hasHandedOverItems ? 'linear-gradient(135deg, #f1f8e9 0%, #dcedc8 100%)' :
+                'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
           borderRadius: '16px',
           padding: '24px',
           marginBottom: '24px',
-          boxShadow: isHighlighted 
-            ? '0 8px 32px rgba(255, 193, 7, 0.3), 0 0 0 2px #ffc107' 
+          boxShadow: isHighlighted
+            ? '0 8px 32px rgba(255, 193, 7, 0.3), 0 0 0 2px #ffc107'
             : '0 4px 20px rgba(0, 0, 0, 0.08)',
-          border: isHighlighted 
-            ? '2px solid #ffc107' 
+          border: isHighlighted
+            ? '2px solid #ffc107'
             : '1px solid #e0e0e0',
           opacity: 0.95,
           transition: 'all 0.3s ease',
@@ -343,7 +342,7 @@ const PastOrders: React.FC = () => {
                   {order.orderNumber}
                 </h3>
               </div>
-              
+
               <div className="flex gap-2">
                 {allItemsHandedOver && (
                   <span className="px-3 py-1 bg-gradient-to-r from-green-500 to-green-600 text-white text-xs font-bold rounded-full">
@@ -371,7 +370,7 @@ const PastOrders: React.FC = () => {
                   <p className="font-semibold text-gray-800">{order.customerName}</p>
                 </div>
               </div>
-              
+
               {order.customerPhone && (
                 <div className="flex items-center gap-3">
                   <Phone className="w-5 h-5 text-green-600" />
@@ -447,15 +446,14 @@ const PastOrders: React.FC = () => {
                     key={index}
                     className="flex justify-between items-center p-4 rounded-lg transition-all duration-200"
                     style={{
-                      background: item.status === 'handedOver' ? 'linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)' : 
-                                 item.status === 'accepted' ? 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)' :
-                                 item.status === 'pending' ? 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)' : 
-                                 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)',
-                      border: `1px solid ${
-                        item.status === 'handedOver' ? '#4caf50' :
-                        item.status === 'accepted' ? '#2196f3' :
-                        item.status === 'pending' ? '#ff9800' : '#f44336'
-                      }`
+                      background: item.status === 'handedOver' ? 'linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)' :
+                        item.status === 'accepted' ? 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)' :
+                          item.status === 'pending' ? 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)' :
+                            'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)',
+                      border: `1px solid ${item.status === 'handedOver' ? '#4caf50' :
+                          item.status === 'accepted' ? '#2196f3' :
+                            item.status === 'pending' ? '#ff9800' : '#f44336'
+                        }`
                     }}
                   >
                     <div className="flex-1">
@@ -463,12 +461,11 @@ const PastOrders: React.FC = () => {
                         <span className="font-semibold text-gray-800">
                           {item.quantity}x {item.name}
                         </span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                          item.status === 'handedOver' ? 'bg-green-100 text-green-800' :
-                          item.status === 'accepted' ? 'bg-blue-100 text-blue-800' :
-                          item.status === 'pending' ? 'bg-orange-100 text-orange-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
+                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${item.status === 'handedOver' ? 'bg-green-100 text-green-800' :
+                            item.status === 'accepted' ? 'bg-blue-100 text-blue-800' :
+                              item.status === 'pending' ? 'bg-orange-100 text-orange-800' :
+                                'bg-red-100 text-red-800'
+                          }`}>
                           {item.status.toUpperCase()}
                         </span>
                       </div>
@@ -514,7 +511,7 @@ const PastOrders: React.FC = () => {
               <h1 className="text-4xl font-bold text-gray-900 mb-2">Past Orders</h1>
               <p className="text-gray-600">View your completed and rejected orders</p>
             </div>
-            
+
             <div className="flex items-center gap-4">
               <Input
                 placeholder="Search orders, customers, or items..."
@@ -529,7 +526,7 @@ const PastOrders: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <div 
+        <div
           className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden"
         >
           <div className="bg-gradient-to-r from-gray-600 to-gray-700 px-8 py-6">
