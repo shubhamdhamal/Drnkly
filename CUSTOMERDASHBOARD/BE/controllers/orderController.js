@@ -24,48 +24,42 @@ exports.updatePaymentStatus = async (req, res) => {
     const { orderId } = req.params;
     const { screenshotUploaded, transactionId, isCashOnDelivery } = req.body;
 
-    console.log("Request body:", req.body);
-
-    if (screenshotUploaded === undefined && isCashOnDelivery === undefined) {
-      return res.status(400).json({ message: 'Payment status is required' });
-    }
-
     let paymentStatus = 'pending';
-    let paymentProof = null;
-
     if (isCashOnDelivery) {
       paymentStatus = 'cash on delivery';
     } else if (screenshotUploaded || req.file) {
       paymentStatus = 'paid';
-      if (req.file) {
-        paymentProof = `https://peghouse.in/uploads/${req.file.filename}`;
-      }
     }
 
-    const updated = await Order.findByIdAndUpdate(
+    // Generate paymentProof URL if file uploaded
+    let paymentProofUrl = null;
+    if (req.file) {
+      paymentProofUrl = `https://peghouse.in/uploads/${req.file.filename}`;
+    }
+
+    const updatedOrder = await Order.findByIdAndUpdate(
       orderId,
       {
         paymentStatus,
         transactionId: transactionId || null,
-        ...(paymentProof && { paymentProof })
+        ...(paymentProofUrl && { paymentProof: paymentProofUrl })
       },
       { new: true }
     );
 
-    if (!updated) {
+    if (!updatedOrder) {
       return res.status(404).json({ message: 'Order not found' });
     }
 
     res.status(200).json({
       message: 'Payment status updated successfully',
-      order: updated,
+      order: updatedOrder,
     });
-  } catch (error) {
-    console.error('Error updating payment status:', error);
-    res.status(500).json({ message: 'Error updating payment status', error: error.message });
+  } catch (err) {
+    console.error('❌ Error:', err);
+    res.status(500).json({ message: 'Server error' });
   }
 };
-
 
 
 
