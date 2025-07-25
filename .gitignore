@@ -1,0 +1,29 @@
+# Node modules (for all subprojects)
+node_modules/
+
+# Build output (for all subprojects)
+dist/
+build/
+
+# Environment variables
+.env
+.env.*
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE/editor settings
+.vscode/
+.idea/
+
+# Misc
+*.local
+
+# Ignore uploads if you don't want to track images/uploads
+images/uploads/
