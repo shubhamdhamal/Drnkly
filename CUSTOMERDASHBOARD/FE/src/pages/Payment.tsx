@@ -46,16 +46,12 @@ const Payment = () => {
     }
   };
 
-const handleScreenshotFileChange = async (
-  e: React.ChangeEvent<HTMLInputElement>,
-  orderId: string // 👈 Pass orderId from component state or props
-) => {
+const handleScreenshotFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
   const file = e.target.files?.[0];
   if (!file) return;
 
   const formData = new FormData();
-  formData.append('screenshot', file);    // 📁 Image file
-  formData.append('orderId', orderId);    // 🆔 Order ID
+  formData.append('screenshot', file);
 
   try {
     const res = await axios.post(
@@ -67,12 +63,12 @@ const handleScreenshotFileChange = async (
         },
       }
     );
-    console.log('✅ Upload success:', res.data);
-    // Optional: Show toast or update order UI
+    console.log('✅ Upload success', res.data);
   } catch (err) {
     console.error('❌ Upload failed:', err);
   }
 };
+
 
 
 
