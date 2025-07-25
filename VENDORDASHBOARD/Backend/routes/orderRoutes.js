@@ -5,11 +5,10 @@ const Order = require('../models/Order');
 const Product = require('../models/product');
 const { authenticateVendor } = require('../middleware/auth'); // ✅ Import middleware
 
-// ✔ Main function: Filter orders by vendor's own products only
+// ✔ Internal helper function: Filter orders by vendor
 const getOrdersForVendor = async (vendorId) => {
   try {
     const allOrders = await Order.find();
-
     const filteredOrders = [];
 
     for (const order of allOrders) {
@@ -67,25 +66,19 @@ const getOrdersForVendor = async (vendorId) => {
   }
 };
 
-
-
-  
-  
-
-// 🔥 Attach middleware here
+// 🔥 GET all orders for vendor
 router.get('/orders', authenticateVendor, async (req, res) => {
-    const vendorId = req.vendorId; // ✅ Now dynamically set from JWT
-  
-    try {
-      const orders = await getOrdersForVendor(vendorId);
-      res.status(200).json({ orders });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
+  const vendorId = req.vendorId;
 
+  try {
+    const orders = await getOrdersForVendor(vendorId);
+    res.status(200).json({ orders });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
-// ✅ Update order item status (Accept / Reject) by Vendor
+// ✅ PUT: Accept or Reject order item
 router.put('/orders/:orderId/status', authenticateVendor, async (req, res) => {
   console.log('🔥 PUT /orders/:orderId/status HIT');
   const { orderId } = req.params;
@@ -93,90 +86,87 @@ router.put('/orders/:orderId/status', authenticateVendor, async (req, res) => {
   const vendorId = req.vendorId;
 
   if (!['accepted', 'rejected'].includes(status)) {
-      return res.status(400).json({ message: 'Invalid status value' });
+    return res.status(400).json({ message: 'Invalid status value' });
   }
 
   try {
-      const order = await Order.findById(orderId);
-      if (!order) return res.status(404).json({ message: 'Order not found' });
+    const order = await Order.findById(orderId);
+    if (!order) return res.status(404).json({ message: 'Order not found' });
 
-      let updated = false;
+    let updated = false;
 
-      // Loop through each item and update status only if vendor owns the product
-      for (let item of order.items) {
-          if (
-              item.productId.toString() === productId &&
-              (await Product.findOne({ _id: productId, vendorId }))
-          ) {
-              item.status = status; // ✅ set status
-              updated = true;
-              break;
-          }
+    for (let item of order.items) {
+      if (
+        item.productId.toString() === productId &&
+        (await Product.findOne({ _id: productId, vendorId }))
+      ) {
+        item.status = status;
+        updated = true;
+        break;
       }
+    }
 
-      if (!updated) {
-          return res.status(403).json({ message: 'Not authorized to update this item' });
-      }
+    if (!updated) {
+      return res.status(403).json({ message: 'Not authorized to update this item' });
+    }
 
-      await order.save();
-      return res.status(200).json({ message: 'Order item status updated' });
+    await order.save();
+    return res.status(200).json({ message: 'Order item status updated' });
   } catch (err) {
-      console.error('❌ Error updating order status:', err);
-      return res.status(500).json({ message: 'Server error' });
+    console.error('❌ Error updating order status:', err);
+    return res.status(500).json({ message: 'Server error' });
   }
 });
-  
 
-  router.get('/ready-for-pickup', authenticateVendor, async (req, res) => {
-    const vendorId = req.vendorId;
-  
-    try {
-      const allOrders = await Order.find();
-      const readyOrders = [];
-  
-      for (const order of allOrders) {
-        const vendorItems = [];
-  
-        for (const item of order.items) {
-          const product = await Product.findById(item.productId);
-          if (!product || !product.vendorId) continue;
-  
-          // ✅ Match current vendor and accepted status
-          if (product.vendorId.toString() === vendorId.toString() && item.status === 'accepted') {
-            vendorItems.push({
-              productId: item.productId,
-              name: item.name,
-              quantity: item.quantity,
-              price: item.price,
-              orderNumber: order.orderNumber,
-              customerName: order.deliveryAddress?.fullName || 'Customer',
-              customerAddress: `${order.deliveryAddress?.street}, ${order.deliveryAddress?.city}`,
-              orderId: order._id,
-              totalAmount: item.price * item.quantity,
-              readyTime: order.createdAt, // you can adjust this if you track a separate ready time
-            });
-          }
-        }
-  
-        if (vendorItems.length > 0) {
-          readyOrders.push(...vendorItems);
+// 🔥 GET ready-for-pickup orders
+router.get('/ready-for-pickup', authenticateVendor, async (req, res) => {
+  const vendorId = req.vendorId;
+
+  try {
+    const allOrders = await Order.find();
+    const readyOrders = [];
+
+    for (const order of allOrders) {
+      const vendorItems = [];
+
+      for (const item of order.items) {
+        const product = await Product.findById(item.productId);
+        if (!product || !product.vendorId) continue;
+
+        if (product.vendorId.toString() === vendorId.toString() && item.status === 'accepted') {
+          vendorItems.push({
+            productId: item.productId,
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price,
+            orderNumber: order.orderNumber,
+            customerName: order.deliveryAddress?.fullName || 'Customer',
+            customerAddress: `${order.deliveryAddress?.street}, ${order.deliveryAddress?.city}`,
+            orderId: order._id,
+            totalAmount: item.price * item.quantity,
+            readyTime: order.createdAt,
+          });
         }
       }
-  
-      res.status(200).json({ orders: readyOrders });
-    } catch (err) {
-      console.error('Error fetching ready-for-pickup orders:', err);
-      res.status(500).json({ message: 'Server error' });
+
+      if (vendorItems.length > 0) {
+        readyOrders.push(...vendorItems);
+      }
     }
-  });
-  
-// ✅ Update order item handover status
+
+    res.status(200).json({ orders: readyOrders });
+  } catch (err) {
+    console.error('Error fetching ready-for-pickup orders:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// ✅ PUT: Update handover status
 router.put('/orders/handover', authenticateVendor, async (req, res) => {
   const { productId, orderNumber } = req.body;
   const vendorId = req.vendorId;
 
   try {
-    // Find the order with the given orderNumber
     const order = await Order.findOne({ orderNumber });
 
     if (!order) {
@@ -185,15 +175,14 @@ router.put('/orders/handover', authenticateVendor, async (req, res) => {
 
     let updated = false;
 
-    // Loop through each item and check if the productId and vendor match
     for (let item of order.items) {
       if (
         item.productId.toString() === productId &&
         (await Product.findOne({ _id: productId, vendorId }))
       ) {
-        item.handoverStatus = 'handedOver';  // Update handoverStatus
+        item.handoverStatus = 'handedOver';
         updated = true;
-        break;  // No need to check further items once we have updated the status
+        break;
       }
     }
 
@@ -201,7 +190,6 @@ router.put('/orders/handover', authenticateVendor, async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to update this item' });
     }
 
-    // Save the updated order
     await order.save();
     res.status(200).json({ message: 'Handover marked successfully' });
   } catch (error) {
@@ -210,7 +198,4 @@ router.put('/orders/handover', authenticateVendor, async (req, res) => {
   }
 });
 
-
-
 module.exports = router;
-
