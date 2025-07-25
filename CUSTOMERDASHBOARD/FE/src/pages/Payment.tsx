@@ -46,19 +46,29 @@ const Payment = () => {
     }
   };
 
-  // Handle screenshot file upload
-  const handleScreenshotFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files && e.target.files[0];
-    if (file) {
-      setScreenshotFile(file);
-      setIsScreenshotUploaded(true);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setScreenshotPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+const handleScreenshotFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append('screenshot', file);
+
+  try {
+    const res = await axios.post(
+      'https://peghouse.in/api/uploads/upload-screenshot',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    console.log('✅ Upload success', res.data);
+  } catch (err) {
+    console.error('❌ Upload failed:', err);
+  }
+};
+
 
   useEffect(() => {
     const fetchCart = async () => {
