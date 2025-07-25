@@ -13,6 +13,7 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const addressesRoutes=require('./routes/addressRoutes');
 const couponRoutes = require('./routes/couponRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
 
 dotenv.config();         // ✅ Load environment variables
 connectDB();             // ✅ Connect to MongoDB
@@ -31,7 +32,8 @@ app.use(cors({
 }));
 
 // ✅ Static file handling
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Static folder for public image access
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 app.use('/uploads/issues', express.static(path.join(__dirname, 'uploads/issues')));
 
 // ✅ API Routes
@@ -44,6 +46,8 @@ app.use('/api', orderRoutes);         // General route (like /api/orders)
 app.use('/api/issues', issueRoutes);
 app.use('/api/addresses', addressesRoutes);
 app.use('/api/coupons', couponRoutes);  // ✅ This enables GET /api/coupons/:code
+// ✅ Mount your upload route
+app.use('/api/uploads', uploadRoutes);  // <--- This is required
 
 // ✅ Health check route
 app.get('/', (req, res) => {
