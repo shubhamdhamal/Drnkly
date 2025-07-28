@@ -50,25 +50,33 @@ const handleScreenshotFileChange = async (e: React.ChangeEvent<HTMLInputElement>
   const file = e.target.files?.[0];
   if (!file) return;
 
+  setScreenshotFile(file);
+  setIsScreenshotUploaded(true);
+
   const formData = new FormData();
   formData.append('screenshot', file);
 
   try {
-    const res = await axios.post(
-      'https://peghouse.in/api/uploads/upload-screenshot',
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
-    );
-    console.log('✅ Upload success', res.data);
-  } catch (err) {
-    console.error('❌ Upload failed:', err);
+    const res = await axios.post('https://peghouse.in/api/uploads/upload-screenshot', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    if (res.data.imageUrl) {
+      const imageUrl = res.data.imageUrl;
+
+      setScreenshotPreview(imageUrl); // ✅ Set preview from image.peghouse.in
+      localStorage.setItem('uploadedScreenshotUrl', imageUrl); // ✅ Store for later use
+    } else {
+      throw new Error('Invalid response: Missing imageUrl');
+    }
+  } catch (error) {
+    console.error('Upload failed:', error);
+    alert('Screenshot upload failed. Please try again.');
+    setIsScreenshotUploaded(false);
   }
 };
-
 
 
 
