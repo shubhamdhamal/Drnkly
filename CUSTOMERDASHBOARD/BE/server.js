@@ -31,9 +31,8 @@ app.use(cors({
   credentials: true
 }));
 
-// ✅ Static file handling
-// Static folder for public image access
-app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+// ✅ Static route for serving screenshots from https://image.peghouse.in/uploads
+app.use('/uploads', express.static('/var/www/Drnkly/images/uploads'));
 app.use('/uploads/issues', express.static(path.join(__dirname, 'uploads/issues')));
 
 // ✅ API Routes
@@ -46,8 +45,8 @@ app.use('/api', orderRoutes);         // General route (like /api/orders)
 app.use('/api/issues', issueRoutes);
 app.use('/api/addresses', addressesRoutes);
 app.use('/api/coupons', couponRoutes);  // ✅ This enables GET /api/coupons/:code
-// ✅ Mount your upload route
-app.use('/api/uploads', uploadRoutes);  // <--- This is required
+// ✅ API Routes
+app.use('/api/uploads', uploadRoutes);
 
 // ✅ Health check route
 app.get('/', (req, res) => {
