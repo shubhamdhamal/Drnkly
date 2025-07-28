@@ -1,37 +1,36 @@
 const express = require('express');
+const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const router = express.Router();
+const screenshotController = require('../controllers/screenshotController');
 
-// Ensure /public/uploads exists
-const UPLOAD_DIR = path.join(__dirname, '../public/uploads');
-if (!fs.existsSync(UPLOAD_DIR)) {
-  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+// ✅ Absolute path where files should be saved
+const uploadDir = '/var/www/Drnkly/images/uploads';
+
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+  console.log('✅ uploads folder created at:', uploadDir);
 }
 
+// ✅ Configure Multer to store in the correct public folder
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, UPLOAD_DIR); // ✅ Use correct path
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
   },
-  filename: function (req, file, cb) {
-    const uniqueName = Date.now() + '-' + file.originalname;
-    cb(null, uniqueName);
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `payment_${Date.now()}${ext}`);
   }
 });
 
 const upload = multer({ storage });
 
-router.post('/upload-screenshot', upload.single('screenshot'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ message: 'No file uploaded' });
-  }
-
-  const imageUrl = `https://peghouse.in/uploads/${req.file.filename}`;
-  return res.status(200).json({
-    message: 'Screenshot uploaded',
-    imageUrl
-  });
-});
+// ✅ Screenshot Upload Route
+router.post(
+  '/upload-screenshot',
+  upload.single('screenshot'),
+  screenshotController.uploadScreenshot
+);
 
 module.exports = router;
