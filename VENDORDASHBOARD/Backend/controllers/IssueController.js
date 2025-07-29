@@ -54,3 +54,24 @@ exports.reportIssue = async (req, res) => {
     res.status(500).json({ error: 'Failed to report issue' });
   }
 };
+
+
+exports.getMyIssues = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "Unauthorized" });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const vendorId = decoded.vendorId;
+
+    if (!vendorId) return res.status(400).json({ error: "Vendor ID missing in token" });
+
+    const issues = await Issue.find({ vendorId }).sort({ createdAt: -1 }); // ✅ Mongoose
+
+    res.status(200).json({ issues });
+  } catch (error) {
+    console.error("❌ Fetch Issues Error:", error.message);
+    res.status(500).json({ error: "Failed to fetch issues", details: error.message });
+  }
+};
+
