@@ -548,65 +548,70 @@ const addNewAddress = async () => {
 
 
 
-
-
-
   // Get live location function
 const getLiveLocation = () => {
-  if (!('geolocation' in navigator)) {
-    alert('Location is not supported by your browser.');
+  if (!navigator.geolocation) {
+    alert('Geolocation is not supported by your browser.');
     return;
   }
 
-  setIsLocating(true); // Start loading
+  setIsLocating(true);
 
   navigator.geolocation.getCurrentPosition(
     async (position) => {
       const latitude = position.coords.latitude;
       const longitude = position.coords.longitude;
+      console.log("📍 Live coords:", latitude, longitude);
 
       try {
-        // Store only the coordinates, don't auto-fill the address
+        // Fetch readable address from backend
+        const userId = localStorage.getItem('userId');
+        const response = await axios.get(`https://peghouse.in/api/addresses/from-coordinates`, {
+          params: { latitude, longitude, userId }
+        });
+
+        const { address, city, pincode } = response.data;
+
+        // Autofill into the form
         setNewAddress(prev => ({
           ...prev,
           latitude,
-          longitude
+          longitude,
+          fullAddress: address,
+          // Optional: try to extract flat/building from the string if structured
+          flatNo: '',
+          buildingNo: '',
+          landmark: '',
+          additionalInfo: '',
         }));
 
-        alert('Location detected successfully! Please enter your address manually.');
-      } catch (error) {
-        console.error('Failed to get location:', error);
-        alert('Location detected. Please enter your address manually.');
+        alert("Location detected");
+      } catch (err) {
+        console.error('❌ Address fetch failed:', err.message);
+        alert('Location detected, but address could not be resolved. Please fill manually.');
       } finally {
-        setIsLocating(false); // Stop loading
+        setIsLocating(false);
       }
     },
     (error) => {
-      console.error('Location error:', error);
-      let errorMessage = 'Unable to get your location.';
+      console.error('Location error:', error.message);
+      let msg = 'Failed to get your location.';
+      if (error.code === 1) msg = 'Location permission denied.';
+      else if (error.code === 2) msg = 'Location unavailable.';
+      else if (error.code === 3) msg = 'Location request timed out.';
 
-      switch (error.code) {
-        case error.PERMISSION_DENIED:
-          errorMessage = 'Location access denied. Please enable location in your browser settings.';
-          break;
-        case error.POSITION_UNAVAILABLE:
-          errorMessage = 'Location information unavailable.';
-          break;
-        case error.TIMEOUT:
-          errorMessage = 'Location request timed out.';
-          break;
-      }
-
-      alert(errorMessage);
-      setIsLocating(false); // Stop loading
+      alert(msg);
+      setIsLocating(false);
     },
     {
       enableHighAccuracy: true,
-      timeout: 10000,
+      timeout: 8000,
       maximumAge: 60000
     }
   );
 };
+
+
 
 
   // Delete address
