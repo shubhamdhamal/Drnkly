@@ -2,16 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface Issue {
-  id: number;
+  _id: string;
   category: string;
   description: string;
-  file?: File | null;
-  transactionId?: string;
+  file?: string;
+  orderOrTransactionId?: string;
   priority?: string;
-  email?: string;
-  phone?: string;
-  updates?: boolean;
-  timestamp: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  receiveUpdates?: boolean;
+  createdAt: string;
 }
 
 interface Update {
@@ -23,33 +23,50 @@ interface Update {
 const IssueTracking: React.FC = () => {
   const navigate = useNavigate();
   const [issues, setIssues] = useState<Issue[]>([]);
-  const [selectedTicket, setSelectedTicket] = useState<number | null>(null);
-  const [updatesData, setUpdatesData] = useState<Record<number, Update[]>>({});
+  const [selectedTicket, setSelectedTicket] = useState<string | null>(null);
+  const [updatesData, setUpdatesData] = useState<Record<string, Update[]>>({});
 
   useEffect(() => {
-    const stored = localStorage.getItem('reportedIssues');
-    if (stored) {
-      const parsed: Issue[] = JSON.parse(stored);
-      setIssues(parsed);
-
-      const updates: Record<number, Update[]> = {};
-      parsed.forEach((issue) => {
-        updates[issue.id] = [
-          {
-            time: 'Now',
-            status: `${issue.category} submitted by user`,
-            active: true,
+    const fetchIssues = async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        const res = await fetch('https://vendor.peghouse.in/api/issues/my', {
+          headers: {
+            Authorization: `Bearer ${token}`,
           },
-        ];
-      });
-      setUpdatesData(updates);
-    }
+        });
+
+        if (!res.ok) throw new Error('Failed to fetch issues');
+
+        const data = await res.json();
+        const fetchedIssues: Issue[] = data.issues;
+
+        setIssues(fetchedIssues);
+
+        const updates: Record<string, Update[]> = {};
+        fetchedIssues.forEach((issue) => {
+          updates[issue._id] = [
+            {
+              time: 'Now',
+              status: `${issue.category} submitted by user`,
+              active: true,
+            },
+          ];
+        });
+        setUpdatesData(updates);
+      } catch (error) {
+        console.error('Error fetching issues:', error);
+      }
+    };
+
+    fetchIssues();
   }, []);
 
   const handleViewUpdate = () => {
     navigate('/issue-report');
   };
 
+  const selectedIssue = issues.find((i) => i._id === selectedTicket);
   const selectedUpdates = selectedTicket ? updatesData[selectedTicket] || [] : [];
 
   return (
@@ -62,16 +79,20 @@ const IssueTracking: React.FC = () => {
           <div className="border rounded-lg divide-y">
             {issues.map((issue) => (
               <button
-                key={issue.id}
-                onClick={() => setSelectedTicket(issue.id)}
-                className={`flex justify-between items-center p-4 text-sm sm:text-base w-full text-left hover:bg-gray-50 transition ${selectedTicket === issue.id ? 'bg-gray-100' : ''}`}
+                key={issue._id}
+                onClick={() => setSelectedTicket(issue._id)}
+                className={`flex justify-between items-center p-4 text-sm sm:text-base w-full text-left hover:bg-gray-50 transition ${
+                  selectedTicket === issue._id ? 'bg-gray-100' : ''
+                }`}
               >
                 <div>
                   <p className="text-gray-600 font-medium">
-                    Ticket ID <span className="font-bold text-black">{issue.id}</span>
+                    Ticket ID <span className="font-bold text-black">{issue._id}</span>
                   </p>
                   <p className="text-black">{issue.category}</p>
-                  <p className="text-gray-500">{new Date(issue.timestamp).toLocaleString()}</p>
+                  <p className="text-gray-500">
+                    {new Date(issue.createdAt).toLocaleString()}
+                  </p>
                 </div>
                 <div>
                   <span className="px-3 py-1 text-xs sm:text-sm font-semibold rounded-full bg-gray-200 text-gray-700">
@@ -83,14 +104,55 @@ const IssueTracking: React.FC = () => {
           </div>
         </div>
 
-        {selectedTicket && (
-          <div className="mt-8">
-            <h3 className="text-xl font-semibold mb-3">Issue Status Updates</h3>
+        {selectedIssue && (
+          <div className="mt-8 border-t pt-6">
+            <h3 className="text-xl font-semibold mb-4">Issue Details</h3>
+            <div className="space-y-2 text-sm sm:text-base">
+              <p><strong>Category:</strong> {selectedIssue.category}</p>
+              <p><strong>Description:</strong> {selectedIssue.description}</p>
+              {selectedIssue.orderOrTransactionId && (
+                <p><strong>Order/Transaction ID:</strong> {selectedIssue.orderOrTransactionId}</p>
+              )}
+              {selectedIssue.priority && (
+                <p><strong>Priority:</strong> {selectedIssue.priority}</p>
+              )}
+              {selectedIssue.contactEmail && (
+                <p><strong>Contact Email:</strong> {selectedIssue.contactEmail}</p>
+              )}
+              {selectedIssue.contactPhone && (
+                <p><strong>Contact Phone:</strong> {selectedIssue.contactPhone}</p>
+              )}
+              <p>
+                <strong>Receive Updates:</strong>{' '}
+                {selectedIssue.receiveUpdates ? 'Yes' : 'No'}
+              </p>
+              {selectedIssue.file && (
+                <p>
+                  <strong>Attached File:</strong>{' '}
+                  <a
+                    href={`https://vendor.peghouse.in/${selectedIssue.file}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 underline"
+                  >
+                    View File
+                  </a>
+                </p>
+              )}
+              <p>
+                <strong>Created At:</strong>{' '}
+                {new Date(selectedIssue.createdAt).toLocaleString()}
+              </p>
+            </div>
+
+            <h3 className="text-xl font-semibold mt-6 mb-3">Status Updates</h3>
             <ul className="space-y-4">
               {selectedUpdates.map((u, i) => (
                 <li key={i} className="flex items-start gap-4 text-sm">
                   <div
-                    className={`mt-1 w-3 h-3 rounded-full ${u.active ? 'bg-blue-600' : 'bg-gray-300'}`}
+                    className={`mt-1 w-3 h-3 rounded-full ${
+                      u.active ? 'bg-blue-600' : 'bg-gray-300'
+                    }`}
                   ></div>
                   <div>
                     <p className="text-gray-500 font-semibold">{u.time}</p>
