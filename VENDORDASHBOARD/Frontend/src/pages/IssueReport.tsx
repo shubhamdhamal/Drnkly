@@ -71,77 +71,72 @@ function App() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!description.trim()) {
-      alert('Please provide an issue description.');
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  if (!description.trim()) {
+    alert('Please provide an issue description.');
+    return;
+  }
+
+  setIsSubmitting(true);
+  setSubmitStatus('idle');
+
+  const formData = new FormData();
+  formData.append('category', category);
+  formData.append('description', description);
+  if (file) formData.append('file', file);
+  formData.append('orderOrTransactionId', transactionId);
+  formData.append('priority', priority);
+  formData.append('contactEmail', email);
+  formData.append('contactPhone', phone);
+  formData.append('receiveUpdates', updates.toString());
+
+  try {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      alert('Login required to report an issue.');
+      setIsSubmitting(false);
       return;
     }
 
-    setIsSubmitting(true);
-    setSubmitStatus('idle');
+    const response = await fetch('https://vendor.peghouse.in/api/issues/report', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
 
-    const formData = new FormData();
-    formData.append('category', category);
-    formData.append('description', description);
-    if (file) formData.append('file', file);
-    formData.append('orderOrTransactionId', transactionId);
-    formData.append('priority', priority);
-    formData.append('contactEmail', email);
-    formData.append('contactPhone', phone);
-    formData.append('receiveUpdates', updates.toString());
+    const data = await response.json(); // ✅ Required to parse response
 
-    try {
-      // Simulate API call for demo purposes
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // In real implementation, uncomment below:
-      /*
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        alert('Login required to report an issue.');
-        setIsSubmitting(false);
-        return;
-      }
-
-      const response = await fetch('https://vendor.peghouse.in/api/issues/report', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to submit issue');
-      }
-      */
-
-      setSubmitStatus('success');
-      
-      // Reset form
-      setCategory('Order Issues');
-      setDescription('');
-      setTransactionId('');
-      setPriority('Medium');
-      setEmail('');
-      setPhone('');
-      setFile(null);
-      setUpdates(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-
-    } catch (error) {
-      console.error('Error submitting issue:', error);
-      setSubmitStatus('error');
-    } finally {
-      setIsSubmitting(false);
+    if (!response.ok) {
+      console.error('❌ Server Error:', data);
+      throw new Error(data.error || 'Failed to submit issue');
     }
-  };
+
+    setSubmitStatus('success');
+
+    // ✅ Reset form
+    setCategory('Order Issues');
+    setDescription('');
+    setTransactionId('');
+    setPriority('Medium');
+    setEmail('');
+    setPhone('');
+    setFile(null);
+    setUpdates(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  } catch (error) {
+    console.error('❌ Error submitting issue:', error);
+    setSubmitStatus('error');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 py-8 px-4">
