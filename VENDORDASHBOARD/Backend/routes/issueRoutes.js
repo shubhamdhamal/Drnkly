@@ -11,4 +11,7 @@ router.post(
   issueController.reportIssue
 );
 
+// Fetch vendor's own issues
+router.get('/my', authenticateVendor, issueController.getMyIssues);
+
 module.exports = router;
