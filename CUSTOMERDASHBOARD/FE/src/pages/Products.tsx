@@ -22,6 +22,7 @@ import React, { useState, useEffect, useRef } from 'react';
     brand: string;
     alcoholContent?: number;
     description?: string;
+    inStock?: boolean;
   }
 
   interface SubBrand {
@@ -1323,11 +1324,12 @@ import React, { useState, useEffect, useRef } from 'react';
                   const productQuantity = cartItem ? cartItem.quantity : 0;
                   return (
                     <div
-                      key={product._id}
-                      id={`product-${product._id}`}
-                      className="product-card"
-                      style={productCardStyle}
-                    >
+  key={product._id}
+  id={`product-${product._id}`}
+  className={`product-card ${product.inStock === false ? 'opacity-50 grayscale pointer-events-none' : ''}`}
+  style={productCardStyle}
+>
+
                       <div>
                         <div style={productImageContainerStyle}>
                           {product.category.toLowerCase() === 'Food' ? (
@@ -1382,19 +1384,27 @@ import React, { useState, useEffect, useRef } from 'react';
                         </div>
                       </div>
                       <button
-                        onClick={e => {
-                          if (productQuantity > 0) {
-                            openQuantityModal(product, productQuantity);
-                          } else {
-                            handleAddToCart(e, product);
-                          }
-                        }}
-                        className="w-full py-1 px-2 bg-[#cd6839] text-white text-[9px] sm:text-[10px] rounded font-medium mt-2
-                                  hover:bg-[#b55a31] transition-colors duration-200
-                                  focus:outline-none focus:ring-1 focus:ring-[#cd6839] focus:ring-opacity-50"
-                      >
-                        {productQuantity > 0 ? `Add One More (Qty: ${productQuantity})` : 'Add to Cart'}
-                      </button>
+  disabled={!product.inStock}
+  onClick={e => {
+    if (productQuantity > 0) {
+      openQuantityModal(product, productQuantity);
+    } else {
+      handleAddToCart(e, product);
+    }
+  }}
+  className={`w-full py-1 px-2 mt-2 rounded font-medium text-[9px] sm:text-[10px] transition-colors duration-200 focus:outline-none ${
+    product.inStock
+      ? 'bg-[#cd6839] text-white hover:bg-[#b55a31] focus:ring-1 focus:ring-[#cd6839] focus:ring-opacity-50'
+      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+  }`}
+>
+  {product.inStock
+    ? productQuantity > 0
+      ? `Add One More (Qty: ${productQuantity})`
+      : 'Add to Cart'
+    : 'Out of Stock'}
+</button>
+
                     </div>
                   );
                 })
