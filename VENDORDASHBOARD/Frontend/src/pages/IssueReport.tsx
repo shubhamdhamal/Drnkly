@@ -103,16 +103,19 @@ const handleSubmit = async (e: React.FormEvent) => {
     const response = await fetch('https://vendor.peghouse.in/api/issues/report', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`, // ✅ Do NOT add Content-Type manually
       },
       body: formData,
     });
 
-    const data = await response.json(); // ✅ Required to parse response
+    const contentType = response.headers.get('Content-Type') || '';
+    const isJson = contentType.includes('application/json');
+
+    const data = isJson ? await response.json() : await response.text();
 
     if (!response.ok) {
       console.error('❌ Server Error:', data);
-      throw new Error(data.error || 'Failed to submit issue');
+      throw new Error(data?.error || 'Failed to submit issue');
     }
 
     setSubmitStatus('success');
@@ -136,6 +139,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     setIsSubmitting(false);
   }
 };
+
 
 
   return (
@@ -239,12 +243,13 @@ const handleSubmit = async (e: React.FormEvent) => {
                   onDrop={handleDrop}
                 >
                   <input
-                    ref={fileInputRef}
-                    type="file"
-                    className="sr-only"
-                    onChange={handleFileChange}
-                    accept="image/*,.pdf,.doc,.docx,.txt"
-                  />
+  ref={fileInputRef}
+  type="file"
+  className="sr-only"
+  onChange={handleFileChange}
+  accept=".pdf,.doc,.docx,.txt,.xls,.xlsx,.csv,.png,.jpg,.jpeg,.gif,image/*"
+/>
+
                   
  {file ? (
                     <div className="space-y-3">

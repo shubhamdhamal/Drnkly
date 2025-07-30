@@ -3,15 +3,23 @@ const multer = require('multer');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 
-// Setup Multer for issue file upload
+const fs = require('fs');
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/issues/');
+    const dir = 'uploads/issues';
+
+    // ✅ Ensure the directory exists
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true }); // recursive for nested dirs
+    }
+
+    cb(null, dir);
   },
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-${file.originalname}`);
   }
 });
+
 exports.uploadIssueFile = multer({ storage }).single('file');
 
 // POST /api/issues/report
